@@ -1,10 +1,13 @@
-import Interpolations: LinearInterpolation
+import Interpolations:
+LinearInterpolation,
+Flat
 import DifferentialEquations:
 ContinuousCallback,
 CallbackSet,
 ODEProblem,
 solve,
-terminate!
+terminate!,
+ODESolution
 import ForwardDiff: ForwardDiff
 import Base: broadcastable
 
@@ -164,11 +167,11 @@ struct Medium
 	
 	p_c = heatmap(r, z, ocn.c,
 		yaxis = ("Depth(m)", :flip),
-		title = raw"$c(r, z)$")
+		title = "c(r, z)")
 	p_∂c_∂r = heatmap(r, z, ocn.∂,
 		xaxis = "Range (m)",
 		yaxis = ("Depth (m)", :flip),
-		title = raw"$\frac{\partial{c}}{\partial{r}}$")
+		title = "∂c/∂r(r, z)")
 
 	l = @layout [a; b]
 
