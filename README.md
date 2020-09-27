@@ -55,7 +55,9 @@ rays = Ray.(θ₀, src, ocn, bty, ati)
 ```julia
 p = plot(xaxis = "Range (m)",
 	yaxis = ("Depth (m)", :flip),
-	title = "Upward Refracting Rays")
+	title = "Ray Trace: Upward Refracting Scenario")
+plot!([0, R], ati.z)
+plot!([0, R], bty.z)
 for nRay = 1:length(rays)
 	plot!(rays[nRay].sol, vars = (1, 2))
 end
