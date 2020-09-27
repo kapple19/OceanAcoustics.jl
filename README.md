@@ -68,6 +68,10 @@ display(p)
 
 ## Development Plan
 The following features are under development:
+* Documentation:
+  * Extensive usage details
+  * Implementation
+  * Mathematical theory
 * General corner cases that produce logical or other runtime errors
 * More robust function and struct designs
 * GPU utilization
