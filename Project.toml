@@ -1,0 +1,13 @@
+name = "OceanAcoustics"
+uuid = "b3c7479f-3bb7-44a7-8cfe-e7f6ad93c72d"
+authors = ["Aaron Kaw"]
+version = "0.1.0"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
