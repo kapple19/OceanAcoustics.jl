@@ -3,7 +3,7 @@ using Documenter
 using OceanAcoustics
 
 makedocs(
-    sitename = "OceanAcoustics",
+    sitename = "Ocean Acoustics",
     format = Documenter.HTML(),
     modules = [OceanAcoustics]
 )

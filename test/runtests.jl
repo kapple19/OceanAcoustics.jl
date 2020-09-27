@@ -1,7 +1,7 @@
 using OceanAcoustics
 using Test
 
-@testset "OceanAcoustics.jl" begin
+@testset "Medium" begin
     R = 1e3
     Z = 1e3
 

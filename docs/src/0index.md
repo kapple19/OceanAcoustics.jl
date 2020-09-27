@@ -1,8 +1,12 @@
 # OceanAcoustics.jl Documentation
 This documentation details the theory underlying the implementations found in the OceanAcoustics.jl package.
 
+```@contents
+Depth = 3
+```
+
 ## Installation
-To install the package, use the following commands in ths Julia REPL:
+To install the package, use the following commands in the Julia REPL.
 
 ```
 using Pkg
@@ -10,7 +14,7 @@ Pkg.add("OceanAcoustics")
 ```
 
 ## Usage
-To load the package, use the command:
+To load the package, use the command
 
 ```
 using OceanAcoustics
