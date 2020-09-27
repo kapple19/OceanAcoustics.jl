@@ -1,6 +1,7 @@
 using OceanAcoustics
+using RunTests
 using Test
 
 @testset "OceanAcoustics.jl" begin
-    # Write your tests here.
+    @test "Hello, Julia" == "Hello, Julia"
 end
