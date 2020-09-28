@@ -5,6 +5,8 @@
 [![Coverage](https://codecov.io/gh/kapple19/OceanAcoustics.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/kapple19/OceanAcoustics.jl)
 [![Coverage](https://coveralls.io/repos/github/kapple19/OceanAcoustics.jl/badge.svg?branch=master)](https://coveralls.io/github/kapple19/OceanAcoustics.jl?branch=master)
 
+This package is an implementation of ocean acoustics models found in literature, written in the Julia programming language.
+
 ## Installation
 At the Julia REPL, execute the following commands.
 
@@ -74,7 +76,7 @@ There are a variety of ocean acoustics modelling software available online, whic
 * Reliable programming suite: Julia's packages are community-driven and -proven, ensuring quality performance and reliability.
   * DifferentialEquations.jl: Differential equation solver suite.
   * Interpolations.jl: Trustworthy interpolation.
-  * ForwardDiff.jl: Modern methods in calculating derivatives -- minimisation of discretization.
+  * ForwardDiff.jl: Modern methods in calculating derivatives - minimisation of discretization.
 
 ## Development Plan
 The following features are under development:
@@ -109,8 +111,12 @@ The theory implemented in this package has been taken from the following intelle
 ## Dependencies
 This package stands on the shoulders of Julia giants.
 
-> Bezanson, Jeff, et al. "Julia: A fresh approach to numerical computing." SIAM review 59.1 (2017): 65-98.
+> [Julia](https://github.com/JuliaLang/julia): Bezanson, Jeff, et al. "Julia: A fresh approach to numerical computing." SIAM review 59.1 (2017): 65-98.
 
-> Rackauckas, Christopher, and Qing Nie. "Differentialequations. jl–a performant and feature-rich ecosystem for solving differential equations in julia." Journal of Open Research Software 5.1 (2017).
+> [DifferentialEquations.jl](https://github.com/SciML/DifferentialEquations.jl): Rackauckas, Christopher, and Qing Nie. "Differentialequations. jl–a performant and feature-rich ecosystem for solving differential equations in julia." Journal of Open Research Software 5.1 (2017).
 
-> Revels, Jarrett, Miles Lubin, and Theodore Papamarkou. "Forward-mode automatic differentiation in Julia." arXiv preprint arXiv:1607.07892 (2016).
+> [ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl): Revels, Jarrett, Miles Lubin, and Theodore Papamarkou. "Forward-mode automatic differentiation in Julia." arXiv preprint arXiv:1607.07892 (2016).
+
+> [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl)
+
+> [Interpolations.jl](https://github.com/JuliaMath/Interpolations.jl)
