@@ -66,13 +66,23 @@ display(p)
 
 ![](plots/rays/scen=Upward.png)
 
+## Motivation
+There are a variety of ocean acoustics modelling software available online, which prompts asking for the purpose for yet another one.
+* Core code legibility: Due to the heavy computational power needed, other model implementations are performed in C++ or Fortran where readability is low and bugs are difficult to resolve.
+* Continuous function definitions: Julia enables the quick and easy utilization of continuous functions (some of which are still discretized but handled with accurate interpolation very easily) which avoids particular artefacts found in other implementations.
+* GPU, parallelisation, and distributed computing: Some solvers are written in Matlab, which lacks scalability. Julia places the full power of computation in the hands of the scientist.
+* Reliable programming suite: Julia's packages are community-driven and -proven, ensuring quality performance and reliability.
+  * DifferentialEquations.jl: Differential equation solver suite.
+  * Interpolations.jl: Trustworthy interpolation.
+  * ForwardDiff.jl: Modern methods in calculating derivatives -- minimisation of discretization.
+
 ## Development Plan
 The following features are under development:
 * Documentation:
   * Extensive usage details
   * Implementation
   * Mathematical theory
-* General corner cases that produce logical or other runtime errors
+* Corner cases that produce logical or other runtime errors
 * More robust function and struct designs
 * GPU utilization
 * Transmission loss field calculation for multipath rays:
@@ -83,7 +93,9 @@ The following features are under development:
   * Detection index
   * Signal excess
   * Probability of detection
-* GUI
+* GUI production:
+  * Interactive plot selection and data handling
+  * Comparison of multiple scenarios
 
 For proof of concept of the sonar equations, see [the author's earlier work](https://github.com/kapple19/OceanAcousticsModelling).
 
