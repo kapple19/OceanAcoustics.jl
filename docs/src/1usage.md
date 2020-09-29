@@ -1,10 +1,17 @@
-# Ray Tracing
+# Usage
+
+## Ray Tracing
+
+```@meta
+CurrentModule = OceanAcoustics
+```
+
 The environment modelled is a vertical slice of ocean with range and depth dependent sound speed profile, bathymetry, and altimetry. Acoustic rays propagate from a single point source. All dynamics are static.
 
-## Environment
+### Environment
 The ocean environment is defined with Julia `struct`s.
 
-### Medium
+#### Medium
 The volume of ocean within which rays propagate is termed a `Medium`. This struct receives two medium properties:
 * Range
 * Sound speed profile
@@ -35,7 +42,7 @@ c = 1520
 ocn = Medium(c, R)
 ```
 
-### Boundary
+#### Boundary
 The volume of ocean is bounded above by the altimetry, and below by the bathymetry. Each are represented as a `Boundary`.
 
 ```@example
@@ -44,7 +51,7 @@ ati = Boundary(0)
 bty = Boundary(1e3)
 ```
 
-### Signal
+#### Signal
 The acoustic source is partially defined by the properties of the source `Signal`.
 
 ```@example
@@ -53,11 +60,11 @@ f = 1e3 # frequency (Hz)
 sig = Signal(f)
 ```
 
-### Position
+#### Position
 The position of an object in the ocean is 
 
-### Sound Source
+#### Sound Source
 
 
-## Ray Trace
+### Ray Trace
 

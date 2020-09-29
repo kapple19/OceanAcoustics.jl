@@ -7,9 +7,10 @@ julia:
   - nightly
 os:
   - linux
-  - osx
+  
 arch:
   - x64
+  - x86
 cache:
   directories:
     - ~/.julia/artifacts
@@ -20,9 +21,7 @@ jobs:
   include:
     - stage: "Documentation"
       julia: 1.5
-      os:
-        - linux
-        - osx
+      os: linux
       script:
         - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd()));
                                                Pkg.instantiate()'

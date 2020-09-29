@@ -1,36 +1,23 @@
-# OceanAcoustics.jl Documentation
-This documentation details the theory underlying the implementations found in the OceanAcoustics.jl package.
+# OceanAcoustics.jl
+Implementations of ocean acoustics modelling.
 
 ```@contents
 Depth = 3
 ```
 
-## Installation
-To install the package, use the following commands in the Julia REPL.
+<!-- ## Package Features -->
+2D Ray tracing theory for a vertical slice of an ocean environment is implemented.
 
-```
-using Pkg
-Pkg.add("OceanAcoustics")
-```
+## Under Development
+The following mathematical implementations are under development.
+* Acoustic propagation field
+  * Beam tracing
+  * Pressure field
+  * Transmission loss
+* Detection theory
+  * Detection index
+  * Detection threshold
+  * Probability of detection
 
-## Usage
-To load the package, use the command
-
-```
-using OceanAcoustics
-```
-
-## References and Dependencies
-The theory implemented in `OceanAcoustics.jl` has been taken from the following intellectual giants.
-
-> Jensen, Finn B., et al. Computational ocean acoustics. Springer Science & Business Media, 2011.
-
-> Lurton, Xavier. Underwater acoustics: an introduction. Springer Berlin, 2010.
-
-This package stands on the shoulders of Julia giants.
-
-> Bezanson, Jeff, et al. "Julia: A fresh approach to numerical computing." SIAM review 59.1 (2017): 65-98.
-
-> Rackauckas, Christopher, and Qing Nie. "Differentialequations. jl–a performant and feature-rich ecosystem for solving differential equations in julia." Journal of Open Research Software 5.1 (2017).
-
-> Revels, Jarrett, Miles Lubin, and Theodore Papamarkou. "Forward-mode automatic differentiation in Julia." arXiv preprint arXiv:1607.07892 (2016).
+The package anticipates performance features.
+* 

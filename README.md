@@ -7,6 +7,8 @@
 
 This package is an implementation of ocean acoustics models found in literature, written in the Julia programming language.
 
+Note, this package is still under development, and not yet registered.
+
 ## Installation
 At the Julia REPL, execute the following commands.
 
@@ -21,6 +23,8 @@ To load the package, execute
 ```julia
 using OceanAcoustics
 ```
+
+at the Julia REPL.
 
 ### Ray Tracing
 1. Define the environment parameters:
@@ -70,10 +74,10 @@ display(p)
 
 ## Motivation
 There are a variety of ocean acoustics modelling software available online, which prompts asking for the purpose for yet another one.
-* Core code legibility: Due to the heavy computational power needed, other model implementations are performed in C++ or Fortran where readability is low and bugs are difficult to resolve.
-* Continuous function definitions: Julia enables the quick and easy utilization of continuous functions (some of which are still discretized but handled with accurate interpolation very easily) which avoids particular artefacts found in other implementations.
-* GPU, parallelisation, and distributed computing: Some solvers are written in Matlab, which lacks scalability. Julia places the full power of computation in the hands of the scientist.
-* Reliable programming suite: Julia's packages are community-driven and -proven, ensuring quality performance and reliability.
+* **Core code legibility**: Due to the heavy computational power needed, other model implementations are performed in C++ or Fortran where readability is low and bugs are difficult to resolve.
+* **Automatic differentiation**: Julia allows the quick and easy utilization of continuous functions and the fast calculation of their smooth derivatives, avoiding artefacts of discretisation found in other implementations.
+* **GPU, parallelisation, and distributed computing**: Some solvers are written in Matlab, which lacks scalability. Julia places the full power of computation in the hands of the scientist.
+* **Reliable programming suite**: Julia's packages are community-driven and -proven, ensuring quality performance and reliability.
   * DifferentialEquations.jl: Differential equation solver suite.
   * Interpolations.jl: Trustworthy interpolation.
   * ForwardDiff.jl: Modern methods in calculating derivatives - minimisation of discretization.
