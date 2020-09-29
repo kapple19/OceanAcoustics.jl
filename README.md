@@ -76,7 +76,7 @@ display(p)
 There are a variety of ocean acoustics modelling software available online, which prompts asking for the purpose for yet another one.
 * **Core code legibility**: Due to the heavy computational power needed, other model implementations are performed in C++ or Fortran where readability is low and bugs are difficult to resolve.
 * **Automatic differentiation**: Julia allows the quick and easy utilization of continuous functions and the fast calculation of their smooth derivatives, avoiding artefacts of discretisation found in other implementations.
-* **GPU, parallelisation, and distributed computing**: Some solvers are written in Matlab, which lacks scalability. Julia places the full power of computation in the hands of the scientist.
+* **Easy multithreading**: Some solvers are written in Matlab, which lacks scalability. Julia places the full power of computation in the hands of the scientist while having legible code.
 * **Reliable programming suite**: Julia's packages are community-driven and -proven, ensuring quality performance and reliability.
   * DifferentialEquations.jl: Differential equation solver suite.
   * Interpolations.jl: Trustworthy interpolation.
@@ -84,13 +84,15 @@ There are a variety of ocean acoustics modelling software available online, whic
 
 ## Development Plan
 The following features are under development:
-* Documentation:
+* **Documentation**:
+  * Examples, replicating literature results
   * Extensive usage details
   * Implementation
   * Mathematical theory
 * Corner cases that produce logical or other runtime errors
-* More robust function and struct designs
-* GPU utilization
+* More robust function and struct designs:
+  * **GPU** utilization
+  * **Multithreading** for the numerous rays being traced
 * Transmission loss field calculation for multipath rays:
   * Gaussian beam tracing
   * Interpolation onto range-depth grid
