@@ -1,11 +1,14 @@
 # OceanAcoustics.jl
 
-[![Build Status](https://travis-ci.com/kapple19/OceanAcoustics.jl.svg?branch=master)](https://travis-ci.com/kapple19/OceanAcoustics.jl)
-[![Build Status](https://ci.appveyor.com/api/projects/status/github/kapple19/OceanAcoustics.jl?svg=true)](https://ci.appveyor.com/project/kapple19/OceanAcoustics-jl)
-[![Coverage](https://codecov.io/gh/kapple19/OceanAcoustics.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/kapple19/OceanAcoustics.jl)
-[![Coverage](https://coveralls.io/repos/github/kapple19/OceanAcoustics.jl/badge.svg?branch=master)](https://coveralls.io/github/kapple19/OceanAcoustics.jl?branch=master)
+Linux: [![Build Status](https://travis-ci.com/kapple19/OceanAcoustics.jl.svg?branch=master)](https://travis-ci.com/kapple19/OceanAcoustics.jl)
 
-This package is an implementation of ocean acoustics models found in literature, written in the Julia programming language.
+Windows: [![Build Status](https://ci.appveyor.com/api/projects/status/github/kapple19/OceanAcoustics.jl?svg=true)](https://ci.appveyor.com/project/kapple19/OceanAcoustics-jl)
+
+Tests:
+* [![Coverage](https://codecov.io/gh/kapple19/OceanAcoustics.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/kapple19/OceanAcoustics.jl)
+* [![Coverage](https://coveralls.io/repos/github/kapple19/OceanAcoustics.jl/badge.svg?branch=master)](https://coveralls.io/github/kapple19/OceanAcoustics.jl?branch=master)
+
+An implementation of ocean acoustics models found in literature, written in the Julia programming language.
 
 Note, this package is still under development, and not yet registered.
 
@@ -18,13 +21,11 @@ Pkg.add("OceanAcoustics")
 ```
 
 ## Usage
-To load the package, execute
+At the Julia REPL, execute
 
 ```julia
 using OceanAcoustics
 ```
-
-at the Julia REPL.
 
 ### Ray Tracing
 1. Define the environment parameters:

@@ -1,5 +1,5 @@
 ## Flat Scenario
-function fcn_rays_flat()
+function scenario_flat()
 	pars_rays_flat = Dict(
 		:title => "Flat Environment",
 		:z₀ => 200,
@@ -15,8 +15,9 @@ function fcn_rays_flat()
 		:pars => pars_rays_flat
 	)
 end
+
 ## Smooth Scenario
-function fcn_rays_smooth()
+function scenario_smooth()
 	# Altimetry
 	zAtiMin = -10
 	zAtiMax = 50
@@ -71,7 +72,7 @@ function fcn_rays_smooth()
 end
 
 ## Parabolic Bathymetry
-function fcn_rays_parabolic()
+function scenario_parabolic()
 	cOcnVal = 250
 	zBtyFcn(r) = 2e-3*2.5e5sqrt(1 + r/cOcnVal)
 	θ₀ = range(atan(5e3/2e3), atan(5e3/20e3), length = 30)
@@ -94,7 +95,7 @@ function fcn_rays_parabolic()
 end
 
 ## Uniformly Increasing Celerity
-function fcn_rays_upward()
+function scenario_upward()
 	cOcnFcn(r, z) = 1500 + 100z/5e3
 	θ_crit = acos(cOcnFcn(0, 0)/cOcnFcn(0, 5e3))
 
@@ -116,7 +117,7 @@ function fcn_rays_upward()
 end
 
 ## n²-Linear Profile
-function fcn_rays_n2linear()
+function scenario_n2linear()
 	c₀ = 1550
 	z₀ = 1e3
 	cOcnFcn(r, z) = c₀/sqrt(1 + 2.4z/c₀)
@@ -137,3 +138,5 @@ function fcn_rays_n2linear()
 		:pars => pars_rays_n2linear
 	)
 end
+
+nothing

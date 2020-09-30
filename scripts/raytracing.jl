@@ -49,11 +49,11 @@ end
 
 ## Run Scenarios
 scenarios_rays = [
-	fcn_rays_flat(),
-	fcn_rays_smooth(),
-	fcn_rays_parabolic(),
-	fcn_rays_upward(),
-	fcn_rays_n2linear()
+	scenario_flat(),
+	scenario_smooth(),
+	scenario_parabolic(),
+	scenario_upward(),
+	scenario_n2linear()
 ]
 
 run_sims(sims_rays, scenarios_rays)
