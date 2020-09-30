@@ -292,7 +292,7 @@ function acoustic_propagation_problem(
 
 		∂²c_∂n²(r, z) = ocn.c(r, z)^2*(
 			ocn.∂²c_∂r²(r, z)*ζ^2
-			- 2Ocn.∂²c_∂r∂z(r, z)*ξ*ζ
+			- 2ocn.∂²c_∂r∂z(r, z)*ξ*ζ
 			+ ocn.∂²c_∂z²(r, z)*ξ^2
 		)
 
@@ -348,14 +348,14 @@ Returns the `ODESolution` `RaySol` which is a type belonging to the `Differentia
 
 Note that it is easier to use the wrapper struct `Ray` to compute the solution, instead of calling this function.
 """
-function solve_acoustic_propagation(prob::ODEProblem, CbBnd::ContinuousCallback)
+function solve_acoustic_propagation(prob::ODEProblem, CbBnd::Union{ContinuousCallback, CallbackSet})
 	@time RaySol = solve(prob, callback = CbBnd, reltol=1e-8, abstol=1e-8)
 	return RaySol
 end
 
 struct Ray
 	θ₀::Real
-	sol::ODESolution
+	sol
 	S::Real
 	r::Function
 	z::Function
@@ -406,10 +406,8 @@ function Ray(θ₀::Real, src::Source, ocn::Medium, bty::Boundary, ati::Boundary
 end
 
 struct Beam
-	θ₀::Real
 	ray
 	b::Function
-	S::Real
 	W::Function
 end
 
@@ -446,7 +444,7 @@ function Beam(θ₀::Real, src::Source, ocn::Medium, bty::Boundary, ati::Boundar
 	A = 1/c₀ * exp(im*π/4)*sqrt(q₀*ω*cos(θ₀)/2π)
 	b(s, n) = A * sqrt(c(s)/r(s)/q(s)) * exp(-im*ω * (τ(s) + p(s)/q(s)*n^2/2))
 
-	return new(θ₀, ray, b, ray.S, W)
+	return Beam(ray, b, W)
 end
 
 # function addtofield!(p, r, z, b)
