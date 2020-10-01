@@ -227,7 +227,7 @@ function Medium(c::AbstractArray, R::Real = c[end, 1], Z::Real = c[1, end])
 	c_ = c[2:end, 2:end]
 	
 	cFcn = interpolated_function(r_, z_, c_)
-	return Medium(cFcn, R)
+	return Medium(cFcn, R, Z)
 end
 
 """
@@ -250,7 +250,7 @@ Note that for this dispatch, all range derivatives are zero due to range-indepen
 """
 function Medium(z::AbstractVector, c::AbstractVector, R::Real, Z::Real = z[end])
 	cMat = vcat([0 0 R], hcat(z, c, c))
-	return Medium(cMat, R)
+	return Medium(cMat, R, Z)
 end
 
 """
