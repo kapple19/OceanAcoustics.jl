@@ -24,27 +24,41 @@ beams = Beam.(θ₀, src, ocn, bty, ati);
 nothing
 
 ##
+plot(beams.ray.sol, vars = (1, 2),
+	yaxis = :flip)
+
+##
 dr_ds(s) = ForwardDiff.derivative(s -> beam.ray.r(s), s)
 dz_ds(s) = ForwardDiff.derivative(s -> beam.ray.z(s), s)
 rng(s, n) = beam.ray.r(s) - dz_ds(s)*n
 dpt(s, n) = beam.ray.z(s) + dr_ds(s)*n
 
 ##
-function closest_point(r, z, ray)
-	Q(s) = (ray.r(s) - r)^2 + (ray.z(s) - z)^2
+function closest_points(r, z, beam)
+	Q(s) = (beam.ray.r(s) - r)^2 + (beam.ray.z(s) - z)^2
 	dQ(s) = ForwardDiff.derivative(Q, s)
-	sMins = find_zeros(dQ, 0, ray.S)
-	indMin = argmin(Q.(sMins))
-	sMin = sMins[indMin]
-	nMin = sqrt(Q(sMin))
-	return sMin, nMin
+	sMins = find_zeros(dQ, 0, beam.ray.S)
+	d²Q(s) = ForwardDiff.derivative(dQ, s)
+	min_cond(s) = d²Q(s) > 0 && beam.W(s) > sqrt(Q(s))
+	min_cond.(sMins)
+	filter!(min_cond, sMins)
+	return sMins, sqrt.(Q.(sMins))
 end
 
 ##
 function add_to_field!(p, nr, r, nz, z, beam)
-	sMin, nMin = closest_point(r, z, beam.ray)
-	p[nr, nz] += beam.b(sMin, nMin)
+	sMins, nMins = closest_points(r, z, beam)
+	for i = 1:length(sMins)
+		p[nr, nz] += beam.b(sMins[i], nMins[i])
+	end
 end
+
+##
+r = 3.2e3
+z = 9.5e2
+
+##
+pair_ = closest_points(r, z, beams)
 
 ##
 Z = 1e3
@@ -59,7 +73,5 @@ p = zeros(Complex, length(ranges), length(depths))
 
 ##
 heatmap(ranges, depths, min.(100., -20log10.(abs.(p'))),
-	yaxis = :flip,
-	seriescolor = cgrad(:jet, rev = true))
-
-# 1. Change to `closest_points`.
+yaxis = :flip,
+seriescolor = cgrad(:jet, rev = true))

@@ -10,6 +10,7 @@ terminate!,
 ODESolution
 import ForwardDiff: ForwardDiff
 import Base: broadcastable
+import Roots: find_zeros
 
 export Position
 export Signal
@@ -18,6 +19,8 @@ export Boundary
 export Medium
 export Ray
 export Beam
+export Receiver
+export Field
 
 function interpolated_function(rng, val)
 	Itp = LinearInterpolation(rng, val, extrapolation_bc = Flat())
@@ -141,11 +144,12 @@ struct Medium
 	∂²c_∂r∂z::Function
 	∂²c_∂z²::Function
 	R::Real
+	Z::Real
 
 	"""
-		Medium(c::Function, R::Real)
+		Medium(c::Function, R::Real, Z::Real)
 	
-	An acoustic medium storing the sound speed `c` (m/s) as a bivariate function of range and depth, with a range `R` (metres).
+	An acoustic medium storing the sound speed `c` (m/s) as a bivariate function of range and depth, with a maximum range `R` (metres) and maximum depth `Z`.
 
 	The following derivatives are also computed and stored as bivariate functions:
 	* `∂c_∂r(r, z)`: ∂c/∂r
@@ -160,7 +164,7 @@ struct Medium
 
 	R, Z = 5e3, 1e3
 	c(r, z) = 1500 + 0.1z^2 - 0.01r
-	ocn = Medium(c, R)
+	ocn = Medium(c, R, Z)
 
 	r = range(0, R, length = 101)
 	z = range(0, Z, length = 101)
@@ -178,7 +182,7 @@ struct Medium
 	plot(p_c, p_∂c_∂r, layout = l)
 	```
 	"""
-	function Medium(c::Function, R::Real)
+	function Medium(c::Function, R::Real, Z::Real)
 		c_(x) = c(x[1], x[2])
 		∇c_(x) = ForwardDiff.gradient(c_, x)
 		∇c(r, z) = ∇c_([r, z])
@@ -197,18 +201,18 @@ struct Medium
 		∂²c_∂r∂z(r, z) = ∇∂c_∂r(r, z)[2]
 		∂²c_∂z²(r, z) = ∇∂c_∂z(r, z)[2]
 	
-		return new(c, ∂c_∂r, ∂c_∂z, ∂²c_∂r², ∂²c_∂r∂z, ∂²c_∂z², R)
+		return new(c, ∂c_∂r, ∂c_∂z, ∂²c_∂r², ∂²c_∂r∂z, ∂²c_∂z², R, Z)
 	end
 end
 
 """
-	Medium(c::AbstractArray, R::Real = c[end, 1])
+	Medium(c::AbstractArray, R::Real = c[end, 1], Z::Real = c[1, end])
 
 An acoustic medium storing the sound speed `c` as an array with values `2:end` in the first row as range (metres), values `2:end` in the first column as depth (metres) and values `[2:end, 2:end]` as the respective sound speed (m/s) grid.
 
-The medium range `R` (metres) is also stored. Its default is the last value of the given range in the inputted sound speed array.
+The medium maximal range `R` (metres) and maximal depth `Z` are also stored. Their defaults are their respective last values of the given range/depth in the inputted sound speed array.
 
-The inputted values are interpolated into and stored as a bivariate function or range and depth.
+The inputted values are interpolated into and stored as a bivariate function of range and depth.
 
 The following derivatives are also computed and stored:
 * `∂c_∂r(r, z)`: ∂c/∂r
@@ -217,7 +221,7 @@ The following derivatives are also computed and stored:
 * `∂²c_∂r∂z(r, z)`: ∂²c/∂r∂z
 * `∂²c_∂z²(r, z)`: ∂²c/∂z²
 """
-function Medium(c::AbstractArray, R::Real = c[end, 1])
+function Medium(c::AbstractArray, R::Real = c[end, 1], Z::Real = c[1, end])
 	r_ = [rc for rc ∈ c[1, 2:end]]
 	z_ = [zc for zc ∈ c[2:end, 1]]
 	c_ = c[2:end, 2:end]
@@ -227,13 +231,13 @@ function Medium(c::AbstractArray, R::Real = c[end, 1])
 end
 
 """
-	Medium(z::AbstractVector, c::AbstractVector, R = z[end])
+	Medium(z::AbstractVector, c::AbstractVector, R::Real, Z::Real = z[end])
 
 An acoustic medium storing the sound speed `c` (m/s) as a vector with corresponding depths `z` (metres).
 
-The medium range is also stored as `R` (metres).
+The medium maximal range `R` (metres) and medium maximal depth `Z` (metres) are also stored. The default of `Z` is the last value in `z`.
 
-The sound speed grid values are interpolated into and stored as a bivariate function of range (metres) and depth (metres).
+The sound speed grid values are interpolated into and stored as a bivariate function of range `r` (metres) and depth `z` (metres) as `c(r, z)`.
 
 The following derivatives are also computed and stored:
 * `∂c_∂r(r, z)`: ∂c/∂r
@@ -244,7 +248,7 @@ The following derivatives are also computed and stored:
 
 Note that for this dispatch, all range derivatives are zero due to range-independence.
 """
-function Medium(z::AbstractVector, c::AbstractVector, R::Real)
+function Medium(z::AbstractVector, c::AbstractVector, R::Real, Z::Real = z[end])
 	cMat = vcat([0 0 R], hcat(z, c, c))
 	return Medium(cMat, R)
 end
@@ -252,13 +256,13 @@ end
 """
 	Medium
 
-An acoustic medium storing sound speed `c` (m/s) as a constant, along with the medium range `R`.
+An acoustic medium storing sound speed `c` (m/s) as a constant, along with the maximal medium range `R` and maximal medium depth `Z`.
 
 The sound speed is interpolated and stored as a function. Derivatives are also calculated, but in the case of this dispatch, are zero.
 """
-function Medium(c::Real, R::Real)
+function Medium(c::Real, R::Real, Z::Real)
 	cFcn(r, z) = c
-	return Medium(cFcn, R)
+	return Medium(cFcn, R, Z)
 end
 
 """
@@ -349,7 +353,7 @@ Returns the `ODESolution` `RaySol` which is a type belonging to the `Differentia
 Note that it is easier to use the wrapper struct `Ray` to compute the solution, instead of calling this function.
 """
 function solve_acoustic_propagation(prob::ODEProblem, CbBnd::Union{ContinuousCallback, CallbackSet})
-	@time RaySol = solve(prob, callback = CbBnd, reltol=1e-8, abstol=1e-8)
+	RaySol = @time solve(prob, callback = CbBnd, reltol=1e-8, abstol=1e-8)
 	return RaySol
 end
 
@@ -447,40 +451,71 @@ function Beam(θ₀::Real, src::Source, ocn::Medium, bty::Boundary, ati::Boundar
 	return Beam(ray, b, W)
 end
 
-# function addtofield!(p, r, z, b)
+parse_receiver_input(x::Real) = [x]
+parse_receiver_input(x::AbstractArray) = x
 
-# end
 
-# struct Field
-# 	θ₀::Union{Real,Vector}
-# 	p::Func
-# 	function Field(
-# 		θ₀vals::Vector,
-# 		src::Source,
-# 		Rcv::Receiver,
-# 		ocn::Medium,
-# 		bty::Boundary,
-# 		ati::Boundary = Boundary(0),
-# 		Before::Function = p -> p,
-# 		After!::Function = p -> p)
+struct Receiver
+	r::AbstractVector
+	z::AbstractVector
+	
+	function Receiver(r::Union{Real, AbstractArray}, z::Union{Real, AbstractArray})
+		return new(parse_receiver_input(r), parse_receiver_input(z))
+	end
+end
 
-# 		p = zeros(length(Rcv.r), length(Rcv.z))
-# 		θ₀s = sort(θ₀vals)
-# 		rays = Beam.(θ₀s, src, ocn, bty, ati)
-		
-# 		θ₀ = θ₀s[1]
-# 		δθ = θ₀ - θ₀s[2]
-# 		b(s, n) = Before(δθ*rays[1].b(s, n))
-# 		addtofield!(p, Rcv.r, Rcv.z, b)
+function closest_points(r, z, beam)
+	Q(s) = (beam.ray.r(s) - r)^2 + (beam.ray.z(s) - z)^2
+	dQ(s) = ForwardDiff.derivative(Q, s)
+	sMins = find_zeros(dQ, 0, beam.ray.S)
+	d²Q(s) = ForwardDiff.derivative(dQ, s)
+	min_cond(s) = d²Q(s) > 0 && beam.W(s) > sqrt(Q(s))
+	min_cond.(sMins)
+	filter!(min_cond, sMins)
+	return sMins, sqrt.(Q.(sMins))
+end
 
-# 		for n = 2:length(θ₀)-1
+function add_to_field!(p::AbstractArray, nr::Integer, r::Real, nz::Integer, z::Real, beam::Beam, coh_pre::Function)
+	sMins, nMins = closest_points(r, z, beam)
+	for i = 1:length(sMins)
+		p[nr, nz] += coh_pre(beam.b(sMins[i], nMins[i]))
+	end
+end
 
-# 		end
+struct Field
+	θ₀s::AbstractVector
+	src::Source
+	rcv::Receiver
+	ocn::Medium
+	bty::Boundary
+	ati::Boundary
+	p::AbstractArray
 
-# 		After!(p)
-# 		return new(θ₀, p, TL)
-# 	end
-# end
+	"""
+		Field(θ₀s::AbstractVector, src::Source, rcv::Receiver, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0))
+
+	Calculates the pressure field for a particular coherence (TODO: Make input).
+	"""
+	function Field(θ₀s::AbstractVector, src::Source, rcv::Receiver, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0))
+		coh_pre(p) = p
+		coh_pre!(p) = coh_pre(p)
+
+		p = zeros(Complex, length(rcv.r), length(rcv.z))
+		coh_pre!(p)
+
+		for θ₀ ∈ θ₀s
+			beam = Beam(θ₀, src, ocn, bty, ati)
+			for (nr, r) ∈ enumerate(rcv.r), (nz, z) ∈ enumerate(rcv.z)
+				add_to_field!(p, nr, r, nz, z, beam, coh_pre)
+			end
+		end
+
+		coh_post!(p) = p
+		coh_post!(p)
+
+		return new(θ₀s, src, rcv, ocn, bty, ati, p)
+	end
+end
 
 Base.broadcastable(m::Position) = Ref(m)
 Base.broadcastable(m::Medium) = Ref(m)
