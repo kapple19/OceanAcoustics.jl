@@ -22,10 +22,10 @@ ati = Boundary(zAti)
 ##
 rcv = Receiver(range(0, R, length = 101), range(0, Z, length = 51))
 
-fld = Field([θ₀], src, rcv, ocn, bty, ati)
+fld = Field(θ₀*(0.5:0.05:1), src, rcv, ocn, bty, ati)
 
 ##
-TL = min.(100, -20log10.(abs.(p.p)))
+TL = min.(100, -20log10.(abs.(fld.p)))
 heatmap(rcv.r, rcv.z, TL', yaxis = :flip, seriescolor = cgrad(:jet, rev = true))
 
 ##

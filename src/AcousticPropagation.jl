@@ -454,7 +454,6 @@ end
 parse_receiver_input(x::Real) = [x]
 parse_receiver_input(x::AbstractArray) = x
 
-
 struct Receiver
 	r::AbstractVector
 	z::AbstractVector
