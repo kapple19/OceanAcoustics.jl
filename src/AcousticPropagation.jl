@@ -22,22 +22,21 @@ export Beam
 export Receiver
 export Field
 
-function interpolated_function(rng, val)
-	Itp = LinearInterpolation(rng, val, extrapolation_bc = Flat())
-	return ItpFcn(r) = Itp(r)
+function interpolated_function(x, y)
+	Itp = LinearInterpolation(x, y, extrapolation_bc = Flat())
+	return ItpFcn(x::Real) = Itp(x)
 end
-function interpolated_function(rng, dpt, val)
-	Itp = LinearInterpolation((dpt, rng), val, extrapolation_bc = Flat())
-	return ItpFcn(r, z) = Itp(z, r)
+function interpolated_function(x, y, z)
+	Itp = LinearInterpolation((x, y), z, extrapolation_bc = Flat())
+	return ItpFcn(x::Real, y::Real) = Itp(x, y)
 end
 
 """
-	t_rfl::Vector = boundary_reflection(t_inc::Vector, t_bnd::Vector)
+	boundary_reflection(t_inc::Vector, t_bnd::Vector) -> t_rfl::Vector
 
 Calculates the reflection ray tangent vector `r_rfl` for an incident ray tangent vector `t_inc` reflecting against a boundary with tangent vector `t_bnd`.
 """
 function boundary_reflection(t_inc::Vector, t_bnd::Vector)
-	# works for parabolic boundary
 	MyAngle(tng) = atan(tng[2]/tng[1])
 	θ_inc = MyAngle(t_inc)
 	θ_bnd = MyAngle(t_bnd)
@@ -224,7 +223,7 @@ The following derivatives are also computed and stored:
 function Medium(c::AbstractArray, R::Real = c[end, 1], Z::Real = c[1, end])
 	r_ = [rc for rc ∈ c[1, 2:end]]
 	z_ = [zc for zc ∈ c[2:end, 1]]
-	c_ = c[2:end, 2:end]
+	c_ = c[2:end, 2:end]'
 	
 	cFcn = interpolated_function(r_, z_, c_)
 	return Medium(cFcn, R, Z)
@@ -266,7 +265,7 @@ function Medium(c::Real, R::Real, Z::Real)
 end
 
 """
-	(prob::ODEProblem, CbBnd::ContinuousCallback) = acoustic_propagation_problem(θ₀::Real, src::Source, ocn::Medium, bty::Boundary, ati::Boundary)
+	acoustic_propagation_problem(θ₀::Real, src::Source, ocn::Medium, bty::Boundary, ati::Boundary) -> prob::ODEProblem, CbBnd::ContinuousCallback
 
 Defines the differential equation problem `Prob` and continuous callback `Cb` for a combination of the eikonal, transport, and dynamic ray equations for a source `src` in an ocean medium `ocn` bounded above by the altimetry `ati` and below by the bathymetry `bty`, for the initial angle `θ₀` (radians) of the ray launched from the specified source position.
 
@@ -344,7 +343,7 @@ function acoustic_propagation_problem(
 end
 
 """
-	RaySol::ODESolution = solve_acoustic_propagation(prob_eikonal::ODEProblem, CbBnd::ContinuousCallback)
+	solve_acoustic_propagation(prob_eikonal::ODEProblem, CbBnd::ContinuousCallback) -> RaySol::ODESolution
 
 Solves the eikonal, transport, and dynamic ray equations defined by the differential equation problem `prob` with continuous callback `CbBnd`.
 
