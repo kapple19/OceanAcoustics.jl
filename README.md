@@ -40,12 +40,13 @@ z₀ = 0.0 # source depth
 θ₀ = θ_crit*range(0.1, 1, length = 10) # initial ray angles
 f = 2e2 # frequency
 R = 1e5 # maximum range
+Z = zBty # maximum depth
 ```
 
 2. Parse the scenario:
 
 ```julia
-ocn = Medium(c, R)
+ocn = Medium(c, R, Z)
 bty = Boundary(zBty)
 ati = Boundary(zAti)
 src = Source(Position(r₀, z₀), Signal(f))
