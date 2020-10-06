@@ -65,7 +65,7 @@ function convergence()
 	ati = Boundary(0)
 	
 	θ_crit = acos(ocn.c(0, 0)/ocn.c(0, 5e3))
-	θ₀ = θ_crit*range(0.01, 1, length = 10)
+	θ₀ = θ_crit*range(0.5, 1, length = 10)
 
 	return θ₀, src, ocn, bty, ati, "Convergence Zones"
 end
@@ -83,6 +83,56 @@ function upward()
 	ati = Boundary(0)
 	
 	return θ₀, src, ocn, bty, ati, "Upward-Refracting Rays"
+end
+
+## Parabolic Bathymetry
+function parabolic()
+	c = 250
+	zBty(r) = 2e-3*2.5e5sqrt(1 + r/c)
+	θ₀ = range(atan(5e3/2e3), atan(5e3/20e3), length = 30)
+
+	src = Source(Position(0, 0), Signal(200))
+	ocn = Medium(c, 20e3, 5e3)
+	bty = Boundary(zBty)
+	ati = Boundary(0)
+
+	return θ₀, src, ocn, bty, ati, "Parabolic Bathymetry"
+end
+
+## Deep-Sound-Channel
+function channel()
+	z = [0, 500/3, 500/2, 500, 1000, 1500, 4e3]
+	c = [1480, 1500, 1485, 1475, 1480, 1485, 1525]
+	Z = z[end]
+	
+	z₀ = 500
+	src = Source(Position(0, z₀), Signal(200))
+	ocn = Medium(z, c, 250e3, Z)
+	bty = Boundary(4e3)
+	ati = Boundary(0)
+
+	θ₀ = acos(ocn.c(0, z₀)/1500) * range(-1, 1, length = 31)
+
+	return θ₀, src, ocn, bty, ati, "Deep Sound Channel"
+end
+
+## Seamount
+function seamount()
+	z = [0, 100, 200, 350, 500, 1500, 3100]
+	c = [1480, 1470, 1475, 1473, 1475, 1488, 1505]
+	Z = z[end]
+	r = 1e3*[0, 40, 45, 50, 55, 60, 70, 140]
+	zBty = [Z, Z, 2900, 2850, 2000, 500, Z, Z]
+	R = r[end]
+
+	src = Source(Position(0, 363), Signal(200))
+	ocn = Medium(z, c, R, Z)
+	bty = Boundary(r, zBty)
+	ati = Boundary(0)
+
+	θ₀ = atan(363/2e3) * range(-1, 1, length = 31)
+
+	return θ₀, src, ocn, bty, ati, "Seamount"
 end
 
 ## EOF

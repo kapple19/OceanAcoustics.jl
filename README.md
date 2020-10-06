@@ -74,7 +74,7 @@ display(p)
 ![](plots/rays/upward.png)
 
 ## Motivation
-There are a variety of ocean acoustics modelling software available online, which prompts asking for the purpose for yet another one.
+There are a variety of ocean acoustics modelling software available online, which prompts asking for the purpose of yet another one.
 * **Core code legibility**: Due to the heavy computational power needed, other model implementations are performed in C++ or Fortran where readability is low and bugs are difficult to resolve.
 * **Automatic differentiation**: Julia allows the quick and easy utilization of continuous functions and the fast calculation of their smooth derivatives, avoiding artefacts of discretisation found in other implementations.
 * **Easy multithreading**: Some solvers are written in Matlab, which lacks scalability. Julia places the full power of computation in the hands of the scientist while having legible code.

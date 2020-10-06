@@ -1,26 +1,17 @@
-using Interpolations:
+## Acoustic Propagation Module
+import Interpolations:
 LinearInterpolation,
 Flat
-using DifferentialEquations:
+import DifferentialEquations:
 ContinuousCallback,
 CallbackSet,
 ODEProblem,
 solve,
 terminate!,
 ODESolution
-using ForwardDiff: ForwardDiff
-using Base: broadcastable
-using Roots: find_zeros
-
-export Position
-export Signal
-export Source
-export Boundary
-export Medium
-export Ray
-export Beam
-export Receiver
-export Field
+import ForwardDiff: ForwardDiff
+import Base: broadcastable
+import Roots: find_zeros
 
 function interpolated_function(x, y)
 	Itp = LinearInterpolation(x, y, extrapolation_bc = Flat())
@@ -328,13 +319,17 @@ function acoustic_propagation_problem(
 		du[9] = dqⁱ_ds = ocn.c(r, z)*pⁱ
 	end
 
+	# Range
 	rng_condition(u, t, ray) = ocn.R/2 - abs(u[1] - ocn.R/2)
 	rng_affect!(ray) = terminate!(ray)
+
+	# Callbacks
 	CbRng = ContinuousCallback(rng_condition, rng_affect!)
 	CbBty = ContinuousCallback(bty.condition, bty.affect!)
 	CbAti = ContinuousCallback(ati.condition, ati.affect!)
 	CbBnd = CallbackSet(CbRng, CbBty, CbAti)
 
+	# Initial Conditions
 	r₀ = src.pos.r
 	z₀ = src.pos.z
 	ξ₀ = cos(θ₀)/ocn.c(r₀, z₀)
@@ -533,9 +528,24 @@ struct Field
 	end
 end
 
-Base.broadcastable(m::Position) = Ref(m)
-Base.broadcastable(m::Medium) = Ref(m)
-Base.broadcastable(m::Boundary) = Ref(m)
-Base.broadcastable(m::Signal) = Ref(m)
-Base.broadcastable(m::Source) = Ref(m)
-# Base.broadcastable(m::Ray) = Ref(m)
+##
+using Plots
+
+R = 20
+Z = 10
+
+src = Source(Position(0, 5), Signal(200))
+ocn = Medium(1500, R, Z)
+bty = Boundary([0, 15, 20], [10, 10, 2.5])
+ati = Boundary(0)
+
+θ₀ = 0.
+
+ray = Ray(θ₀, src, ocn, bty, ati)
+
+r = range(0, R, length = 101)
+
+plot(yaxis = :flip)
+plot!(r, ati.z)
+plot!(r, bty.z)
+plot!(ray.sol, vars = (1, 2))

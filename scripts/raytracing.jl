@@ -21,15 +21,9 @@ function sim_rays(scen::Function)
 	for nRay = 1:length(θ₀)
 		plot!(rays[nRay].sol, vars = (1, 2))
 	end
+	plot!(xlims = (0, ocn.R))
 	return pt
 end
-
-# function sims_rays(dict_rays::Vector)
-# 	@unpack pars = dict_rays
-# 	pt = sim_rays(pars)
-# 	display(pt)
-# 	return pt
-# end
 
 function run_sims(sim_fcn::Function, scenarios::AbstractVector)
 	for scen ∈ scenarios
@@ -45,10 +39,13 @@ include("scenarios.jl")
 # scenarios_rays = [
 # 	flat,
 # 	smooth,
-#	convergence,
-#	upward
+# 	convergence,
+# 	upward,
+# 	parabolic,
+# 	channel,
+# 	seamount
 # ]
 
-scenarios_rays = [upward]
+scenarios_rays = [seamount]
 
 run_sims(sim_rays, scenarios_rays)
