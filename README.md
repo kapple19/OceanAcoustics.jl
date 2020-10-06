@@ -62,7 +62,7 @@ rays = Ray.(θ₀, src, ocn, bty, ati)
 ```julia
 p = plot(xaxis = "Range (m)",
 	yaxis = ("Depth (m)", :flip),
-	title = "Ray Trace: Upward Refracting Scenario")
+	title = "Ray Trace: Upward Refracting Rays")
 plot!([0, R], ati.z)
 plot!([0, R], bty.z)
 for nRay = 1:length(rays)
@@ -71,7 +71,7 @@ end
 display(p)
 ```
 
-![](plots/rays/scen=Upward.png)
+![](plots/rays/upward.png)
 
 ## Motivation
 There are a variety of ocean acoustics modelling software available online, which prompts asking for the purpose for yet another one.

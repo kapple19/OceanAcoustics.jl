@@ -1,28 +1,21 @@
 ## Preamble
-using DrWatson
 using OceanAcoustics
+using DrWatson
 using Plots
 
-## Load Scenarios
-include("scenarios.jl")
-
 ## Scenario-Running Functions
-function sim_rays(pars::Dict)
-	@unpack z₀, f, c, R, zBty, zAti, θ₀, title = pars
+function sim_rays(scen::Function)
+	θ₀, src, ocn, bty, ati, title = scen()
 
-	src = Source(Position(0, z₀), Signal(f))
-	ocn = Medium(c, R)
-	bty = Boundary(zBty)
-	ati = Boundary(zAti)
 	rays = Ray.(θ₀, src, ocn, bty, ati)
+	r = range(0, ocn.R, length = 1001)
 
 	pt = plot(
 		xaxis = "Range (m)",
 		yaxis = ("Depth (m)", :flip),
-		title = "Ray Trace: " * title * " Scenario",
+		title = "Ray Trace: " * title,
 		legend = false
 	)
-	r = range(0, R, length = 1001)
 	plot!(r, ati.z)
 	plot!(r, bty.z)
 	for nRay = 1:length(θ₀)
@@ -31,29 +24,31 @@ function sim_rays(pars::Dict)
 	return pt
 end
 
-function sims_rays(dict_rays::Dict)
-	@unpack pars = dict_rays
-	pt = sim_rays(pars)
-	display(pt)
-	return pt
-end
+# function sims_rays(dict_rays::Vector)
+# 	@unpack pars = dict_rays
+# 	pt = sim_rays(pars)
+# 	display(pt)
+# 	return pt
+# end
 
-function run_sims(sims_fcn::Function, scenarios)
-	for (i, d) in enumerate(scenarios)
-		p = sims_fcn(d)
-		@show savename(d, "png")
-		@show plotsdir("rays", savename(d, "png"))
-		wsave(plotsdir("rays", savename(d, "png")), p)
+function run_sims(sim_fcn::Function, scenarios::AbstractVector)
+	for scen ∈ scenarios
+		p = sim_fcn(scen)
+		filename = String(Symbol(scen))
+		wsave(plotsdir("rays") * "/" * filename * ".png", p)
 	end
 end
 
 ## Run Scenarios
-scenarios_rays = [
-	scenario_flat(),
-	scenario_smooth(),
-	scenario_parabolic(),
-	scenario_upward(),
-	scenario_n2linear()
-]
+include("scenarios.jl")
 
-run_sims(sims_rays, scenarios_rays)
+# scenarios_rays = [
+# 	flat,
+# 	smooth,
+#	convergence,
+#	upward
+# ]
+
+scenarios_rays = [upward]
+
+run_sims(sim_rays, scenarios_rays)
