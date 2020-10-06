@@ -1,3 +1,4 @@
+## Acoustic Propagation Module
 using Interpolations:
 LinearInterpolation,
 Flat
@@ -468,6 +469,10 @@ function Beam(θ₀::Real, src::Source, ocn::Medium, bty::Boundary, ati::Boundar
 	return Beam(ray, b, W)
 end
 
+function Beam!(beam, θ₀::Real, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0))
+	beam = Beam(θ₀, src, ocn, bty, ati)
+end
+
 parse_receiver_input(x::Real) = [x]
 parse_receiver_input(x::AbstractArray) = x
 
@@ -516,7 +521,7 @@ function Field(θ₀s::AbstractVector, rng::AbstractVector, dpt::AbstractVector,
 	beams = []
 	for θ₀ ∈ θ₀s
 		push!(beams, Beam(θ₀, src, ocn, bty, ati))
-		@time for (nr, r) ∈ enumerate(rng), (nz, z) ∈ enumerate(dpt)
+		for (nr, r) ∈ enumerate(rng), (nz, z) ∈ enumerate(dpt)
 			add_to_field!(p, nr, r, nz, z, beams[end], coh_pre)
 		end
 	end
@@ -532,3 +537,32 @@ Base.broadcastable(m::Medium) = Ref(m)
 Base.broadcastable(m::Boundary) = Ref(m)
 Base.broadcastable(m::Signal) = Ref(m)
 Base.broadcastable(m::Source) = Ref(m)
+# Base.broadcastable(m::Ray) = Ref(m)
+
+##
+using Plots
+
+include("../scripts/scenarios.jl")
+
+θ₀s, src, ocn, bty, ati = upward()
+
+##
+rays = Ray.(θ₀s[end-1:end], src, ocn, bty, ati)
+
+plot(rays[1].sol, vars = (1, 2), yaxis = :flip)
+plot!(rays[2].sol, vars = (1, 2), yaxis = :flip)
+
+##
+rng = range(0, ocn.R, length = 51)
+dpt = range(0, ocn.Z, length = 31)
+fld = @time Field(θ₀s[2:end], rng, dpt, src, ocn, bty, ati)
+
+nothing
+
+##
+TL = min.(100, -20log10.(abs.(fld.p)))
+pt = heatmap(rng, dpt, TL', yaxis = :flip)
+for nRay = 1:length(fld.beams)
+	plot!(fld.beams[nRay].ray.sol, vars = (1, 2))
+end
+display(pt)

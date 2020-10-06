@@ -71,7 +71,7 @@ end
 display(p)
 ```
 
-![](plots/rays/upward.png)
+![](plots/sim_rays/upward.png)
 
 ## Motivation
 There are a variety of ocean acoustics modelling software available online, which prompts asking for the purpose of yet another one.
@@ -127,3 +127,5 @@ This package stands on the shoulders of Julia giants.
 > [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl)
 
 > [Interpolations.jl](https://github.com/JuliaMath/Interpolations.jl)
+
+> [Roots.jl](https://github.com/JuliaMath/Roots.jl)

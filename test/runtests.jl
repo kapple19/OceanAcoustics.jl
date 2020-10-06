@@ -51,7 +51,7 @@ end
 
 ## Position
 @testset "Position" begin
-    for x ∈ range(0, 10e3, length = 1001), y ∈ range(0, 5e3, length = 501)
+    for x ∈ range(0, 10e3, length = 51), y ∈ range(0, 5e3, length = 31)
         pos = Position(x, y)
         @test pos.r == x
         @test pos.z == y
@@ -68,7 +68,7 @@ end
 
 ## Source
 @testset "Source" begin
-    for x ∈ range(0, 10e3, length = 101), y ∈ range(0, 5e3, length = 51)
+    for x ∈ range(0, 10e3, length = 21), y ∈ range(0, 5e3, length = 11)
         pos = Position(x, y)
         for f ∈ 10.0.^(0:5)
             sig = Signal(f)

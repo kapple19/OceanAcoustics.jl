@@ -3,7 +3,7 @@ using OceanAcoustics
 using DrWatson
 using Plots
 
-## Scenario-Running Functions
+## Simulate Rays
 function sim_rays(scen::Function)
 	θ₀, src, ocn, bty, ati, title = scen()
 
@@ -25,27 +25,20 @@ function sim_rays(scen::Function)
 	return pt
 end
 
-function run_sims(sim_fcn::Function, scenarios::AbstractVector)
-	for scen ∈ scenarios
-		p = sim_fcn(scen)
-		filename = String(Symbol(scen))
-		wsave(plotsdir("rays") * "/" * filename * ".png", p)
-	end
-end
-
 ## Run Scenarios
 include("scenarios.jl")
+include("simulations.jl")
 
-# scenarios_rays = [
-# 	flat,
-# 	smooth,
-# 	convergence,
-# 	upward,
-# 	parabolic,
-# 	channel,
-# 	seamount
-# ]
+scenarios_rays = [
+	flat,
+	smooth,
+	convergence,
+	upward,
+	parabolic,
+	channel,
+	seamount
+]
 
-scenarios_rays = [seamount]
+# scenarios_rays = [seamount]
 
 run_sims(sim_rays, scenarios_rays)
