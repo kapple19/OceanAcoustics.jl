@@ -61,14 +61,12 @@ rays = Ray.(θ₀, src, ocn, bty, ati)
 4. Plot rays:
 
 ```julia
-p = plot(xaxis = "Range (m)",
-	yaxis = ("Depth (m)", :flip),
-	title = "Ray Trace: Upward Refracting Rays")
-plot!([0, R], ati.z)
-plot!([0, R], bty.z)
-for nRay = 1:length(rays)
-	plot!(rays[nRay].sol, vars = (1, 2))
-end
+rng = range(0, ocn.R, length = 101)
+
+p = acoustic_plot(rays)
+acoustic_plot!(rng, ati)
+acoustic_plot!(rng, bty)
+title!("Ray Trace: Upward Refracting Rays")
 display(p)
 ```
 
