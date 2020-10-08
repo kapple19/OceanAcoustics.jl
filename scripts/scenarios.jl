@@ -174,7 +174,7 @@ function n2linear()
 	bty = Boundary(Z)
 	ati = Boundary(0)
 
-	θ₀ = -acos(ocn.c(r₀, z₀)/ocn.c(r₀, 150.)) * [0.95, 1, 1.05]
+	θ₀ = -acos(ocn.c(r₀, z₀)/ocn.c(r₀, 150.)) * [0.1, 0.5, 0.95, 1, 1.05]
 	# θ₀ = -acos(ocn.c(r₀, z₀)/ocn.c(r₀, 150.)) * [0.1, 0.5, 1]
 
 	return θ₀, src, ocn, bty, ati, "n²-Linear Profile"

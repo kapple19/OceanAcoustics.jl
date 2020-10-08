@@ -496,7 +496,8 @@ end
 function add_to_field!(p::AbstractArray, nr::Integer, r::Real, nz::Integer, z::Real, beam::Beam, coh_pre::Function)
 	sMins, nMins = closest_points(r, z, beam)
 	for i = 1:length(sMins)
-		p[nr, nz] += coh_pre(beam.b(sMins[i], nMins[i]))
+		p_ = coh_pre(beam.b(sMins[i], nMins[i]))
+		p[nr, nz] += p_
 	end
 end
 
@@ -514,12 +515,14 @@ function Field(θ₀s::AbstractVector{T}, rng::AbstractVector{T}, dpt::AbstractV
 	coh_pre(p) = p
 
 	p = zeros(Complex, length(rng), length(dpt))
+	@show p[1, 1]
 
 	beams = []
 	for θ₀ ∈ θ₀s
 		push!(beams, Beam(θ₀, src, ocn, bty, ati))
-		@time for (nr, r) ∈ enumerate(rng), (nz, z) ∈ enumerate(dpt)
+		for (nr, r) ∈ enumerate(rng), (nz, z) ∈ enumerate(dpt)
 			add_to_field!(p, nr, r, nz, z, beams[end], coh_pre)
+			@show p[1, 1]
 		end
 	end
 
@@ -536,32 +539,18 @@ Base.broadcastable(m::Signal) = Ref(m)
 Base.broadcastable(m::Source) = Ref(m)
 
 ##
-using Plots
-
 include("../scripts/scenarios.jl")
 
 θ₀, src, ocn, bty, ati, title = n2linear()
 
-beams = Beam.(θ₀, src, ocn, bty, ati)
+beams = Beam.(θ₀[end:end], src, ocn, bty, ati)
 
 ##
-rng = range(0, ocn.R, length = 31)
-dpt = range(0, ocn.Z, length = 15)
+s = 0.15beams[end].ray.S
+rng = [beams[end].ray.r(s)]
+dpt = [beams[end].ray.z(s)]
 
-fld = Field(θ₀, rng, dpt, src, ocn, bty, ati)
+fld = Field(θ₀[end:end], rng, dpt, src, ocn, bty, ati)
 
-##
-TL_ = min.(100, -20log10.(abs.(fld.p)/4π))'
-
-p = heatmap(rng, dpt, TL_,
-	seriescolor = cgrad(:jet, rev = true),
-	legend = false,
-	xaxis = ("Range (m)", (0, ocn.R)),
-	yaxis = ("Depth (m)", :flip, (0, ocn.Z)),
-	colorbar = :right)
-plot!(rng, ati.z)
-plot!(rng, bty.z)
-for nRay = 1:length(beams)
-	plot!(beams[nRay].ray.sol, vars = (1, 2))
-end
-display(p)
+TL = min.(100, -20log10.(abs.(fld.p)/4π))
+TL[1, 1]
