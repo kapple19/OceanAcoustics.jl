@@ -534,7 +534,7 @@ function Field(beams::AbstractVector{T}) where T <: Beam
 end
 
 function Field(θ₀s::AbstractVector{T}, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0)) where T <: Real
-	beams = Beam.(θ₀, src, ocn, bty, ati)
+	beams = Beam.(θ₀s, src, ocn, bty, ati)
 	return Field(beams)
 end
 

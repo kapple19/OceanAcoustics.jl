@@ -473,46 +473,11 @@ function closest_points(r, z, beam)
 	dQ(s) = ForwardDiff.derivative(Q, s)
 	sMins = find_zeros(dQ, 0, beam.ray.S)
 	d²Q(s) = ForwardDiff.derivative(dQ, s)
-	min_cond(s) = d²Q(s) > 0 && beam.W(s) > sqrt(Q(s))
+	# min_cond(s) = d²Q(s) > 0 && beam.W(s) > sqrt(Q(s))
+	min_cond(s) = d²Q(s) > 0
 	min_cond.(sMins)
 	filter!(min_cond, sMins)
 	return sMins, sqrt.(Q.(sMins))
-end
-
-function add_to_field!(p::AbstractArray, nr::Integer, r::Real, nz::Integer, z::Real, beam::Beam, coh_pre::Function)
-	sMins, nMins = closest_points(r, z, beam)
-	for i = 1:length(sMins)
-		p[nr, nz] += coh_pre(beam.b(sMins[i], nMins[i]))
-	end
-end
-
-struct Field
-	θ₀s::AbstractVector
-	src::Source
-	ocn::Medium
-	bty::Boundary
-	ati::Boundary
-	beams::AbstractVector
-	p::AbstractArray
-end
-
-function Field(θ₀s::AbstractVector, rng::AbstractVector, dpt::AbstractVector, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0))
-	coh_pre(p) = p
-
-	p = zeros(Complex, length(rng), length(dpt))
-
-	beams = []
-	for θ₀ ∈ θ₀s
-		push!(beams, Beam(θ₀, src, ocn, bty, ati))
-		@time for (nr, r) ∈ enumerate(rng), (nz, z) ∈ enumerate(dpt)
-			add_to_field!(p, nr, r, nz, z, beams[end], coh_pre)
-		end
-	end
-
-	coh_post!(p) = p
-	coh_post!(p)
-
-	return Field(θ₀s, src, ocn, bty, ati, beams, p)
 end
 
 Base.broadcastable(m::Position) = Ref(m)
@@ -520,3 +485,55 @@ Base.broadcastable(m::Medium) = Ref(m)
 Base.broadcastable(m::Boundary) = Ref(m)
 Base.broadcastable(m::Signal) = Ref(m)
 Base.broadcastable(m::Source) = Ref(m)
+
+function add_to_pressure(r::Real, z::Real, beam::Beam, δθ₀::Real, coh_pre::Function)
+	sMins, nMins = closest_points(r, z, beam)
+	p = complex(0)
+	for (n, sMin) ∈ enumerate(sMins)
+		p += coh_pre(δθ₀ * beam.b(sMin, nMins[n]))
+	end
+	return p
+end
+
+struct Field
+	p::Function
+	TL::Function
+end
+
+function Field(beams::AbstractVector{T}) where T <: Beam
+	NumBeams = length(beams)
+	δθ₀ = []
+	for (n, beam) = enumerate(beams)
+		# n⁻ = max(n - 1, 1)
+		# n⁺ = min(n + 1, NumBeams)
+		# θ₀⁻ = beams[n⁻].ray.θ(0)
+		# θ₀ = beam.ray.θ(0)
+		# θ₀⁺ = beams[n⁺].ray.θ(0)
+		# δθ₀⁻ = abs(θ₀⁺ - θ₀)
+		# δθ₀⁺ = abs(θ₀ - θ₀⁻)
+		# δθ₀Ave = (δθ₀⁻ + δθ₀⁺)/2
+		# δθ₀Val = δθ₀Ave == 0 ? 1.0 : δθ₀
+		# push!(δθ₀, δθ₀Val)
+		push!(δθ₀, 1.0)
+	end
+
+	coh_pre(p) = p
+	coh_post(p) = p
+
+	function pressure(r::Real, z::Real)
+		p = complex(0.0)
+		for (n, beam) ∈ enumerate(beams)
+			p += add_to_pressure(r, z, beam, δθ₀[n], coh_pre)
+		end
+		return coh_post(p)
+	end
+
+	TL(r::Real, z::Real) = min(100, -20log10(abs(pressure(r, z))/4π))
+
+	return Field(pressure, TL)
+end
+
+function Field(θ₀s::AbstractVector{T}, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0)) where T <: Real
+	beams = Beam.(θ₀s, src, ocn, bty, ati)
+	return Field(beams)
+end
