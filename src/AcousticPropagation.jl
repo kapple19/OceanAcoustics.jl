@@ -11,6 +11,11 @@ ODESolution
 using ForwardDiff: ForwardDiff
 using Base: broadcastable
 using Roots: find_zeros
+using Plots:
+plot!,
+plot,
+heatmap,
+cgrad
 
 export Position
 export Signal
@@ -21,6 +26,8 @@ export Ray
 export Beam
 export Receiver
 export Field
+export acoustic_plot!
+export acoustic_plot
 
 function interpolated_function(x, y)
 	Itp = LinearInterpolation(x, y, extrapolation_bc = Flat())
@@ -485,6 +492,7 @@ Base.broadcastable(m::Medium) = Ref(m)
 Base.broadcastable(m::Boundary) = Ref(m)
 Base.broadcastable(m::Signal) = Ref(m)
 Base.broadcastable(m::Source) = Ref(m)
+Base.broadcastable(m::Ray) = Ref(m)
 
 function add_to_pressure(r::Real, z::Real, beam::Beam, δθ₀::Real, coh_pre::Function)
 	sMins, nMins = closest_points(r, z, beam)
@@ -496,11 +504,16 @@ function add_to_pressure(r::Real, z::Real, beam::Beam, δθ₀::Real, coh_pre::F
 end
 
 struct Field
+	beams::AbstractVector{Beam}
+	src::Source
+	ocn::Medium
+	bty::Boundary
+	ati::Boundary
 	p::Function
 	TL::Function
 end
 
-function Field(beams::AbstractVector{T}) where T <: Beam
+function Field(beams::AbstractVector{T}, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0)) where T <: Beam
 	NumBeams = length(beams)
 	δθ₀ = []
 	for (n, beam) = enumerate(beams)
@@ -512,7 +525,7 @@ function Field(beams::AbstractVector{T}) where T <: Beam
 		# δθ₀⁻ = abs(θ₀⁺ - θ₀)
 		# δθ₀⁺ = abs(θ₀ - θ₀⁻)
 		# δθ₀Ave = (δθ₀⁻ + δθ₀⁺)/2
-		# δθ₀Val = δθ₀Ave == 0 ? 1.0 : δθ₀
+		# δθ₀Val = δθ₀Ave == 0.0 ? 1.0 : δθ₀
 		# push!(δθ₀, δθ₀Val)
 		push!(δθ₀, 1.0)
 	end
@@ -530,10 +543,75 @@ function Field(beams::AbstractVector{T}) where T <: Beam
 
 	TL(r::Real, z::Real) = min(100, -20log10(abs(pressure(r, z))/4π))
 
-	return Field(pressure, TL)
+	return Field(beams, src, ocn, bty, ati, pressure, TL)
 end
 
 function Field(θ₀s::AbstractVector{T}, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0)) where T <: Real
 	beams = Beam.(θ₀s, src, ocn, bty, ati)
-	return Field(beams)
+	return Field(beams, src, ocn, bty, ati)
 end
+
+## Plots
+
+function acoustic_plot!()
+	plot!(
+		xaxis = "Range (m)",
+		yaxis = ("Depth (m)", :flip)
+	)
+end
+
+function acoustic_plot()
+	p = plot()
+	acoustic_plot!()
+	return p
+end
+
+function acoustic_plot!(R::Real, Z::Real)
+	plot!(
+		xlims = (0, R),
+		ylims = (0, Z)
+	)
+end
+
+function acoustic_plot(R::Real, Z::Real)
+	p = acoustic_plot()
+	acoustic_plot!(R, Z)
+	return p
+end
+
+function acoustic_plot!(rng::AbstractVector{T}, bnd::Boundary) where T <: Real
+	plot!(rng, bnd.z,
+		linecolor = :black)
+end
+
+function acoustic_plot(rng::AbstractVector{T}, bnd::Boundary, Z::Real) where T <: Real
+	p = acoustic_plot(rng[end], Z)
+	acoustic_plot!(rng, bnd)
+	return p
+end
+
+function acoustic_plot!(ray::Ray)
+	plot!(ray.sol, vars = (1, 2))
+end
+
+function acoustic_plot!(rays::AbstractVector{T}) where T <: Ray
+	acoustic_plot!.(rays)
+end
+
+function acoustic_plot(ray::Union{Ray, AbstractVector{T}}) where T <: Ray
+	p = acoustic_plot()
+	acoustic_plot!(ray)
+	return p
+end
+
+function acoustic_plot(rng::AbstractVector{T}, dpt::AbstractVector{T}, fld::Field) where T <: Real
+	p = heatmap(rng, dpt, fld.TL,
+		seriescolor = cgrad(:jet, rev = true),
+		legend = false,
+		xaxis = ("Range (m)", extrema(rng)),
+		yaxis = ("Depth (m)", :flip, extrema(dpt)),
+		colorbar = :right)
+	acoustic_plot!(rng[end], dpt[end])
+	return p
+end
+
