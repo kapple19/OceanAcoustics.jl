@@ -469,10 +469,6 @@ function Beam(θ₀::Real, src::Source, ocn::Medium, bty::Boundary, ati::Boundar
 	return Beam(ray, b, W)
 end
 
-function Beam!(beam, θ₀::Real, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0))
-	beam = Beam(θ₀, src, ocn, bty, ati)
-end
-
 parse_receiver_input(x::Real) = [x]
 parse_receiver_input(x::AbstractArray) = x
 
@@ -490,7 +486,8 @@ function closest_points(r, z, beam)
 	dQ(s) = ForwardDiff.derivative(Q, s)
 	sMins = find_zeros(dQ, 0, beam.ray.S)
 	d²Q(s) = ForwardDiff.derivative(dQ, s)
-	min_cond(s) = d²Q(s) > 0 && beam.W(s) > sqrt(Q(s))
+	# min_cond(s) = d²Q(s) > 0 && beam.W(s) > sqrt(Q(s))
+	min_cond(s) = d²Q(s) > 0
 	min_cond.(sMins)
 	filter!(min_cond, sMins)
 	return sMins, sqrt.(Q.(sMins))
@@ -513,7 +510,7 @@ struct Field
 	p::AbstractArray
 end
 
-function Field(θ₀s::AbstractVector, rng::AbstractVector, dpt::AbstractVector, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0))
+function Field(θ₀s::AbstractVector{T}, rng::AbstractVector{T}, dpt::AbstractVector{T}, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0)) where T <: Real
 	coh_pre(p) = p
 
 	p = zeros(Complex, length(rng), length(dpt))
@@ -521,7 +518,7 @@ function Field(θ₀s::AbstractVector, rng::AbstractVector, dpt::AbstractVector,
 	beams = []
 	for θ₀ ∈ θ₀s
 		push!(beams, Beam(θ₀, src, ocn, bty, ati))
-		for (nr, r) ∈ enumerate(rng), (nz, z) ∈ enumerate(dpt)
+		@time for (nr, r) ∈ enumerate(rng), (nz, z) ∈ enumerate(dpt)
 			add_to_field!(p, nr, r, nz, z, beams[end], coh_pre)
 		end
 	end
@@ -537,32 +534,34 @@ Base.broadcastable(m::Medium) = Ref(m)
 Base.broadcastable(m::Boundary) = Ref(m)
 Base.broadcastable(m::Signal) = Ref(m)
 Base.broadcastable(m::Source) = Ref(m)
-# Base.broadcastable(m::Ray) = Ref(m)
 
 ##
 using Plots
 
 include("../scripts/scenarios.jl")
 
-θ₀s, src, ocn, bty, ati = upward()
+θ₀, src, ocn, bty, ati, title = n2linear()
+
+beams = Beam.(θ₀, src, ocn, bty, ati)
 
 ##
-rays = Ray.(θ₀s[end-1:end], src, ocn, bty, ati)
+rng = range(0, ocn.R, length = 31)
+dpt = range(0, ocn.Z, length = 15)
 
-plot(rays[1].sol, vars = (1, 2), yaxis = :flip)
-plot!(rays[2].sol, vars = (1, 2), yaxis = :flip)
-
-##
-rng = range(0, ocn.R, length = 51)
-dpt = range(0, ocn.Z, length = 31)
-fld = @time Field(θ₀s[2:end], rng, dpt, src, ocn, bty, ati)
-
-nothing
+fld = Field(θ₀, rng, dpt, src, ocn, bty, ati)
 
 ##
-TL = min.(100, -20log10.(abs.(fld.p)))
-pt = heatmap(rng, dpt, TL', yaxis = :flip)
-for nRay = 1:length(fld.beams)
-	plot!(fld.beams[nRay].ray.sol, vars = (1, 2))
+TL_ = min.(100, -20log10.(abs.(fld.p)/4π))'
+
+p = heatmap(rng, dpt, TL_,
+	seriescolor = cgrad(:jet, rev = true),
+	legend = false,
+	xaxis = ("Range (m)", (0, ocn.R)),
+	yaxis = ("Depth (m)", :flip, (0, ocn.Z)),
+	colorbar = :right)
+plot!(rng, ati.z)
+plot!(rng, bty.z)
+for nRay = 1:length(beams)
+	plot!(beams[nRay].ray.sol, vars = (1, 2))
 end
-display(pt)
+display(p)

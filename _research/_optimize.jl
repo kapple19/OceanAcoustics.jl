@@ -1,3 +1,4 @@
+## Acoustic Propagation Module
 using Interpolations:
 LinearInterpolation,
 Flat
@@ -11,16 +12,6 @@ ODESolution
 using ForwardDiff: ForwardDiff
 using Base: broadcastable
 using Roots: find_zeros
-
-export Position
-export Signal
-export Source
-export Boundary
-export Medium
-export Ray
-export Beam
-export Receiver
-export Field
 
 function interpolated_function(x, y)
 	Itp = LinearInterpolation(x, y, extrapolation_bc = Flat())
@@ -300,7 +291,7 @@ function acoustic_propagation_problem(
 	bty::Boundary,
 	ati::Boundary)
 
-	function eikonal!(du, u, p, s)
+	function propagation!(du, u, p, s)
 		r = u[1]
 		z = u[2]
 		ξ = u[3]
@@ -355,7 +346,7 @@ function acoustic_propagation_problem(
 	S = 10^(TLmax/10)
 	sSpan = (0., S)
 
-	prob = ODEProblem(eikonal!, u₀, sSpan)
+	prob = ODEProblem(propagation!, u₀, sSpan)
 
 	return prob, CbBnd
 end
@@ -422,6 +413,7 @@ function Ray(θ₀::Real, src::Source, ocn::Medium, bty::Boundary, ati::Boundary
 	q(s) = sol(s, idxs = 8) + im*sol(s, idxs = 9)
 	θ(s) = atan(ζ(s)/ξ(s))
 	c(s) = cos(θ(s))/ξ(s)
+	pressure(s) = 
 
 	return Ray(θ₀, sol, S, r, z, ξ, ζ, τ, p, q, θ, c)
 end
@@ -468,26 +460,33 @@ function Beam(θ₀::Real, src::Source, ocn::Medium, bty::Boundary, ati::Boundar
 	return Beam(ray, b, W)
 end
 
+function Beam!(beam::Beam, θ₀::Real, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0))
+	beam = Beam(θ₀, src, ocn, bty, ati)
+end
+
 function closest_points(r, z, beam)
 	Q(s) = (beam.ray.r(s) - r)^2 + (beam.ray.z(s) - z)^2
 	dQ(s) = ForwardDiff.derivative(Q, s)
 	sMins = find_zeros(dQ, 0, beam.ray.S)
 	d²Q(s) = ForwardDiff.derivative(dQ, s)
-	min_cond(s) = d²Q(s) > 0 && beam.W(s) > sqrt(Q(s))
+	# min_cond(s) = d²Q(s) > 0 && beam.W(s) > sqrt(Q(s))
+	min_cond(s) = d²Q(s) > 0
 	min_cond.(sMins)
 	filter!(min_cond, sMins)
 	return sMins, sqrt.(Q.(sMins))
 end
 
-function add_to_field!(p::AbstractArray, nr::Integer, r::Real, nz::Integer, z::Real, beam::Beam, coh_pre::Function)
+function add_to_field!(p::AbstractArray, nr::Integer, r::Real, nz::Integer, z::Real, beam::Beam, δθ₀::Real, coh_pre::Function)
 	sMins, nMins = closest_points(r, z, beam)
 	for i = 1:length(sMins)
-		p[nr, nz] += coh_pre(beam.b(sMins[i], nMins[i]))
+		p[nr, nz] += coh_pre(δθ₀ * beam.b(sMins[i], nMins[i]))
 	end
 end
 
 struct Field
 	θ₀s::AbstractVector
+	rng::AbstractVector
+	dpt::AbstractVector
 	src::Source
 	ocn::Medium
 	bty::Boundary
@@ -504,19 +503,122 @@ function Field(θ₀s::AbstractVector, rng::AbstractVector, dpt::AbstractVector,
 	beams = []
 	for θ₀ ∈ θ₀s
 		push!(beams, Beam(θ₀, src, ocn, bty, ati))
-		@time for (nr, r) ∈ enumerate(rng), (nz, z) ∈ enumerate(dpt)
-			add_to_field!(p, nr, r, nz, z, beams[end], coh_pre)
+	end
+	for nBeam = 1:length(beams)
+		if nBeam == 1
+			if length(beams) == 1
+				δθ₀ = 1.
+			else
+				δθ₀ = abs(beams[nBeam + 1].ray.θ(0.) - beams[nBeam].ray.θ(0.))
+			end
+		else
+			δθ₀ = abs(beams[nBeam - 1].ray.θ(0.) - beams[nBeam].ray.θ(0.))
+		end
+		for (nr, r) ∈ enumerate(rng), (nz, z) ∈ enumerate(dpt)
+			add_to_field!(p, nr, r, nz, z, beams[nBeam], δθ₀, coh_pre)
 		end
 	end
+
+	# for nBeam = [1]
+	# 	θ₀ = θ₀s[nBeam]
+	# 	if length(θ₀s) == 1
+	# 		δθ₀ = 1.
+	# 	else
+	# 		δθ₀ = abs(θ₀s[nBeam + 1] - θ₀s[nBeam])
+	# 	end
+	# 	beam = Beam(θ₀, src, ocn, bty, ati)
+	# 	for (nr, r) ∈ enumerate(rng), (nz, z) ∈ enumerate(dpt)
+	# 		add_to_field!(p, nr, r, nz, z, beam, δθ₀, coh_pre)
+	# 	end
+	# end
+	# for nBeam = 2:length(θ₀s)
+	# 	θ₀ = θ₀s[nBeam]
+	# 	δθ₀ = abs(θ₀s[nBeam] - θ₀s[nBeam - 1])
+	# 	Beam!(beam, θ₀, src, ocn, bty, ati)
+	# 	add_to_field!(p, nr, r, nz, z, beam, δθ₀, coh_pre)
+	# end
 
 	coh_post!(p) = p
 	coh_post!(p)
 
-	return Field(θ₀s, src, ocn, bty, ati, beams, p)
+	return Field(θ₀s, rng, dpt, src, ocn, bty, ati, beams, p)
 end
+
+# function add_to_pressure!(p, r, z, beam, δθ₀, coh_pre)
+# 	sMins, nMins = closest_points(r, z, beam)
+# 	for i = 1:length(sMins)
+# 		p_ = δθ₀ * beam.b(sMins[i], nMins[i])
+# 		p += coh_pre(p_)
+# 	end
+# end
+
+# struct Field
+# 	p::Function
+# 	TL::Function
+# end
+
+# function Field(beams::AbstractVector{T}) where T <: Beam
+
+# 	NumBeams = length(beams)
+# 	δθ₀ = []
+# 	for (n, beam) = enumerate(beams)
+# 		n⁻ = max(n - 1, 1)
+# 		n⁺ = min(n + 1, NumBeams)
+# 		θ₀⁻ = beams[n⁻].ray.θ(0)
+# 		θ₀ = beam.ray.θ(0)
+# 		θ₀⁺ = beams[n⁺].ray.θ(0)
+# 		δθ₀⁻ = abs(θ₀⁺ - θ₀)
+# 		δθ₀⁺ = abs(θ₀ - θ₀⁻)
+# 		push!(δθ₀, (δθ₀⁻ + δθ₀⁺)/2)
+# 	end
+
+# 	coh_pre(p) = p
+# 	coh_post(p) = p
+
+# 	function pressure(r::Real, z::Real)
+# 		p = complex(0.)
+# 		for (n, beam) = enumerate(beams)
+# 			add_to_pressure!(p, r, z, beam, δθ₀[n], coh_pre)
+# 		end
+# 		return coh_post(p)
+# 	end
+
+# 	TL(r::Real, z::Real) = min(100, -20log10(abs(pressure(r, z))))
+# 	return Field(pressure, TL)
+# end
 
 Base.broadcastable(m::Position) = Ref(m)
 Base.broadcastable(m::Medium) = Ref(m)
 Base.broadcastable(m::Boundary) = Ref(m)
 Base.broadcastable(m::Signal) = Ref(m)
 Base.broadcastable(m::Source) = Ref(m)
+
+##
+using Plots
+
+include("../scripts/scenarios.jl")
+
+θ₀, src, ocn, bty, ati, title = n2linear()
+
+beams = Beam.(θ₀, src, ocn, bty, ati)
+
+##
+rng = range(0, ocn.R, length = 31)
+dpt = range(0, ocn.Z, length = 15)
+fld = Field(θ₀, rng, dpt, src, ocn, bty, ati)
+
+TL(r, z) = min(100, -20log10(abs(fld.p(r, z))/4π))
+
+##
+p = heatmap(rng, dpt, TL,
+	seriescolor = cgrad(:jet, rev = true),
+	legend = false,
+	xaxis = ("Range (m)", (0, ocn.R)),
+	yaxis = ("Depth (m)", :flip, (0, ocn.Z)),
+	colorbar = :right)
+plot!(rng, ati.z)
+plot!(rng, bty.z)
+for nRay = 1:length(beams)
+	plot!(beams[nRay].ray.sol, vars = (1, 2))
+end
+display(p)

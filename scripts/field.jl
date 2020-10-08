@@ -22,8 +22,12 @@ end
 include("scenarios.jl")
 include("simulations.jl")
 
+# scenarios_field = [
+# 	convergence
+# ]
+
 scenarios_field = [
-	convergence
+	small
 ]
 
 run_sims(sim_field, scenarios_field)

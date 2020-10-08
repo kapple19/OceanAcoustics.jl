@@ -135,5 +135,50 @@ function seamount()
 	return θ₀, src, ocn, bty, ati, "Seamount"
 end
 
+## Simple Test Scenario
+function simple()
+	R = 2e3
+	Z = 500
+	z = [0, 0.5, 0.6, 0.7, 1]*Z
+	c = [1510, 1480, 1500, 1490, 1520]
+	rBty = [0, 0.6, 0.7, 0.8, 1]*R
+	zBty = [1, 1, 0.8, 1, 1]*Z
+	rAti = [0, 0.4, 0.5, 0.6, 1]*R
+	zAti = [0, 0, 0.25, 0, 0]*Z
+	r₀ = 0.
+	z₀ = Z/20
+
+	src = Source(Position(r₀, z₀), Signal(50.))
+	ocn = Medium(z, c, R, Z)
+	bty = Boundary(rBty, zBty)
+	ati = Boundary(rAti, zAti)
+
+	θ₀_crit = acos(ocn.c(r₀, z₀)/ocn.c(r₀, Z))
+	θ₀ = θ₀_crit * (-1.5:0.5:1.5)
+
+	return θ₀, src, ocn, bty, ati, "Simple Environment"
+end
+
+## n²-Linear Profile
+function n2linear()
+	R = 3.5e3
+	Z = 1e3
+	r₀ = 0.
+	z₀ = Z
+	f = 2e3
+	c₀ = 1550.
+	c(r, z) = c₀/sqrt(1 + 2.4z/c₀)
+
+	src = Source(Position(r₀, z₀), Signal(f))
+	ocn = Medium(c, R, Z)
+	bty = Boundary(Z)
+	ati = Boundary(0)
+
+	θ₀ = -acos(ocn.c(r₀, z₀)/ocn.c(r₀, 150.)) * [0.95, 1, 1.05]
+	# θ₀ = -acos(ocn.c(r₀, z₀)/ocn.c(r₀, 150.)) * [0.1, 0.5, 1]
+
+	return θ₀, src, ocn, bty, ati, "n²-Linear Profile"
+end
+
 ## EOF
 nothing
