@@ -1,6 +1,9 @@
+@info "  Loading dependencies"
+@info "   Interpolations"
 using Interpolations:
 LinearInterpolation,
 Flat
+@info "   DifferentialEquations"
 using DifferentialEquations:
 ContinuousCallback,
 CallbackSet,
@@ -8,15 +11,20 @@ ODEProblem,
 solve,
 terminate!,
 ODESolution
+@info "   ForwardDiff"
 using ForwardDiff: ForwardDiff
+@info "   Base"
 using Base: broadcastable
+@info "   Roots"
 using Roots: find_zeros
+@info "   Plots"
 using Plots:
 plot!,
 plot,
 heatmap,
 cgrad
 
+@info "  Loading acoustic methods"
 export Position
 export Signal
 export Source
@@ -552,7 +560,8 @@ function Field(θ₀s::AbstractVector{T}, src::Source, ocn::Medium, bty::Boundar
 end
 
 ## Plots
-
+@info "  Building acoustic plotting methods"
+@info "   Labels"
 function acoustic_plot!()
 	plot!(
 		xaxis = "Range (m)",
@@ -567,6 +576,7 @@ function acoustic_plot()
 	return p
 end
 
+@info "   Plot limits"
 function acoustic_plot!(rLims::Tuple, zLims::Tuple)
 	plot!(
 		xlims = rLims,
@@ -579,6 +589,7 @@ function acoustic_plot(rLims::Tuple, zLims::Tuple)
 	acoustic_plot!()
 end
 
+@info "   Boundaries"
 function acoustic_plot!(rng::AbstractVector{T}, bnd::Boundary) where T <: Real
 	plot!(rng, bnd.z,
 		linecolor = :black)
@@ -590,6 +601,7 @@ function acoustic_plot(rng::AbstractVector{T}, bnd::Boundary, Z::Real) where T <
 	return p
 end
 
+@info "   Rays"
 function acoustic_plot!(ray::Ray)
 	plot!(ray.sol, vars = (1, 2))
 end
@@ -604,6 +616,7 @@ function acoustic_plot(ray::Union{Ray, AbstractVector{T}}) where T <: Ray
 	return p
 end
 
+@info "   Field"
 function acoustic_plot(rng::AbstractVector{T}, dpt::AbstractVector{T}, fld::Field) where T <: Real
 	p = heatmap(rng, dpt, fld.TL,
 		seriescolor = cgrad(:jet, rev = true),
@@ -611,4 +624,3 @@ function acoustic_plot(rng::AbstractVector{T}, dpt::AbstractVector{T}, fld::Fiel
 	acoustic_plot!(extrema(rng), extrema(dpt))
 	return p
 end
-
