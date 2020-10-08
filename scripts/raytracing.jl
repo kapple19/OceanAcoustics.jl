@@ -8,21 +8,27 @@ function sim_rays(scen::Function)
 	θ₀, src, ocn, bty, ati, title = scen()
 
 	rays = Ray.(θ₀, src, ocn, bty, ati)
-	r = range(0, ocn.R, length = 1001)
+	rng = range(0, ocn.R, length = 1001)
 
-	pt = plot(
-		xaxis = "Range (m)",
-		yaxis = ("Depth (m)", :flip),
-		title = "Ray Trace: " * title,
-		legend = false
-	)
-	plot!(r, ati.z)
-	plot!(r, bty.z)
-	for nRay = 1:length(θ₀)
-		plot!(rays[nRay].sol, vars = (1, 2))
-	end
-	plot!(xlims = (0, ocn.R))
-	return pt
+	# pt = plot(
+	# 	xaxis = "Range (m)",
+	# 	yaxis = ("Depth (m)", :flip),
+	# 	title = "Ray Trace: " * title,
+	# 	legend = false
+	# )
+	# plot!(r, ati.z)
+	# plot!(r, bty.z)
+	# for nRay = 1:length(θ₀)
+	# 	plot!(rays[nRay].sol, vars = (1, 2))
+	# end
+	# plot!(xlims = (0, ocn.R))
+
+	p = acoustic_plot(rays)
+	acoustic_plot!(rng, ati)
+	acoustic_plot!(rng, bty)
+	acoustic_plot!(extrema(rng), (0., ocn.Z))
+	title!(title)
+	return p
 end
 
 ## Run Scenarios
@@ -36,9 +42,9 @@ scenarios_rays = [
 	upward,
 	parabolic,
 	channel,
-	seamount
+	seamount,
+	simple,
+	n2linear
 ]
-
-# scenarios_rays = [seamount]
 
 run_sims(sim_rays, scenarios_rays)

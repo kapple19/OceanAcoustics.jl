@@ -1,9 +1,9 @@
 ## Flat Scenario
 function flat()
-	src = Source(Position(0, 200), Signal(200))
-	ocn = Medium(1500, 2000, 500)
-	bty = Boundary(500)
-	ati = Boundary(0)
+	src = Source(Position(0.0, 2e2), Signal(2e2))
+	ocn = Medium(15e2, 2e3, 5e2)
+	bty = Boundary(5e2)
+	ati = Boundary(0.0)
 
 	θ₀ = π/4*range(-1, 1, length = 51)
 	
@@ -12,8 +12,8 @@ end
 
 function smooth()
 	# Altimetry
-	zAtiMin = -10
-	zAtiMax = 50
+	zAtiMin = 0.
+	zAtiMax = 50.
 	zAti(r) = zAtiMin + (zAtiMax - zAtiMin)*(sin(r/1e3) + 1.)/2
 
 	# Bathymetry
@@ -39,7 +39,7 @@ function smooth()
 	# Source
 	r₀ = 0.0
 	z₀ = (zBty(r₀) + zAti(r₀))/2
-	f = 250
+	f = 250.
 
 	# Rays
 	θ₀ = acos(cOcn(r₀, z₀)/cOcnMax).*(-1.5:0.125:1.5)
@@ -59,10 +59,10 @@ function convergence()
 	Z = z[end]
 	R = 250e3
 
-	src = Source(Position(0, 0), Signal(200))
+	src = Source(Position(0., 0.), Signal(200.))
 	ocn = Medium(z, c, R, Z)
 	bty = Boundary(5e3)
-	ati = Boundary(0)
+	ati = Boundary(0.)
 	
 	θ_crit = acos(ocn.c(0, 0)/ocn.c(0, 5e3))
 	θ₀ = θ_crit*range(0.5, 1, length = 10)
@@ -105,11 +105,11 @@ function channel()
 	c = [1480, 1500, 1485, 1475, 1480, 1485, 1525]
 	Z = z[end]
 	
-	z₀ = 500
-	src = Source(Position(0, z₀), Signal(200))
+	z₀ = 500.
+	src = Source(Position(0., z₀), Signal(200))
 	ocn = Medium(z, c, 250e3, Z)
 	bty = Boundary(4e3)
-	ati = Boundary(0)
+	ati = Boundary(0.)
 
 	θ₀ = acos(ocn.c(0, z₀)/1500) * range(-1, 1, length = 31)
 
@@ -118,7 +118,7 @@ end
 
 ## Seamount
 function seamount()
-	z = [0, 100, 200, 350, 500, 1500, 3100]
+	z = [0, 100, 200, 350, 500, 1500, 3100.]
 	c = [1480, 1470, 1475, 1473, 1475, 1488, 1505]
 	Z = z[end]
 	r = 1e3*[0, 40, 45, 50, 55, 60, 70, 140]
@@ -138,7 +138,7 @@ end
 ## Simple Test Scenario
 function simple()
 	R = 2e3
-	Z = 500
+	Z = 500.
 	z = [0, 0.5, 0.6, 0.7, 1]*Z
 	c = [1510, 1480, 1500, 1490, 1520]
 	rBty = [0, 0.6, 0.7, 0.8, 1]*R
@@ -146,7 +146,7 @@ function simple()
 	rAti = [0, 0.4, 0.5, 0.6, 1]*R
 	zAti = [0, 0, 0.25, 0, 0]*Z
 	r₀ = 0.
-	z₀ = Z/20
+	z₀ = Z/20.
 
 	src = Source(Position(r₀, z₀), Signal(50.))
 	ocn = Medium(z, c, R, Z)
@@ -154,7 +154,7 @@ function simple()
 	ati = Boundary(rAti, zAti)
 
 	θ₀_crit = acos(ocn.c(r₀, z₀)/ocn.c(r₀, Z))
-	θ₀ = θ₀_crit * (-1.5:0.5:1.5)
+	θ₀ = θ₀_crit * (-1.5:0.5:3)
 
 	return θ₀, src, ocn, bty, ati, "Simple Environment"
 end
@@ -174,8 +174,7 @@ function n2linear()
 	bty = Boundary(Z)
 	ati = Boundary(0)
 
-	θ₀ = -acos(ocn.c(r₀, z₀)/ocn.c(r₀, 150.)) * [0.1, 0.5, 0.95, 1, 1.05]
-	# θ₀ = -acos(ocn.c(r₀, z₀)/ocn.c(r₀, 150.)) * [0.1, 0.5, 1]
+	θ₀ = -acos(ocn.c(r₀, z₀)/ocn.c(r₀, 150.)) * (0.1:0.05:1.1)
 
 	return θ₀, src, ocn, bty, ati, "n²-Linear Profile"
 end

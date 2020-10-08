@@ -556,7 +556,8 @@ end
 function acoustic_plot!()
 	plot!(
 		xaxis = "Range (m)",
-		yaxis = ("Depth (m)", :flip)
+		yaxis = ("Depth (m)", :flip),
+		legend = false
 	)
 end
 
@@ -566,17 +567,16 @@ function acoustic_plot()
 	return p
 end
 
-function acoustic_plot!(R::Real, Z::Real)
+function acoustic_plot!(rLims::Tuple, zLims::Tuple)
 	plot!(
-		xlims = (0, R),
-		ylims = (0, Z)
+		xlims = rLims,
+		ylims = zLims
 	)
 end
 
-function acoustic_plot(R::Real, Z::Real)
-	p = acoustic_plot()
-	acoustic_plot!(R, Z)
-	return p
+function acoustic_plot(rLims::Tuple, zLims::Tuple)
+	p = acoustic_plot(rLims, zLims)
+	acoustic_plot!()
 end
 
 function acoustic_plot!(rng::AbstractVector{T}, bnd::Boundary) where T <: Real
@@ -585,7 +585,7 @@ function acoustic_plot!(rng::AbstractVector{T}, bnd::Boundary) where T <: Real
 end
 
 function acoustic_plot(rng::AbstractVector{T}, bnd::Boundary, Z::Real) where T <: Real
-	p = acoustic_plot(rng[end], Z)
+	p = acoustic_plot(extrema(rng), (0, Z))
 	acoustic_plot!(rng, bnd)
 	return p
 end
@@ -607,11 +607,8 @@ end
 function acoustic_plot(rng::AbstractVector{T}, dpt::AbstractVector{T}, fld::Field) where T <: Real
 	p = heatmap(rng, dpt, fld.TL,
 		seriescolor = cgrad(:jet, rev = true),
-		legend = false,
-		xaxis = ("Range (m)", extrema(rng)),
-		yaxis = ("Depth (m)", :flip, extrema(dpt)),
 		colorbar = :right)
-	acoustic_plot!(rng[end], dpt[end])
+	acoustic_plot!(extrema(rng), extrema(dpt))
 	return p
 end
 
