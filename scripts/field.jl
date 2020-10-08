@@ -12,9 +12,11 @@ function sim_field(scen::Function)
 	rng = range(0, ocn.R, length = 51)
 	dpt = range(0, ocn.Z, length = 31)
 
-	p = heatmap(rng, dpt, fld.TL,
-		xaxis = "Range (m)",
-		yaxis = ("Depth (m)", :flip))
+	p = acoustic_plot(rng, dpt, fld)
+	acoustic_plot!(rng, ati)
+	acoustic_plot!(rng, bty)
+	acoustic_plot!(extrema(rng), (0., ocn.Z))
+	title!(title)
 	return p
 end
 
