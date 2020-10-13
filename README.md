@@ -128,3 +128,5 @@ This package stands on the shoulders of Julia giants.
 > [Interpolations.jl](https://github.com/JuliaMath/Interpolations.jl)
 
 > [Roots.jl](https://github.com/JuliaMath/Roots.jl)
+
+> [Plots.jl](https://github.com/JuliaPlots/Plots.jl)

@@ -103,9 +103,8 @@ end
     @test ocn.c(0, Z + 1) == cVec[3]
 end
 
-## Propagation
-
 ## Ray
+include("raytests.jl")
 
 ## Beam
 
