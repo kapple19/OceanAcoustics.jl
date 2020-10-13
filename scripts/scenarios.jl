@@ -5,7 +5,7 @@ function flat()
 	bty = Boundary(5e2)
 	ati = Boundary(0.0)
 
-	θ₀ = π/4*range(-1, 1, length = 51)
+	θ₀ = π/4*range(-1.0, 1.0, length = 51)
 	
 	θ₀, src, ocn, bty, ati, "Flat Environment"
 end
@@ -20,16 +20,16 @@ function smooth()
 	rBtyPeak = 5e3
 	zBtyMax = 1e3
 	zBtyMin = 8e2
-	Aᵣ = (2rBtyPeak/3)^2/log((9zBtyMax - 11zBtyMin)/(10(zBtyMax - zBtyMin)))
+	Aᵣ = (2rBtyPeak/3)^2/log((9.0zBtyMax - 11.0zBtyMin)/(10.0(zBtyMax - zBtyMin)))
 	zBty(r) = zBtyMax - (zBtyMax - zBtyMin)*exp(-(r - rBtyPeak)^2/4e5)
 
 	# Ocean
 	rOcnMax = 10e3
-	cOcnMin = 1500
-	cOcnMax = 1600
-	cSolve(r) = [1 zAti(r) zAti(r)^2
-		1 (zAti(r) + zBty(r))/2 ((zAti(r) + zBty(r))/2)^2
-		1 zBty(r) zBty(r)^2]
+	cOcnMin = 1500.
+	cOcnMax = 1600.
+	cSolve(r) = [1.0 zAti(r) zAti(r)^2
+		1.0 (zAti(r) + zBty(r))/2 ((zAti(r) + zBty(r))/2.0)^2
+		1.0 zBty(r) zBty(r)^2]
 	cSolved(r) = cSolve(r)\[cOcnMax, cOcnMin, cOcnMax]
 	cCoeff₀(r) = cSolved(r)[1]
 	cCoeff₁(r) = cSolved(r)[2]
@@ -163,7 +163,7 @@ end
 function n2linear()
 	R = 3.5e3
 	Z = 1e3
-	r₀ = 0.
+	r₀ = 0.0
 	z₀ = Z
 	f = 2e3
 	c₀ = 1550.
@@ -172,9 +172,10 @@ function n2linear()
 	src = Source(Position(r₀, z₀), Signal(f))
 	ocn = Medium(c, R, Z)
 	bty = Boundary(Z)
-	ati = Boundary(0)
+	ati = Boundary(0.0)
 
-	θ₀ = -acos(ocn.c(r₀, z₀)/ocn.c(r₀, 150.)) * (0.1:0.05:1.1)
+	θ₀_crit = -acos(ocn.c(r₀, z₀)/ocn.c(r₀, 150.))
+	θ₀ = θ₀_crit*(0.1:0.05:1.1)
 
 	return θ₀, src, ocn, bty, ati, "n²-Linear Profile"
 end

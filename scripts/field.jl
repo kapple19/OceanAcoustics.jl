@@ -9,8 +9,8 @@ function sim_field(scen::Function)
 
 	fld = Field(θ₀, src, ocn, bty, ati)
 
-	rng = range(0, ocn.R, length = 51)
-	dpt = range(0, ocn.Z, length = 31)
+	rng = range(0, ocn.R, length = 5)
+	dpt = range(0, ocn.Z, length = 3)
 
 	p = acoustic_plot(rng, dpt, fld)
 	acoustic_plot!(rng, ati)

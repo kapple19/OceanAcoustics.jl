@@ -10,19 +10,6 @@ function sim_rays(scen::Function)
 	rays = Ray.(θ₀, src, ocn, bty, ati)
 	rng = range(0, ocn.R, length = 1001)
 
-	# pt = plot(
-	# 	xaxis = "Range (m)",
-	# 	yaxis = ("Depth (m)", :flip),
-	# 	title = "Ray Trace: " * title,
-	# 	legend = false
-	# )
-	# plot!(r, ati.z)
-	# plot!(r, bty.z)
-	# for nRay = 1:length(θ₀)
-	# 	plot!(rays[nRay].sol, vars = (1, 2))
-	# end
-	# plot!(xlims = (0, ocn.R))
-
 	p = acoustic_plot(rays)
 	acoustic_plot!(rng, ati)
 	acoustic_plot!(rng, bty)
