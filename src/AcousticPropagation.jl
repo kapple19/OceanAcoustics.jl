@@ -551,9 +551,9 @@ function Field(beams::AbstractVector{T}, src::Source, ocn::Medium, bty::Boundary
 	function transmission_loss(r::Float64, z::Float64)
 		pAbs = abs(pressure(r, z))
 		if isnan(pAbs)
-			return -100.0
+			return 0.0
 		else
-			TL = max(-100.0, min(100.0, -20log10(pAbs)))
+			TL = max(0.0, min(100.0, -20log10(pAbs)))
 			return TL
 		end
 	end
