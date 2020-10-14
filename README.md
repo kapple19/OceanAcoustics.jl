@@ -62,10 +62,9 @@ rays = Ray.(θ₀, src, ocn, bty, ati)
 
 ```julia
 f = acoustic_plot(rays)
-acoustic_plot!(f, ati)
-acoustic_plot!(f, bty)
+acoustic_plot!(ati)
+acoustic_plot!(bty)
 acoustic_plot!("Ray Trace: Upward Refracting Rays")
-display(f)
 ```
 
 ![](plots/sim_rays/upward.png)
@@ -117,7 +116,7 @@ This package stands on the shoulders of Julia giants.
 
 > [Julia](https://github.com/JuliaLang/julia): Bezanson, Jeff, et al. "Julia: A fresh approach to numerical computing." SIAM review 59.1 (2017): 65-98.
 
-> [DifferentialEquations.jl](https://github.com/SciML/DifferentialEquations.jl): Rackauckas, Christopher, and Qing Nie. "Differentialequations. jl–a performant and feature-rich ecosystem for solving differential equations in julia." Journal of Open Research Software 5.1 (2017).
+> [OrdinaryDiffEq.jl](https://github.com/SciML/OrdinaryDiffEq.jl): Rackauckas, Christopher, and Qing Nie. "Differentialequations. jl–a performant and feature-rich ecosystem for solving differential equations in julia." Journal of Open Research Software 5.1 (2017).
 
 > [ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl): Revels, Jarrett, Miles Lubin, and Theodore Papamarkou. "Forward-mode automatic differentiation in Julia." arXiv preprint arXiv:1607.07892 (2016).
 
@@ -127,4 +126,4 @@ This package stands on the shoulders of Julia giants.
 
 > [Roots.jl](https://github.com/JuliaMath/Roots.jl)
 
-> [Plots.jl](https://github.com/JuliaPlots/Plots.jl)
+> [GRUtils.jl](https://github.com/heliosdrm/GRUtils.jl)

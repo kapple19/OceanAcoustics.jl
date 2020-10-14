@@ -12,6 +12,9 @@ function flat()
 	θ₀, src, ocn, bty, ati, "Flat Environment"
 end
 
+"""
+TODO: Change name to "wavy".
+"""
 function smooth()
 	# Altimetry
 	zAtiMin = 0.
@@ -167,7 +170,7 @@ end
 
 ## n²-Linear Profile
 function n2linear()
-	R = 3.5e3
+	R = 10e3
 	Z = 1e3
 	r₀ = 0.0
 	z₀ = Z
@@ -183,7 +186,27 @@ function n2linear()
 	θ₀_crit = -acos(ocn.c(r₀, z₀)/ocn.c(r₀, 150.))
 	θ₀ = θ₀_crit*(0.1:0.05:1.1)
 
-	return θ₀, src, ocn, bty, ati, "n²-Linear Profile"
+	return θ₀, src, ocn, bty, ati, "n^2-Linear Profile"
+end
+
+## Sloped Profiles
+function slopes()
+	R = 10e3
+	Z = 2e3
+	r₀ = 0
+	z₀ = Z/4
+	c(r, z) = 1500 - 100r/R + 100z/Z
+	zBty(r) = Z - 500r/R
+	zAti(r) = 100r/R
+
+	src = Source(Position(r₀, z₀), Signal(200))
+	ocn = Medium(c, R, Z)
+	bty = Boundary(zBty, R)
+	ati = Boundary(zAti, R)
+
+	θ₀ = acos(c(r₀, z₀)/c(r₀, Z)) * (-2:0.2:2)
+	
+	return θ₀, src, ocn, bty, ati, "Linearly Sloped Profiles"
 end
 
 ## EOF

@@ -1,25 +1,33 @@
-using Interpolations: LinearInterpolation
-using Interpolations: Flat
-using OrdinaryDiffEq: ContinuousCallback
-using OrdinaryDiffEq: CallbackSet
-using OrdinaryDiffEq: ODEProblem
-using OrdinaryDiffEq: solve
-using OrdinaryDiffEq: terminate!
-using OrdinaryDiffEq: ODESolution
-using OrdinaryDiffEq: Rodas4
-using ForwardDiff: ForwardDiff
+using Interpolations:
+LinearInterpolation,
+Flat
+using OrdinaryDiffEq:
+ContinuousCallback,
+CallbackSet,
+ODEProblem,
+solve,
+terminate!,
+ODESolution,
+Rodas4,
+AutoVern7
+using ForwardDiff:
+derivative,
+gradient
 using Base: broadcastable
 using Roots: find_zeros
-using GRUtils: Figure
-using GRUtils: plot!
-using GRUtils: heatmap!
-using GRUtils: hold!
-using GRUtils: yflip!
-using GRUtils: xlabel!
-using GRUtils: ylabel!
-using GRUtils: colorscheme!
-using GRUtils: color
-using GRUtils: title!
+using GRUtils:
+Figure,
+plot!,
+contourf!,
+hold!,
+yflip!,
+xlabel!,
+ylabel!,
+colorscheme!,
+color,
+title!,
+gcf,
+display
 
 export Position
 export Signal
@@ -110,7 +118,7 @@ struct Boundary
 	An ocean boundary storing its depth `z` (metres) as univariate function of range (metres).
 	"""
 	function Boundary(z::Function, R::Real)
-		dz_dr(r) = ForwardDiff.derivative(z, r)
+		dz_dr(r) = derivative(z, r)
 		condition(u, t, ray) = z(u[1]) - u[2]
 		function affect!(ray)
 			ξ, ζ = boundary_reflection([ray.u[3], ray.u[4]], [1, dz_dr(ray.u[1])])
@@ -192,17 +200,17 @@ struct Medium
 	"""
 	function Medium(c::Function, R::Real, Z::Real)
 		c_(x) = c(x[1], x[2])
-		∇c_(x) = ForwardDiff.gradient(c_, x)
+		∇c_(x) = gradient(c_, x)
 		∇c(r, z) = ∇c_([r, z])
 		∂c_∂r(r, z) = ∇c(r, z)[1]
 		∂c_∂z(r, z) = ∇c(r, z)[2]
 	
 		∂c_∂r_(x) = ∂c_∂r(x[1], x[2])
-		∇∂c_∂r_(x) = ForwardDiff.gradient(∂c_∂r_, x)
+		∇∂c_∂r_(x) = gradient(∂c_∂r_, x)
 		∇∂c_∂r(r, z) = ∇∂c_∂r_([r, z])
 	
 		∂c_∂z_(x) = ∂c_∂z(x[1], x[2])
-		∇∂c_∂z_(x) = ForwardDiff.gradient(∂c_∂r_, x)
+		∇∂c_∂z_(x) = gradient(∂c_∂r_, x)
 		∇∂c_∂z(r, z) = ∇∂c_∂z_([r, z])
 	
 		∂²c_∂r²(r, z) = ∇∂c_∂r(r, z)[1]
@@ -361,7 +369,7 @@ Returns the `ODESolution` `RaySol` which is a type belonging to the `Differentia
 Note that it is easier to use the wrapper struct `Ray` to compute the solution, instead of calling this function.
 """
 function solve_acoustic_propagation(prob::ODEProblem, CbBnd::Union{ContinuousCallback, CallbackSet})
-	RaySol = @time solve(prob, Rodas4(), callback = CbBnd, reltol=1e-8, abstol=1e-8)
+	RaySol = solve(prob, AutoVern7(Rodas4()), callback = CbBnd, reltol=1e-8, abstol=1e-8)
 	return RaySol
 end
 
@@ -461,9 +469,9 @@ end
 
 function closest_points(r, z, beam)
 	Q(s) = (beam.ray.r(s) - r)^2 + (beam.ray.z(s) - z)^2
-	dQ(s) = ForwardDiff.derivative(Q, s)
+	dQ(s) = derivative(Q, s)
 	sMins = find_zeros(dQ, 0, beam.ray.S)
-	d²Q(s) = ForwardDiff.derivative(dQ, s)
+	d²Q(s) = derivative(dQ, s)
 	# min_cond(s) = d²Q(s) > 0 && beam.W(s) > sqrt(Q(s))
 	min_cond(s) = d²Q(s) > 0
 	min_cond.(sMins)
@@ -511,6 +519,7 @@ function Field(beams::AbstractVector{T}, src::Source, ocn::Medium, bty::Boundary
 		# δθ₀Ave = (δθ₀⁻ + δθ₀⁺)/2
 		# δθ₀Val = δθ₀Ave == 0.0 ? 1.0 : δθ₀
 		# push!(δθ₀, δθ₀Val)
+		# alternatively just `diff` then push a copy of the last value?
 		push!(δθ₀, 1.0)
 	end
 
@@ -554,15 +563,18 @@ function acoustic_plot()
 	return f
 end
 
-function acoustic_plot!(f, title::AbstractString)
+function acoustic_plot!(title::AbstractString)
+	f = gcf()
 	title!(f, title)
 end
 
-function acoustic_plot!(f::Figure)
+function acoustic_plot!()
+	f = gcf()
 	yflip!(f, true)
 end
 
-function acoustic_plot!(f::Figure, bnd::Boundary)
+function acoustic_plot!(bnd::Boundary)
+	f = gcf()
 	r = LinRange(0.0, bnd.R, 1001)
 	plot!(f, r, bnd.z,
 		linecolor = color(0, 0, 0))
@@ -570,22 +582,36 @@ end
 
 function acoustic_plot(bnd::Boundary)
 	f = acoustic_plot()
-	acoustic_plot!(f, bnd)
-	acoustic_plot!(f)
+	acoustic_plot!(bnd)
+	acoustic_plot!()
 	return f
 end
 
-Base.broadcastable(m::Figure) = Ref(m)
-
-function acoustic_plot!(f::Figure, ray::Ray)
+function acoustic_plot!(ray::Ray)
+	f = gcf()
 	s = LinRange(0.0, ray.S, 1001)
 	plot!(f, ray.r(s), ray.z(s))
 end
 
 function acoustic_plot(ray::Ray)
 	f = acoustic_plot()
-	acoustic_plot!(f, ray)
-	acoustic_plot!(f)
+	acoustic_plot!(ray)
+	acoustic_plot!()
+	return f
+end
+
+function acoustic_plot!(fld::Field)
+	f = gcf()
+	r = LinRange(0.0, fld.ocn.R, 11)
+	z = LinRange(0.0, fld.ocn.Z, 5)
+	contourf(r, z, fld.TL.(r', z),
+		levels = 21, majorlevels = 2)
+end
+
+function acoustic_plot(fld::Field)
+	f = acoustic_plot()
+	acoustic_plot!(fld)
+	acoustic_plot!()
 	return f
 end
 

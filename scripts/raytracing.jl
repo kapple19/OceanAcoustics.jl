@@ -6,15 +6,15 @@ using GRUtils
 ## Simulate Rays
 function sim_rays(scen::Function)
 	θ₀, src, ocn, bty, ati, title = scen()
+	println("Simulating Rays for ", title)
 
 	rays = Ray.(θ₀, src, ocn, bty, ati)
 	rng = range(0, ocn.R, length = 1001)
 
 	f = acoustic_plot(ati)
-	acoustic_plot!(f, bty)
-	acoustic_plot!.(f, rays)
-	acoustic_plot!(f, title)
-	display(f)
+	acoustic_plot!(bty)
+	acoustic_plot!.(rays)
+	acoustic_plot!("Ray Trace: " * title)
 	return f
 end
 
@@ -31,11 +31,8 @@ scenarios_rays = [
 	channel,
 	seamount,
 	simple,
-	n2linear
+	n2linear,
+	slopes
 ]
-
-# scenarios_rays = [
-# 	parabolic
-# ]
 
 run_sims(sim_rays, scenarios_rays)
