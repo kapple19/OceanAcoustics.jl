@@ -297,7 +297,7 @@ function acoustic_propagation_problem(
 	bty::Boundary,
 	ati::Boundary)
 
-	function eikonal!(du, u, p, s)
+	function propagation!(du, u, p, s)
 		r = u[1]
 		z = u[2]
 		ξ = u[3]
@@ -352,7 +352,7 @@ function acoustic_propagation_problem(
 	S = 10^(TLmax/10)
 	sSpan = (0., S)
 
-	prob = ODEProblem(eikonal!, u₀, sSpan)
+	prob = ODEProblem(propagation!, u₀, sSpan)
 
 	return prob, CbBnd
 end

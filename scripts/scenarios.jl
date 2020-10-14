@@ -1,11 +1,13 @@
 ## Flat Scenario
 function flat()
-	src = Source(Position(0.0, 2e2), Signal(2e2))
-	ocn = Medium(15e2, 2e3, 5e2)
-	bty = Boundary(5e2)
-	ati = Boundary(0.0)
+	R = 5e2
 
-	θ₀ = π/4*range(-1.0, 1.0, length = 51)
+	src = Source(Position(0.0, 2e2), Signal(2e2))
+	ocn = Medium(15e2, 2e3, R)
+	bty = Boundary(5e2, R)
+	ati = Boundary(0.0, R)
+
+	θ₀ = π/4*LinRange(-1.0, 1.0, 51)
 	
 	θ₀, src, ocn, bty, ati, "Flat Environment"
 end
@@ -46,8 +48,8 @@ function smooth()
 
 	src = Source(Position(0, z₀), Signal(f))
 	ocn = Medium(cOcn, rOcnMax, zBtyMax)
-	bty = Boundary(zBty)
-	ati = Boundary(zAti)
+	bty = Boundary(zBty, rOcnMax)
+	ati = Boundary(zAti, rOcnMax)
 	
 	θ₀, src, ocn, bty, ati, "Smooth Environment"
 end
@@ -61,11 +63,11 @@ function convergence()
 
 	src = Source(Position(0., 0.), Signal(200.))
 	ocn = Medium(z, c, R, Z)
-	bty = Boundary(5e3)
-	ati = Boundary(0.)
+	bty = Boundary(5e3, R)
+	ati = Boundary(0., R)
 	
-	θ_crit = acos(ocn.c(0, 0)/ocn.c(0, 5e3))
-	θ₀ = θ_crit*range(0.5, 1, length = 10)
+	θ_crit = acos(ocn.c(0.0, 0.0)/ocn.c(0.0, 5e3))
+	θ₀ = θ_crit*LinRange(0.5, 1.0, 10)
 
 	return θ₀, src, ocn, bty, ati, "Convergence Zones"
 end
@@ -74,44 +76,48 @@ end
 function upward()
 	c(r, z) = 1500 + 100z/5e3
 	θ₀_crit = acos(c(0, 0)/c(0, 5e3))
-	θ₀ = θ₀_crit*range(0.1, 1, length = 10)
+	θ₀ = θ₀_crit*LinRange(0.1, 1.0, 10)
+	R = 1e5
 	Z = 5e3
 
 	src = Source(Position(0, 0), Signal(200))
-	ocn = Medium(c, 1e5, Z)
-	bty = Boundary(Z)
-	ati = Boundary(0)
+	ocn = Medium(c, R, Z)
+	bty = Boundary(Z, R)
+	ati = Boundary(0, R)
 	
 	return θ₀, src, ocn, bty, ati, "Upward-Refracting Rays"
 end
 
 ## Parabolic Bathymetry
 function parabolic()
-	c = 250
+	c = 250.0
 	zBty(r) = 2e-3*2.5e5sqrt(1 + r/c)
-	θ₀ = range(atan(5e3/2e3), atan(5e3/20e3), length = 30)
+	θ₀ = LinRange(atan(5e3/2e3), atan(5e3/20e3), 30)
+	R = 20e3
+	Z = 5e3
 
 	src = Source(Position(0, 0), Signal(200))
-	ocn = Medium(c, 20e3, 5e3)
-	bty = Boundary(zBty)
-	ati = Boundary(0)
+	ocn = Medium(c, R, Z)
+	bty = Boundary(zBty, R)
+	ati = Boundary(0.0, R)
 
 	return θ₀, src, ocn, bty, ati, "Parabolic Bathymetry"
 end
 
 ## Deep-Sound-Channel
 function channel()
-	z = [0, 500/3, 500/2, 500, 1000, 1500, 4e3]
+	z = [0.0, 500/3, 500/2, 500, 1000, 1500, 4e3]
 	c = [1480, 1500, 1485, 1475, 1480, 1485, 1525]
+	R = 250e3
 	Z = z[end]
 	
 	z₀ = 500.
-	src = Source(Position(0., z₀), Signal(200))
-	ocn = Medium(z, c, 250e3, Z)
-	bty = Boundary(4e3)
-	ati = Boundary(0.)
+	src = Source(Position(0.0, z₀), Signal(200))
+	ocn = Medium(z, c, R, Z)
+	bty = Boundary(4e3, R)
+	ati = Boundary(0.0, R)
 
-	θ₀ = acos(ocn.c(0, z₀)/1500) * range(-1, 1, length = 31)
+	θ₀ = acos(ocn.c(0.0, z₀)/1500.0) * LinRange(-1, 1, 31)
 
 	return θ₀, src, ocn, bty, ati, "Deep Sound Channel"
 end
@@ -128,9 +134,9 @@ function seamount()
 	src = Source(Position(0, 363), Signal(200))
 	ocn = Medium(z, c, R, Z)
 	bty = Boundary(r, zBty)
-	ati = Boundary(0)
+	ati = Boundary(0, R)
 
-	θ₀ = atan(363/2e3) * range(-1, 1, length = 31)
+	θ₀ = atan(363/2e3) * LinRange(-1, 1, 31)
 
 	return θ₀, src, ocn, bty, ati, "Seamount"
 end
@@ -171,8 +177,8 @@ function n2linear()
 
 	src = Source(Position(r₀, z₀), Signal(f))
 	ocn = Medium(c, R, Z)
-	bty = Boundary(Z)
-	ati = Boundary(0.0)
+	bty = Boundary(Z, R)
+	ati = Boundary(0.0, R)
 
 	θ₀_crit = -acos(ocn.c(r₀, z₀)/ocn.c(r₀, 150.))
 	θ₀ = θ₀_crit*(0.1:0.05:1.1)

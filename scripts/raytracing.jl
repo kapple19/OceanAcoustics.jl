@@ -1,7 +1,7 @@
 ## Preamble
 using OceanAcoustics
 using DrWatson
-using Plots
+using GRUtils
 
 ## Simulate Rays
 function sim_rays(scen::Function)
@@ -10,12 +10,12 @@ function sim_rays(scen::Function)
 	rays = Ray.(θ₀, src, ocn, bty, ati)
 	rng = range(0, ocn.R, length = 1001)
 
-	p = acoustic_plot(rays)
-	acoustic_plot!(rng, ati)
-	acoustic_plot!(rng, bty)
-	acoustic_plot!(extrema(rng), (0., ocn.Z))
-	title!(title)
-	return p
+	f = acoustic_plot(ati)
+	acoustic_plot!(f, bty)
+	acoustic_plot!.(f, rays)
+	acoustic_plot!(f, title)
+	display(f)
+	return f
 end
 
 ## Run Scenarios
@@ -33,5 +33,9 @@ scenarios_rays = [
 	simple,
 	n2linear
 ]
+
+# scenarios_rays = [
+# 	parabolic
+# ]
 
 run_sims(sim_rays, scenarios_rays)

@@ -1,28 +1,26 @@
-@info "  Loading dependencies"
-@info "   Interpolations"
-@time using Interpolations: LinearInterpolation
-@time using Interpolations: Flat
-@info "   OrdinaryDiffEq"
-@time using OrdinaryDiffEq: ContinuousCallback
-@time using OrdinaryDiffEq: CallbackSet
-@time using OrdinaryDiffEq: ODEProblem
-@time using OrdinaryDiffEq: solve
-@time using OrdinaryDiffEq: terminate!
-@time using OrdinaryDiffEq: ODESolution
-@time using OrdinaryDiffEq: Rodas4
-@info "   ForwardDiff"
-@time using ForwardDiff: ForwardDiff
-@info "   Base"
-@time using Base: broadcastable
-@info "   Roots"
-@time using Roots: find_zeros
-# @info "   Plots"
-# @time using Plots: plot!
-# @time using Plots: plot
-# @time using Plots: heatmap
-# @time using Plots: cgrad
+using Interpolations: LinearInterpolation
+using Interpolations: Flat
+using OrdinaryDiffEq: ContinuousCallback
+using OrdinaryDiffEq: CallbackSet
+using OrdinaryDiffEq: ODEProblem
+using OrdinaryDiffEq: solve
+using OrdinaryDiffEq: terminate!
+using OrdinaryDiffEq: ODESolution
+using OrdinaryDiffEq: Rodas4
+using ForwardDiff: ForwardDiff
+using Base: broadcastable
+using Roots: find_zeros
+using GRUtils: Figure
+using GRUtils: plot!
+using GRUtils: heatmap!
+using GRUtils: hold!
+using GRUtils: yflip!
+using GRUtils: xlabel!
+using GRUtils: ylabel!
+using GRUtils: colorscheme!
+using GRUtils: color
+using GRUtils: title!
 
-@info "  Loading acoustic methods"
 export Position
 export Signal
 export Source
@@ -37,11 +35,11 @@ export acoustic_plot
 
 function interpolated_function(x, y)
 	Itp = LinearInterpolation(x, y, extrapolation_bc = Flat())
-	return ItpFcn(x::Float64) = Itp(x)
+	return ItpFcn(x::Real) = Itp(x)
 end
 function interpolated_function(x, y, z)
 	Itp = LinearInterpolation((x, y), z, extrapolation_bc = Flat())
-	return ItpFcn(x::Float64, y::Float64) = Itp(x, y)
+	return ItpFcn(x::Real, y::Real) = Itp(x, y)
 end
 
 """
@@ -64,24 +62,24 @@ function boundary_reflection(t_inc::Vector, t_bnd::Vector)
 end
 
 """
-	Position(r::Float64, z::Float64)
+	Position(r::Real, z::Real)
 
 Position in 2D slice of ocean, with range `r` (metres) and depth `z` (metres).
 """
 struct Position
-	r::Float64
-	z::Float64
+	r::Real
+	z::Real
 end
 
 """
-	Signal(f::Float64)
+	Signal(f::Real)
 
 Parameters for a signal with frequency `f` (Hertz).
 """
 struct Signal
-	f::Float64
+	f::Real
 
-	function Signal(f::Float64)
+	function Signal(f::Real)
 		if f ≤ 0
 			throw(DomainError(f, "Frequency must be positive."))
 		end
@@ -104,13 +102,14 @@ struct Boundary
 	dz_dr::Function
 	condition::Function
 	affect!::Function
+	R::Real
 	
 	"""
 		Boundary(z::Function)
 
 	An ocean boundary storing its depth `z` (metres) as univariate function of range (metres).
 	"""
-	function Boundary(z::Function)
+	function Boundary(z::Function, R::Real)
 		dz_dr(r) = ForwardDiff.derivative(z, r)
 		condition(u, t, ray) = z(u[1]) - u[2]
 		function affect!(ray)
@@ -125,7 +124,7 @@ struct Boundary
 				return reflect!(ray)
 			end
 		end
-		return new(z, dz_dr, condition, affect!)
+		return new(z, dz_dr, condition, affect!, R)
 	end
 end
 
@@ -136,9 +135,12 @@ An ocean boundary storing its depth `z` (metres) at range `r` (metres).
 
 The inputted values are interpolated into and stored as a function.
 """
-function Boundary(r::Vector, z::Vector)
+function Boundary(
+	r::Vector{T},
+	z::Vector{T},
+	R::T = r[end]) where T <: Real
 	zFcn = interpolated_function(r, z)
-	return Boundary(zFcn)
+	return Boundary(zFcn, R)
 end
 
 """
@@ -148,22 +150,22 @@ An ocean boundary storing its depth and range as a two-column matrix. The first 
 
 The inputted values are interpolated into and stored as a function.
 """
-function Boundary(rz::AbstractArray)
+function Boundary(rz::AbstractArray{T}, R::T = rz[end, 1]) where T <: Real
 	r = [rng for rng ∈ rz[:, 1]]
 	z = [dpt for dpt ∈ rz[:, 2]]
-	return Boundary(r, z)
+	return Boundary(r, z, R)
 end
 
 """
-	Boundary(z::Float64)
+	Boundary(z::Real)
 
 An ocean boundary storing its depth `z` (metres) as a constant.
 
 The inputted valued is interpolated into and stored as a function.
 """
-function Boundary(z::Float64)
+function Boundary(z::Real, R::Real = 1.0)
 	zFcn(r) = z
-	return Boundary(zFcn)
+	return Boundary(zFcn, R)
 end
 
 struct Medium
@@ -173,11 +175,11 @@ struct Medium
 	∂²c_∂r²::Function
 	∂²c_∂r∂z::Function
 	∂²c_∂z²::Function
-	R::Float64
-	Z::Float64
+	R::Real
+	Z::Real
 
 	"""
-		Medium(c::Function, R::Float64, Z::Float64)
+		Medium(c::Function, R::Real, Z::Real)
 	
 	An acoustic medium storing the sound speed `c` (m/s) as a bivariate function of range and depth, with a maximum range `R` (metres) and maximum depth `Z`.
 
@@ -187,32 +189,8 @@ struct Medium
 	* `∂²c_∂r²(r, z)`: ∂²c/∂r²
 	* `∂²c_∂r∂z(r, z)`: ∂²c/∂r∂z
 	* `∂²c_∂z²(r, z)`: ∂²c/∂z²
-
-	```@example
-	using OceanAcoustics
-	using Plots
-
-	R, Z = 5e3, 1e3
-	c(r, z) = 1500 + 0.1z^2 - 0.01r
-	ocn = Medium(c, R, Z)
-
-	r = LinRange(0, R, 101)
-	z = LinRange(0, Z, 101)
-	
-	p_c = heatmap(r, z, ocn.c,
-		yaxis = ("Depth(m)", :flip),
-		title = "c(r, z)")
-	p_∂c_∂r = heatmap(r, z, ocn.∂,
-		xaxis = "Range (m)",
-		yaxis = ("Depth (m)", :flip),
-		title = "∂c/∂r(r, z)")
-
-	l = @layout [a; b]
-
-	plot(p_c, p_∂c_∂r, layout = l)
-	```
 	"""
-	function Medium(c::Function, R::Float64, Z::Float64)
+	function Medium(c::Function, R::Real, Z::Real)
 		c_(x) = c(x[1], x[2])
 		∇c_(x) = ForwardDiff.gradient(c_, x)
 		∇c(r, z) = ∇c_([r, z])
@@ -236,7 +214,7 @@ struct Medium
 end
 
 """
-	Medium(c::AbstractArray, R::Float64 = c[end, 1], Z::Float64 = c[1, end])
+	Medium(c::AbstractArray, R::Real = c[end, 1], Z::Real = c[1, end])
 
 An acoustic medium storing the sound speed `c` as an array with values `2:end` in the first row as range (metres), values `2:end` in the first column as depth (metres) and values `[2:end, 2:end]` as the respective sound speed (m/s) grid.
 
@@ -251,7 +229,7 @@ The following derivatives are also computed and stored:
 * `∂²c_∂r∂z(r, z)`: ∂²c/∂r∂z
 * `∂²c_∂z²(r, z)`: ∂²c/∂z²
 """
-function Medium(c::AbstractArray, R::Float64 = c[end, 1], Z::Float64 = c[1, end])
+function Medium(c::AbstractArray, R::Real = c[end, 1], Z::Real = c[1, end])
 	r_ = [rc for rc ∈ c[1, 2:end]]
 	z_ = [zc for zc ∈ c[2:end, 1]]
 	c_ = c[2:end, 2:end]'
@@ -261,7 +239,7 @@ function Medium(c::AbstractArray, R::Float64 = c[end, 1], Z::Float64 = c[1, end]
 end
 
 """
-	Medium(z::AbstractVector, c::AbstractVector, R::Float64, Z::Float64 = z[end])
+	Medium(z::AbstractVector, c::AbstractVector, R::Real, Z::Real = z[end])
 
 An acoustic medium storing the sound speed `c` (m/s) as a vector with corresponding depths `z` (metres).
 
@@ -278,7 +256,7 @@ The following derivatives are also computed and stored:
 
 Note that for this dispatch, all range derivatives are zero due to range-independence.
 """
-function Medium(z::AbstractVector, c::AbstractVector, R::Float64, Z::Float64 = z[end])
+function Medium(z::AbstractVector, c::AbstractVector, R::Real, Z::Real = z[end])
 	cMat = vcat([0 0 R], hcat(z, c, c))
 	return Medium(cMat, R, Z)
 end
@@ -290,13 +268,13 @@ An acoustic medium storing sound speed `c` (m/s) as a constant, along with the m
 
 The sound speed is interpolated and stored as a function. Derivatives are also calculated, but in the case of this dispatch, are zero.
 """
-function Medium(c::Float64, R::Float64, Z::Float64)
+function Medium(c::Real, R::Real, Z::Real)
 	cFcn(r, z) = c
 	return Medium(cFcn, R, Z)
 end
 
 """
-	acoustic_propagation_problem(θ₀::Float64, src::Source, ocn::Medium, bty::Boundary, ati::Boundary) -> prob::ODEProblem, CbBnd::ContinuousCallback
+	acoustic_propagation_problem(θ₀::Real, src::Source, ocn::Medium, bty::Boundary, ati::Boundary) -> prob::ODEProblem, CbBnd::ContinuousCallback
 
 Defines the differential equation problem `Prob` and continuous callback `Cb` for a combination of the eikonal, transport, and dynamic ray equations for a source `src` in an ocean medium `ocn` bounded above by the altimetry `ati` and below by the bathymetry `bty`, for the initial angle `θ₀` (radians) of the ray launched from the specified source position.
 
@@ -307,7 +285,7 @@ The continuous callback `CbBnd` is defined as condition-affect pairs for checkin
 Note that it is easier to use the wrapper struct `Ray` to compute the solution, instead of calling this function.
 """
 function acoustic_propagation_problem(
-	θ₀::Float64,
+	θ₀::Real,
 	src::Source,
 	ocn::Medium,
 	bty::Boundary,
@@ -388,9 +366,9 @@ function solve_acoustic_propagation(prob::ODEProblem, CbBnd::Union{ContinuousCal
 end
 
 struct Ray
-	θ₀::Float64
+	θ₀::Real
 	sol
-	S::Float64
+	S::Real
 	r::Function
 	z::Function
 	ξ::Function
@@ -403,7 +381,7 @@ struct Ray
 end
 
 """
-	Ray(θ₀::Float64, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0.0))
+	Ray(θ₀::Real, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0.0))
 
 Computes a ray path launched from `src` at an initial angle `θ₀` within an ocean medium `ocn` bounded above by the altimetry `ati` and bathymetry `bty`. The default altimetry is a flat sea surface.
 
@@ -421,7 +399,7 @@ The following fields are stored in an instance of `Ray`:
 * `θ(s)` as a function of arc length `s` (metres)
 * `c(s)` as a function of arc length `s` (metres)
 """
-function Ray(θ₀::Float64, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0.0))
+function Ray(θ₀::Real, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0.0))
 	Prob, CbBnd = acoustic_propagation_problem(θ₀, src, ocn, bty, ati)
 	sol = solve_acoustic_propagation(Prob, CbBnd)
 
@@ -446,7 +424,7 @@ struct Beam
 end
 
 """
-	Beam(θ₀::Float64, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0.0))
+	Beam(θ₀::Real, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0.0))
 
 Computes a complex-valued Gaussian pressure beam propagating through space for the `Ray` trace solved by the scenario defined by the input parameters.
 
@@ -457,7 +435,7 @@ The fields stored are:
 * `S` maximum arc length (metres)
 * `W(s)` the computed half-beamwidth (metres) in terms of arc length `s` (metres)
 """
-function Beam(θ₀::Float64, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0.0))
+function Beam(θ₀::Real, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0.0))
 	
 	ray = Ray(θ₀, src, ocn, bty, ati)
 	
@@ -500,7 +478,7 @@ Base.broadcastable(m::Signal) = Ref(m)
 Base.broadcastable(m::Source) = Ref(m)
 Base.broadcastable(m::Ray) = Ref(m)
 
-function add_to_pressure(r::Float64, z::Float64, beam::Beam, δθ₀::Float64, coh_pre::Function)
+function add_to_pressure(r::Real, z::Real, beam::Beam, δθ₀::Real, coh_pre::Function)
 	sMins, nMins = closest_points(r, z, beam)
 	p = complex(0)
 	for (n, sMin) ∈ enumerate(sMins)
@@ -539,7 +517,7 @@ function Field(beams::AbstractVector{T}, src::Source, ocn::Medium, bty::Boundary
 	coh_pre(p) = p
 	coh_post(p) = p
 
-	function pressure(r::Float64, z::Float64)
+	function pressure(r::Real, z::Real)
 		p = complex(0.0)
 		for (n, beam) ∈ enumerate(beams)
 			p += add_to_pressure(r, z, beam, δθ₀[n], coh_pre)
@@ -548,7 +526,7 @@ function Field(beams::AbstractVector{T}, src::Source, ocn::Medium, bty::Boundary
 		
 	end
 
-	function transmission_loss(r::Float64, z::Float64)
+	function transmission_loss(r::Real, z::Real)
 		pAbs = abs(pressure(r, z))
 		if isnan(pAbs)
 			return 0.0
@@ -561,20 +539,57 @@ function Field(beams::AbstractVector{T}, src::Source, ocn::Medium, bty::Boundary
 	return Field(beams, src, ocn, bty, ati, pressure, transmission_loss)
 end
 
-function Field(θ₀s::AbstractVector{T}, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0.0)) where T <: Float64
+function Field(θ₀s::AbstractVector{T}, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0.0)) where T <: Real
 	beams = Beam.(θ₀s, src, ocn, bty, ati)
 	return Field(beams, src, ocn, bty, ati)
 end
 
 ## Plots
-function acoustic_plot!(args...)
-	error("Acoustic_plot method under refurbishment.")
+function acoustic_plot()
+	f = Figure()
+	hold!(f, true)
+	xlabel!(f, "Range (m)")
+	ylabel!(f, "Depth (m)")
+	colorscheme!(f, "light")
+	return f
 end
 
-function acoustic_plot(args...)
-	acoustic_plot!(args...)
+function acoustic_plot!(f, title::AbstractString)
+	title!(f, title)
 end
 
+function acoustic_plot!(f::Figure)
+	yflip!(f, true)
+end
+
+function acoustic_plot!(f::Figure, bnd::Boundary)
+	r = LinRange(0.0, bnd.R, 1001)
+	plot!(f, r, bnd.z,
+		linecolor = color(0, 0, 0))
+end
+
+function acoustic_plot(bnd::Boundary)
+	f = acoustic_plot()
+	acoustic_plot!(f, bnd)
+	acoustic_plot!(f)
+	return f
+end
+
+Base.broadcastable(m::Figure) = Ref(m)
+
+function acoustic_plot!(f::Figure, ray::Ray)
+	s = LinRange(0.0, ray.S, 1001)
+	plot!(f, ray.r(s), ray.z(s))
+end
+
+function acoustic_plot(ray::Ray)
+	f = acoustic_plot()
+	acoustic_plot!(f, ray)
+	acoustic_plot!(f)
+	return f
+end
+
+## Old
 # @info "  Building acoustic plotting methods"
 # @info "   Labels"
 # function acoustic_plot!()
@@ -605,12 +620,12 @@ end
 # end
 
 # @info "   Boundaries"
-# function acoustic_plot!(rng::AbstractVector{T}, bnd::Boundary) where T <: Float64
+# function acoustic_plot!(rng::AbstractVector{T}, bnd::Boundary) where T <: Real
 # 	plot!(rng, bnd.z,
 # 		linecolor = :black)
 # end
 
-# function acoustic_plot(rng::AbstractVector{T}, bnd::Boundary, Z::Float64) where T <: Float64
+# function acoustic_plot(rng::AbstractVector{T}, bnd::Boundary, Z::Real) where T <: Real
 # 	p = acoustic_plot(extrema(rng), (0, Z))
 # 	acoustic_plot!(rng, bnd)
 # 	return p
@@ -632,10 +647,15 @@ end
 # end
 
 # @info "   Field"
-# function acoustic_plot(rng::AbstractVector{T}, dpt::AbstractVector{T}, fld::Field) where T <: Float64
+# function acoustic_plot(rng::AbstractVector{T}, dpt::AbstractVector{T}, fld::Field) where T <: Real
 # 	p = heatmap(rng, dpt, fld.TL,
 # 		seriescolor = cgrad(:jet, rev = true),
 # 		colorbar = :right)
 # 	acoustic_plot!(extrema(rng), extrema(dpt))
 # 	return p
+# end
+
+# @info "   Title"
+# function acoustic_plot!(title::AbstractString)
+# 	title!(title)
 # end

@@ -25,20 +25,21 @@ yflip(true)
 ##
 function acoustic_plot!(f::Figure, bnd::Boundary)
 	gcf(f)
-	r = range()
-	plot()
+	r = range(0.0, bnd.R)
+	plot!(f, r, bnd.z)
 end
 
 function acoustic_plot(bnd::Boundary)
-	
+	f = acoustic_plot()
+	acoustic_plot!(f, bnd)
 end
 
 ##
 function acoustic_plot()
 	f = Figure()
 	hold(true)
-	xlabel("Range (m)")
-	ylabel("Depth (m)")
+	xlabel!(f, "Range (m)")
+	ylabel!(f, "Depth (m)")
 	return f
 end
 
