@@ -568,7 +568,7 @@ end
 
 ## Plots
 function acoustic_plot!(args...)
-	println("Acoustic_plot method under refurbishment.")
+	error("Acoustic_plot method under refurbishment.")
 end
 
 function acoustic_plot(args...)
