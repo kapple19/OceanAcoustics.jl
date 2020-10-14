@@ -282,7 +282,7 @@ function Medium(c::Real, R::Real, Z::Real)
 end
 
 """
-	acoustic_propagation_problem(θ₀::Real, src::Source, ocn::Medium, bty::Boundary, ati::Boundary) -> prob::ODEProblem, CbBnd::ContinuousCallback
+	propagation_problem(θ₀::Real, src::Source, ocn::Medium, bty::Boundary, ati::Boundary) -> prob::ODEProblem, CbBnd::ContinuousCallback
 
 Defines the differential equation problem `Prob` and continuous callback `Cb` for a combination of the eikonal, transport, and dynamic ray equations for a source `src` in an ocean medium `ocn` bounded above by the altimetry `ati` and below by the bathymetry `bty`, for the initial angle `θ₀` (radians) of the ray launched from the specified source position.
 
@@ -292,14 +292,14 @@ The continuous callback `CbBnd` is defined as condition-affect pairs for checkin
 
 Note that it is easier to use the wrapper struct `Ray` to compute the solution, instead of calling this function.
 """
-function acoustic_propagation_problem(
+function propagation_problem(
 	θ₀::Real,
 	src::Source,
 	ocn::Medium,
 	bty::Boundary,
 	ati::Boundary)
 
-	function eikonal!(du, u, p, s)
+	function propagation!(du, u, p, s)
 		r = u[1]
 		z = u[2]
 		ξ = u[3]
@@ -350,17 +350,17 @@ function acoustic_propagation_problem(
 
 	u₀ = [r₀, z₀, ξ₀, ζ₀, τ₀, p₀ʳ, p₀ⁱ, q₀ʳ, q₀ⁱ]
 
-	TLmax = 100
-	S = 10^(TLmax/10)
+	TLmax = 100.0
+	S = 10^(TLmax/10.0)
 	sSpan = (0., S)
 
-	prob = ODEProblem(eikonal!, u₀, sSpan)
+	prob = ODEProblem(propagation!, u₀, sSpan)
 
 	return prob, CbBnd
 end
 
 """
-	solve_acoustic_propagation(prob_eikonal::ODEProblem, CbBnd::ContinuousCallback) -> RaySol::ODESolution
+	solve_propagation(prob_eikonal::ODEProblem, CbBnd::ContinuousCallback) -> RaySol::ODESolution
 
 Solves the eikonal, transport, and dynamic ray equations defined by the differential equation problem `prob` with continuous callback `CbBnd`.
 
@@ -368,7 +368,7 @@ Returns the `ODESolution` `RaySol` which is a type belonging to the `Differentia
 
 Note that it is easier to use the wrapper struct `Ray` to compute the solution, instead of calling this function.
 """
-function solve_acoustic_propagation(prob::ODEProblem, CbBnd::Union{ContinuousCallback, CallbackSet})
+function solve_propagation(prob::ODEProblem, CbBnd::Union{ContinuousCallback, CallbackSet})
 	RaySol = solve(prob, AutoVern7(Rodas4()), callback = CbBnd, reltol=1e-8, abstol=1e-8)
 	return RaySol
 end
@@ -408,8 +408,8 @@ The following fields are stored in an instance of `Ray`:
 * `c(s)` as a function of arc length `s` (metres)
 """
 function Ray(θ₀::Real, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0.0))
-	Prob, CbBnd = acoustic_propagation_problem(θ₀, src, ocn, bty, ati)
-	sol = solve_acoustic_propagation(Prob, CbBnd)
+	Prob, CbBnd = propagation_problem(θ₀, src, ocn, bty, ati)
+	sol = solve_propagation(Prob, CbBnd)
 
 	S = sol.t[end]
 	r(s) = sol(s, idxs = 1)
@@ -506,22 +506,8 @@ struct Field
 end
 
 function Field(beams::AbstractVector{T}, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0.0)) where T <: Beam
-	NumBeams = length(beams)
-	δθ₀ = []
-	for (n, beam) = enumerate(beams)
-		# n⁻ = max(n - 1, 1)
-		# n⁺ = min(n + 1, NumBeams)
-		# θ₀⁻ = beams[n⁻].ray.θ(0)
-		# θ₀ = beam.ray.θ(0)
-		# θ₀⁺ = beams[n⁺].ray.θ(0)
-		# δθ₀⁻ = abs(θ₀⁺ - θ₀)
-		# δθ₀⁺ = abs(θ₀ - θ₀⁻)
-		# δθ₀Ave = (δθ₀⁻ + δθ₀⁺)/2
-		# δθ₀Val = δθ₀Ave == 0.0 ? 1.0 : δθ₀
-		# push!(δθ₀, δθ₀Val)
-		# alternatively just `diff` then push a copy of the last value?
-		push!(δθ₀, 1.0)
-	end
+	δθ₀ = diff([beams[nBeam].ray.θ₀ for nBeam = eachindex(beams)])
+	push!(δθ₀, δθ₀[end])
 
 	coh_pre(p) = p
 	coh_post(p) = p
@@ -614,74 +600,3 @@ function acoustic_plot(fld::Field)
 	acoustic_plot!()
 	return f
 end
-
-## Old
-# @info "  Building acoustic plotting methods"
-# @info "   Labels"
-# function acoustic_plot!()
-# 	plot!(
-# 		xaxis = "Range (m)",
-# 		yaxis = ("Depth (m)", :flip),
-# 		legend = false
-# 	)
-# end
-
-# function acoustic_plot()
-# 	p = plot()
-# 	acoustic_plot!()
-# 	return p
-# end
-
-# @info "   Plot limits"
-# function acoustic_plot!(rLims::Tuple, zLims::Tuple)
-# 	plot!(
-# 		xlims = rLims,
-# 		ylims = zLims
-# 	)
-# end
-
-# function acoustic_plot(rLims::Tuple, zLims::Tuple)
-# 	p = acoustic_plot(rLims, zLims)
-# 	acoustic_plot!()
-# end
-
-# @info "   Boundaries"
-# function acoustic_plot!(rng::AbstractVector{T}, bnd::Boundary) where T <: Real
-# 	plot!(rng, bnd.z,
-# 		linecolor = :black)
-# end
-
-# function acoustic_plot(rng::AbstractVector{T}, bnd::Boundary, Z::Real) where T <: Real
-# 	p = acoustic_plot(extrema(rng), (0, Z))
-# 	acoustic_plot!(rng, bnd)
-# 	return p
-# end
-
-# @info "   Rays"
-# function acoustic_plot!(ray::Ray)
-# 	plot!(ray.sol, vars = (1, 2))
-# end
-
-# function acoustic_plot!(rays::AbstractVector{T}) where T <: Ray
-# 	acoustic_plot!.(rays)
-# end
-
-# function acoustic_plot(ray::Union{Ray, AbstractVector{T}}) where T <: Ray
-# 	p = acoustic_plot()
-# 	acoustic_plot!(ray)
-# 	return p
-# end
-
-# @info "   Field"
-# function acoustic_plot(rng::AbstractVector{T}, dpt::AbstractVector{T}, fld::Field) where T <: Real
-# 	p = heatmap(rng, dpt, fld.TL,
-# 		seriescolor = cgrad(:jet, rev = true),
-# 		colorbar = :right)
-# 	acoustic_plot!(extrema(rng), extrema(dpt))
-# 	return p
-# end
-
-# @info "   Title"
-# function acoustic_plot!(title::AbstractString)
-# 	title!(title)
-# end

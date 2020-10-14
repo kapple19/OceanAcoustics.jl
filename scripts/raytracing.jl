@@ -9,8 +9,7 @@ function sim_rays(scen::Function)
 	println("Simulating Rays for ", title)
 
 	rays = Ray.(θ₀, src, ocn, bty, ati)
-	rng = range(0, ocn.R, length = 1001)
-
+	
 	f = acoustic_plot(ati)
 	acoustic_plot!(bty)
 	acoustic_plot!.(rays)
