@@ -567,6 +567,14 @@ function Field(θ₀s::AbstractVector{T}, src::Source, ocn::Medium, bty::Boundar
 end
 
 ## Plots
+function acoustic_plot!(args...)
+	println("Acoustic_plot method under refurbishment.")
+end
+
+function acoustic_plot(args...)
+	acoustic_plot!(args...)
+end
+
 # @info "  Building acoustic plotting methods"
 # @info "   Labels"
 # function acoustic_plot!()
