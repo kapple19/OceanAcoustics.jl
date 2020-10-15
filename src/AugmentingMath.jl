@@ -1,4 +1,16 @@
-using ForwardDiff.gradient
+using ForwardDiff: gradient
+using Interpolations:
+LinearInterpolation,
+Flat
+
+function interpolated_function(x, y)
+	Itp = LinearInterpolation(x, y, extrapolation_bc = Flat())
+	return ItpFcn(x::Real) = Itp(x)
+end
+function interpolated_function(x, y, z)
+	Itp = LinearInterpolation((x, y), z, extrapolation_bc = Flat())
+	return ItpFcn(x::Real, y::Real) = Itp(x, y)
+end
 
 function bivariate_partial_derivatives(f::Function)
 	f_(x) = f(x[1], x[2])

@@ -1,6 +1,3 @@
-using Interpolations:
-LinearInterpolation,
-Flat
 using OrdinaryDiffEq:
 ContinuousCallback,
 CallbackSet,
@@ -16,19 +13,6 @@ using Roots: find_zeros
 using IntervalArithmetic:
 (..),
 Interval
-using GRUtils:
-Figure,
-plot!,
-contourf!,
-hold!,
-yflip!,
-xlabel!,
-ylabel!,
-colorscheme!,
-color,
-title!,
-gcf,
-display
 
 export Boundary
 export Medium
@@ -44,15 +28,6 @@ export Receiver
 export Field
 export acoustic_plot!
 export acoustic_plot
-
-function interpolated_function(x, y)
-	Itp = LinearInterpolation(x, y, extrapolation_bc = Flat())
-	return ItpFcn(x::Real) = Itp(x)
-end
-function interpolated_function(x, y, z)
-	Itp = LinearInterpolation((x, y), z, extrapolation_bc = Flat())
-	return ItpFcn(x::Real, y::Real) = Itp(x, y)
-end
 
 """
 	boundary_reflection(t_inc::Vector, t_bnd::Vector) -> t_rfl::Vector
@@ -158,81 +133,31 @@ function Celerity(c::Function)
 	return Celerity(c, ∂c_∂r, ∂c_∂z, ∂²c_∂r², ∂²c_∂r∂z, ∂²c_∂z²)
 end
 
-function Celerity(args...)
-	cels = [args[n] for n = 1:length(args)]
-	return Celerity.(cels)
+function Celerity(z::AbstractVector, c::AbstractVector)
+	cFcn = interpolated_function()
+	return Celerity(cMat)
+end
+
+function Celerity(c::Real)
+	cFcn(r, z) = c
+	return Celerity(cFcn)
 end
 
 struct Medium <: OceanAcoustic
-	c::Function
-	∂c_∂r::Function
-	∂c_∂z::Function
-	∂²c_∂r²::Function
-	∂²c_∂r∂z::Function
-	∂²c_∂z²::Function
-	R::Real
-	Z::Real
-
-	"""
-		Medium(c::Function, R::Real, Z::Real)
-	
-	An acoustic medium storing the sound speed `c` (m/s) as a bivariate function of range and depth, with a maximum range `R` (metres) and maximum depth `Z`.
-
-	The following derivatives are also computed and stored as bivariate functions:
-	* `∂c_∂r(r, z)`: ∂c/∂r
-	* `∂c_∂z(r, z)`: ∂c/∂z
-	* `∂²c_∂r²(r, z)`: ∂²c/∂r²
-	* `∂²c_∂r∂z(r, z)`: ∂²c/∂r∂z
-	* `∂²c_∂z²(r, z)`: ∂²c/∂z²
-	"""
-	function Medium(c::Function, R::Real, Z::Real)
-		c_(x) = c(x[1], x[2])
-		∇c_(x) = gradient(c_, x)
-		∇c(r, z) = ∇c_([r, z])
-		∂c_∂r(r, z) = ∇c(r, z)[1]
-		∂c_∂z(r, z) = ∇c(r, z)[2]
-	
-		∂c_∂r_(x) = ∂c_∂r(x[1], x[2])
-		∇∂c_∂r_(x) = gradient(∂c_∂r_, x)
-		∇∂c_∂r(r, z) = ∇∂c_∂r_([r, z])
-	
-		∂c_∂z_(x) = ∂c_∂z(x[1], x[2])
-		∇∂c_∂z_(x) = gradient(∂c_∂r_, x)
-		∇∂c_∂z(r, z) = ∇∂c_∂z_([r, z])
-	
-		∂²c_∂r²(r, z) = ∇∂c_∂r(r, z)[1]
-		∂²c_∂r∂z(r, z) = ∇∂c_∂r(r, z)[2]
-		∂²c_∂z²(r, z) = ∇∂c_∂z(r, z)[2]
-	
-		return new(c, ∂c_∂r, ∂c_∂z, ∂²c_∂r², ∂²c_∂r∂z, ∂²c_∂z², R, Z)
-	end
+	SSPₚ::Celerity
+	SSPₛ::Celerity
+	# ρ
+	# α
+	# T
 end
 
-function Medium(c::AbstractArray, R::Real = c[end, 1], Z::Real = c[1, end])
-	r_ = [rc for rc ∈ c[1, 2:end]]
-	z_ = [zc for zc ∈ c[2:end, 1]]
-	c_ = c[2:end, 2:end]'
-	
-	cFcn = interpolated_function(r_, z_, c_)
-	return Medium(cFcn, R, Z)
+function fluid(SSPₚ::Celerity)
+	SSPₛ = Celerity((r, z) -> 0.0)
+	return Medium(SSPₚ, SSPₛ)
 end
 
-function Medium(z::AbstractVector, c::AbstractVector, Z::Real = z[end])
-	cMat = vcat([0 0 R], hcat(z, c, c))
-	return Medium(cMat, R, Z)
-end
-
-function Medium(c::Real)
-	cFcn(r, z) = c
-	return Medium(cFcn, R, Z)
-end
-
-function Fluid(c::Celerity, args...)
-	return Medium(args...)
-end
-
-function Solid(args...)
-	return Medium(args...)
+function solid(SSPₚ::Celerity, SSPₛ::Celerity)
+	return Medium(SSPₚ, SSPₛ)
 end
 
 struct Environment <: OceanAcoustic
@@ -260,18 +185,21 @@ struct Environment <: OceanAcoustic
 				ErrorException("Boundaries $nBnd and $nBnd₊ should never meet.") |> throw
 			end
 
-			cₙ = media[nBnd].c
-			function c(r′)
-				Ω_z(r) = zₙ(r)..zₙ₊₁(r)
-				cₙ(r′, Ω_z(r′))
-			end
-			Ωc = c(Ωᵣ)
-			if Ωc ≤ 0
-				ErrorException("Ocean SSP $nBnd must be positive between its respective boundaries.")
+			for celerity ∈ (:SSPₚ, :SSPₛ)
+				SSP = getproperty(media[nBnd], celerity)
+				cₙ = SSP.c
+				function c(r′)
+					Ω_z(r) = zₙ(r)..zₙ₊₁(r)
+					cₙ(r′, Ω_z(r′))
+				end
+				Ωc = c(Ωᵣ)
+				if Ωc < 0
+					ErrorException("Ocean SSP $nBnd must be positive between its respective boundaries.")
+				end
 			end
 		end
 
-		return new(media, bounds)
+		return new(media, bounds, Ωᵣ)
 	end
 end
 
@@ -281,8 +209,8 @@ function Environment(
 	R::Real
 	) where {M <: Medium, B <: Boundary}
 
-	Ω = 0..R
-	return Environment(media, bounds, Ω)
+	Ωᵣ = 0..R
+	return Environment(media, bounds, Ωᵣ)
 end
 
 """
@@ -585,66 +513,4 @@ end
 function Field(θ₀s::AbstractVector{T}, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0.0)) where T <: Real
 	beams = Beam.(θ₀s, src, ocn, bty, ati)
 	return Field(beams, src, ocn, bty, ati)
-end
-
-## Plots
-function acoustic_plot()
-	f = Figure()
-	hold!(f, true)
-	xlabel!(f, "Range (m)")
-	ylabel!(f, "Depth (m)")
-	colorscheme!(f, "light")
-	return f
-end
-
-function acoustic_plot!(title::AbstractString)
-	f = gcf()
-	title!(f, title)
-end
-
-function acoustic_plot!()
-	f = gcf()
-	yflip!(f, true)
-end
-
-function acoustic_plot!(bnd::Boundary)
-	f = gcf()
-	r = LinRange(0.0, bnd.R, 1001)
-	plot!(f, r, bnd.z,
-		linecolor = color(0, 0, 0))
-end
-
-function acoustic_plot(bnd::Boundary)
-	f = acoustic_plot()
-	acoustic_plot!(bnd)
-	acoustic_plot!()
-	return f
-end
-
-function acoustic_plot!(ray::Ray)
-	f = gcf()
-	s = LinRange(0.0, ray.S, 1001)
-	plot!(f, ray.r(s), ray.z(s))
-end
-
-function acoustic_plot(ray::Ray)
-	f = acoustic_plot()
-	acoustic_plot!(ray)
-	acoustic_plot!()
-	return f
-end
-
-function acoustic_plot!(fld::Field)
-	f = gcf()
-	r = LinRange(0.0, fld.ocn.R, 11)
-	z = LinRange(0.0, fld.ocn.Z, 5)
-	contourf(r, z, fld.TL.(r', z),
-		levels = 21, majorlevels = 2)
-end
-
-function acoustic_plot(fld::Field)
-	f = acoustic_plot()
-	acoustic_plot!(fld)
-	acoustic_plot!()
-	return f
 end
