@@ -1,7 +1,7 @@
-function print_properties_types(io::IO, ac::OceanAcoustic)
-	println(string(typeof(ac)), "(")
-	for p ∈ propertynames(ac)
-		println(" ", p, "::", typeof(getproperty(ac, p)))
+function print_properties_types(io::IO, oac::OceanAcoustic)
+	println(string(typeof(oac)), "(")
+	for p ∈ propertynames(oac)
+		println(" ", p, "::", typeof(getproperty(oac, p)))
 	end
 	print(")")
 end

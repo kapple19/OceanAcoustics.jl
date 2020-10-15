@@ -134,7 +134,7 @@ function Celerity(c::Function)
 end
 
 function Celerity(z::AbstractVector, c::AbstractVector)
-	cFcn = interpolated_function()
+	cFcn = interpolated_function(z, c)
 	return Celerity(cMat)
 end
 
@@ -149,6 +149,11 @@ struct Medium <: OceanAcoustic
 	# ρ
 	# α
 	# T
+end
+
+function Medium(c::Union{Function, Real})
+	SSPₚ = Celerity(c)
+	return Medium(SSPₚ)
 end
 
 function fluid(SSPₚ::Celerity)
@@ -245,16 +250,14 @@ end
 An ocean sound source with position `pos` and signal `sig`.
 """
 struct Source <: OceanAcoustic
+	θ₀::Union{THETA, AbstractVector{THETA}} where THETA <: Real
 	pos::Position
 	sig::Signal
 end
 
 struct Scenario <: OceanAcoustic
-
-end
-
-module ExampleScenarios <: OceanAcoustic
-	# paste and export functions
+	src::Union{SOURCE, AbstractVector{SOURCE}} where SOURCE <: Source
+	env::Environment
 end
 
 """
@@ -268,12 +271,7 @@ The continuous callback `CbBnd` is defined as condition-affect pairs for checkin
 
 Note that it is easier to use the wrapper struct `Ray` to compute the solution, instead of calling this function.
 """
-function propagation_problem(
-	θ₀::Real,
-	src::Source,
-	ocn::Medium,
-	bty::Boundary,
-	ati::Boundary)
+function propagation_problem(scenario::Scenario)
 
 	function propagation!(du, u, p, s)
 		r = u[1]
