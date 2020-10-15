@@ -89,7 +89,7 @@ struct Signal
 
 	function Signal(f::Real)
 		if f ≤ 0
-			throw(DomainError(f, "Frequency must be positive."))
+			DomainError(f, "Frequency must be positive.") |> throw
 		end
 		return new(f)
 	end
@@ -103,6 +103,13 @@ An ocean sound source with position `pos` and signal `sig`.
 struct Source
 	pos::Position
 	sig::Signal
+end
+
+function Base.show(io::IO, src::Source)
+	println(io, "Source(")
+	println(io, "\t", src.pos)
+	println(io, "\t", src.sig)
+	print(io, ")")
 end
 
 struct Boundary
@@ -134,6 +141,16 @@ struct Boundary
 		end
 		return new(z, dz_dr, condition, affect!, R)
 	end
+end
+
+function Base.show(io::IO, bnd::Boundary)
+	println(io, "Boundary(")
+	println(io, "\tz::Function")
+	println(io, "\tdz_dr::Function")
+	println(io, "\tcondition::Function")
+	println(io, "\taffect!::Function")
+	println(io, "\tR::Real")
+	print(io, ")")
 end
 
 """
@@ -221,6 +238,19 @@ struct Medium
 	end
 end
 
+function Base.show(io::IO, med::Medium)
+	println(io, "Medium(")
+	println(io, "\tc::Function")
+	println(io, "\t∂c_∂r::Function")
+	println(io, "\t∂c_∂z::Function")
+	println(io, "\t∂²c_∂r²::Function")
+	println(io, "\t∂²c_∂r∂z::Function")
+	println(io, "\t∂²c_∂z²::Function")
+	println(io, "\tR::Real")
+	println(io, "\tZ::Real")
+	print(io, ")")
+end
+
 """
 	Medium(c::AbstractArray, R::Real = c[end, 1], Z::Real = c[1, end])
 
@@ -280,6 +310,19 @@ function Medium(c::Real, R::Real, Z::Real)
 	cFcn(r, z) = c
 	return Medium(cFcn, R, Z)
 end
+
+# struct Environment
+# 	media::AbstractVector{M} where M <: Medium
+# 	bounds::AbstractVector{B} where B <: Boundary
+# end
+
+# function Environment(
+# 	media::AbstractVector{M},
+# 	bounds::AbstractVector{B}
+# 	) where {M <: Medium, B <: Boundary}
+
+
+# end
 
 """
 	propagation_problem(θ₀::Real, src::Source, ocn::Medium, bty::Boundary, ati::Boundary) -> prob::ODEProblem, CbBnd::ContinuousCallback
@@ -388,6 +431,23 @@ struct Ray
 	c::Function
 end
 
+function Base.show(io::IO, ray::Ray)
+	println(io, "Ray(")
+	println(io, "\tθ₀::Real")
+	println(io, "\tsol")
+	println(io, "\tS::Real")
+	println(io, "\tr::Function")
+	println(io, "\tz::Function")
+	println(io, "\tξ::Function")
+	println(io, "\tζ::Function")
+	println(io, "\tτ::Function")
+	println(io, "\tp::Function")
+	println(io, "\tq::Function")
+	println(io, "\tθ::Function")
+	println(io, "\tc::Function")
+	print(io, ")")
+end
+
 """
 	Ray(θ₀::Real, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0.0))
 
@@ -429,6 +489,14 @@ struct Beam
 	ray
 	b::Function
 	W::Function
+end
+
+function Base.show(io::IO, beam::Beam)
+	println("Beam(")
+	println(io, "\tray")
+	println(io, "\tb::Function")
+	println(io, "\tW::Function")
+	println(")")
 end
 
 """
@@ -503,6 +571,18 @@ struct Field
 	ati::Boundary
 	p::Function
 	TL::Function
+end
+
+function Base.show(io::IO, fld::Field)
+	println(io, "Field(")
+	println(io, "\tbeams::AbstractVector{Beam}")
+	println(io, "\tsrc::Source")
+	println(io, "\tocn::Medium")
+	println(io, "\tbty::Boundary")
+	println(io, "\tati::Boundary")
+	println(io, "\tp::Function")
+	println(io, "\tTL::Function")
+	print(io, ")")
 end
 
 function Field(beams::AbstractVector{T}, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0.0)) where T <: Beam
