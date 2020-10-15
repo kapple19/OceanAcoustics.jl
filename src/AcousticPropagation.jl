@@ -10,11 +10,12 @@ terminate!,
 ODESolution,
 Rodas4,
 AutoVern7
-using ForwardDiff:
-derivative,
-gradient
+using ForwardDiff: derivative
 using Base: broadcastable
 using Roots: find_zeros
+using IntervalArithmetic:
+(..),
+Interval
 using GRUtils:
 Figure,
 plot!,
@@ -29,11 +30,14 @@ title!,
 gcf,
 display
 
+export Boundary
+export Medium
+export Environment
 export Position
 export Signal
 export Source
-export Boundary
-export Medium
+export Scenario
+export ExampleScenarios
 export Ray
 export Beam
 export Receiver
@@ -69,50 +73,7 @@ function boundary_reflection(t_inc::Vector, t_bnd::Vector)
 	return [cos(θ_rfl), sin(θ_rfl)]/c
 end
 
-"""
-	Position(r::Real, z::Real)
-
-Position in 2D slice of ocean, with range `r` (metres) and depth `z` (metres).
-"""
-struct Position
-	r::Real
-	z::Real
-end
-
-"""
-	Signal(f::Real)
-
-Parameters for a signal with frequency `f` (Hertz).
-"""
-struct Signal
-	f::Real
-
-	function Signal(f::Real)
-		if f ≤ 0
-			DomainError(f, "Frequency must be positive.") |> throw
-		end
-		return new(f)
-	end
-end
-
-"""
-	Source(pos::Position, sig::Signal)
-
-An ocean sound source with position `pos` and signal `sig`.
-"""
-struct Source
-	pos::Position
-	sig::Signal
-end
-
-function Base.show(io::IO, src::Source)
-	println(io, "Source(")
-	println(io, "\t", src.pos)
-	println(io, "\t", src.sig)
-	print(io, ")")
-end
-
-struct Boundary
+struct Boundary <: OceanAcoustic
 	z::Function
 	dz_dr::Function
 	condition::Function
@@ -141,16 +102,6 @@ struct Boundary
 		end
 		return new(z, dz_dr, condition, affect!, R)
 	end
-end
-
-function Base.show(io::IO, bnd::Boundary)
-	println(io, "Boundary(")
-	println(io, "\tz::Function")
-	println(io, "\tdz_dr::Function")
-	println(io, "\tcondition::Function")
-	println(io, "\taffect!::Function")
-	println(io, "\tR::Real")
-	print(io, ")")
 end
 
 """
@@ -193,7 +144,26 @@ function Boundary(z::Real, R::Real = 1.0)
 	return Boundary(zFcn, R)
 end
 
-struct Medium
+struct Celerity <: OceanAcoustic
+	c::Function
+	∂c_∂r::Function
+	∂c_∂z::Function
+	∂²c_∂r²::Function
+	∂²c_∂r∂z::Function
+	∂²c_∂z²::Function
+end
+
+function Celerity(c::Function)
+	∂c_∂r, ∂c_∂z, ∂²c_∂r², ∂²c_∂r∂z, ∂²c_∂z² = bivariate_partial_derivatives(c)
+	return Celerity(c, ∂c_∂r, ∂c_∂z, ∂²c_∂r², ∂²c_∂r∂z, ∂²c_∂z²)
+end
+
+function Celerity(args...)
+	cels = [args[n] for n = 1:length(args)]
+	return Celerity.(cels)
+end
+
+struct Medium <: OceanAcoustic
 	c::Function
 	∂c_∂r::Function
 	∂c_∂z::Function
@@ -238,35 +208,6 @@ struct Medium
 	end
 end
 
-function Base.show(io::IO, med::Medium)
-	println(io, "Medium(")
-	println(io, "\tc::Function")
-	println(io, "\t∂c_∂r::Function")
-	println(io, "\t∂c_∂z::Function")
-	println(io, "\t∂²c_∂r²::Function")
-	println(io, "\t∂²c_∂r∂z::Function")
-	println(io, "\t∂²c_∂z²::Function")
-	println(io, "\tR::Real")
-	println(io, "\tZ::Real")
-	print(io, ")")
-end
-
-"""
-	Medium(c::AbstractArray, R::Real = c[end, 1], Z::Real = c[1, end])
-
-An acoustic medium storing the sound speed `c` as an array with values `2:end` in the first row as range (metres), values `2:end` in the first column as depth (metres) and values `[2:end, 2:end]` as the respective sound speed (m/s) grid.
-
-The medium maximal range `R` (metres) and maximal depth `Z` are also stored. Their defaults are their respective last values of the given range/depth in the inputted sound speed array.
-
-The inputted values are interpolated into and stored as a bivariate function of range and depth.
-
-The following derivatives are also computed and stored:
-* `∂c_∂r(r, z)`: ∂c/∂r
-* `∂c_∂z(r, z)`: ∂c/∂z
-* `∂²c_∂r²(r, z)`: ∂²c/∂r²
-* `∂²c_∂r∂z(r, z)`: ∂²c/∂r∂z
-* `∂²c_∂z²(r, z)`: ∂²c/∂z²
-"""
 function Medium(c::AbstractArray, R::Real = c[end, 1], Z::Real = c[1, end])
 	r_ = [rc for rc ∈ c[1, 2:end]]
 	z_ = [zc for zc ∈ c[2:end, 1]]
@@ -276,53 +217,117 @@ function Medium(c::AbstractArray, R::Real = c[end, 1], Z::Real = c[1, end])
 	return Medium(cFcn, R, Z)
 end
 
-"""
-	Medium(z::AbstractVector, c::AbstractVector, R::Real, Z::Real = z[end])
-
-An acoustic medium storing the sound speed `c` (m/s) as a vector with corresponding depths `z` (metres).
-
-The medium maximal range `R` (metres) and medium maximal depth `Z` (metres) are also stored. The default of `Z` is the last value in `z`.
-
-The sound speed grid values are interpolated into and stored as a bivariate function of range `r` (metres) and depth `z` (metres) as `c(r, z)`.
-
-The following derivatives are also computed and stored:
-* `∂c_∂r(r, z)`: ∂c/∂r
-* `∂c_∂z(r, z)`: ∂c/∂z
-* `∂²c_∂r²(r, z)`: ∂²c/∂r²
-* `∂²c_∂r∂z(r, z)`: ∂²c/∂r∂z
-* `∂²c_∂z²(r, z)`: ∂²c/∂z²
-
-Note that for this dispatch, all range derivatives are zero due to range-independence.
-"""
-function Medium(z::AbstractVector, c::AbstractVector, R::Real, Z::Real = z[end])
+function Medium(z::AbstractVector, c::AbstractVector, Z::Real = z[end])
 	cMat = vcat([0 0 R], hcat(z, c, c))
 	return Medium(cMat, R, Z)
 end
 
-"""
-	Medium
-
-An acoustic medium storing sound speed `c` (m/s) as a constant, along with the maximal medium range `R` and maximal medium depth `Z`.
-
-The sound speed is interpolated and stored as a function. Derivatives are also calculated, but in the case of this dispatch, are zero.
-"""
-function Medium(c::Real, R::Real, Z::Real)
+function Medium(c::Real)
 	cFcn(r, z) = c
 	return Medium(cFcn, R, Z)
 end
 
-# struct Environment
-# 	media::AbstractVector{M} where M <: Medium
-# 	bounds::AbstractVector{B} where B <: Boundary
-# end
+function Fluid(c::Celerity, args...)
+	return Medium(args...)
+end
 
-# function Environment(
-# 	media::AbstractVector{M},
-# 	bounds::AbstractVector{B}
-# 	) where {M <: Medium, B <: Boundary}
+function Solid(args...)
+	return Medium(args...)
+end
 
+struct Environment <: OceanAcoustic
+	media::AbstractVector{M} where M <: Medium
+	bounds::AbstractVector{B} where B <: Boundary
+	Ω::Interval
 
-# end
+	function Environment(
+		media::AbstractVector{M},
+		bounds::AbstractVector{B},
+		Ωᵣ::Interval
+		) where {M <: Medium, B <: Boundary}
+
+		if length(media) ≠ length(bounds) + 1
+			DimensionMismatch("Environment requires the media on each side of each boundary.")
+		end
+
+		for nBnd = 1:length(bounds) - 1
+			zₙ(r) = bounds[nBnd].z(r)
+			zₙ₊₁(r) = bounds[nBnd + 1].z(r)
+			Δz(r) = zₙ(r) - zₙ₊₁(r)
+			Ω_Δz = Δz(Ωᵣ)
+			if Ω_Δz.lo ≤ 0
+				nBnd₊ = nBnd + 1
+				ErrorException("Boundaries $nBnd and $nBnd₊ should never meet.") |> throw
+			end
+
+			cₙ = media[nBnd].c
+			function c(r′)
+				Ω_z(r) = zₙ(r)..zₙ₊₁(r)
+				cₙ(r′, Ω_z(r′))
+			end
+			Ωc = c(Ωᵣ)
+			if Ωc ≤ 0
+				ErrorException("Ocean SSP $nBnd must be positive between its respective boundaries.")
+			end
+		end
+
+		return new(media, bounds)
+	end
+end
+
+function Environment(
+	media::AbstractVector{M},
+	bounds::AbstractVector{B},
+	R::Real
+	) where {M <: Medium, B <: Boundary}
+
+	Ω = 0..R
+	return Environment(media, bounds, Ω)
+end
+
+"""
+	Position(r::Real, z::Real)
+
+Position in 2D slice of ocean, with range `r` (metres) and depth `z` (metres).
+"""
+struct Position <: OceanAcoustic
+	r::Real
+	z::Real
+end
+
+"""
+	Signal(f::Real)
+
+Parameters for a signal with frequency `f` (Hertz).
+"""
+struct Signal <: OceanAcoustic
+	f::Real
+
+	function Signal(f::Real)
+		if f ≤ 0
+			DomainError(f, "Frequency must be positive.") |> throw
+		end
+		return new(f)
+	end
+end
+
+"""
+	Source(pos::Position, sig::Signal)
+
+An ocean sound source with position `pos` and signal `sig`.
+"""
+struct Source <: OceanAcoustic
+	pos::Position
+	sig::Signal
+end
+
+struct Scenario <: OceanAcoustic
+
+end
+
+module ExampleScenarios <: OceanAcoustic
+	# paste and export functions
+end
 
 """
 	propagation_problem(θ₀::Real, src::Source, ocn::Medium, bty::Boundary, ati::Boundary) -> prob::ODEProblem, CbBnd::ContinuousCallback
@@ -416,7 +421,7 @@ function solve_propagation(prob::ODEProblem, CbBnd::Union{ContinuousCallback, Ca
 	return RaySol
 end
 
-struct Ray
+struct Ray <: OceanAcoustic
 	θ₀::Real
 	sol
 	S::Real
@@ -429,23 +434,6 @@ struct Ray
 	q::Function
 	θ::Function
 	c::Function
-end
-
-function Base.show(io::IO, ray::Ray)
-	println(io, "Ray(")
-	println(io, "\tθ₀::Real")
-	println(io, "\tsol")
-	println(io, "\tS::Real")
-	println(io, "\tr::Function")
-	println(io, "\tz::Function")
-	println(io, "\tξ::Function")
-	println(io, "\tζ::Function")
-	println(io, "\tτ::Function")
-	println(io, "\tp::Function")
-	println(io, "\tq::Function")
-	println(io, "\tθ::Function")
-	println(io, "\tc::Function")
-	print(io, ")")
 end
 
 """
@@ -485,18 +473,10 @@ function Ray(θ₀::Real, src::Source, ocn::Medium, bty::Boundary, ati::Boundary
 	return Ray(θ₀, sol, S, r, z, ξ, ζ, τ, p, q, θ, c)
 end
 
-struct Beam
+struct Beam <: OceanAcoustic
 	ray
 	b::Function
 	W::Function
-end
-
-function Base.show(io::IO, beam::Beam)
-	println("Beam(")
-	println(io, "\tray")
-	println(io, "\tb::Function")
-	println(io, "\tW::Function")
-	println(")")
 end
 
 """
@@ -547,12 +527,12 @@ function closest_points(r, z, beam)
 	return sMins, sqrt.(Q.(sMins))
 end
 
-Base.broadcastable(m::Position) = Ref(m)
-Base.broadcastable(m::Medium) = Ref(m)
-Base.broadcastable(m::Boundary) = Ref(m)
-Base.broadcastable(m::Signal) = Ref(m)
-Base.broadcastable(m::Source) = Ref(m)
-Base.broadcastable(m::Ray) = Ref(m)
+# Base.broadcastable(m::Position) = Ref(m)
+# Base.broadcastable(m::Medium) = Ref(m)
+# Base.broadcastable(m::Boundary) = Ref(m)
+# Base.broadcastable(m::Signal) = Ref(m)
+# Base.broadcastable(m::Source) = Ref(m)
+# Base.broadcastable(m::Ray) = Ref(m)
 
 function add_to_pressure(r::Real, z::Real, beam::Beam, δθ₀::Real, coh_pre::Function)
 	sMins, nMins = closest_points(r, z, beam)
@@ -563,7 +543,7 @@ function add_to_pressure(r::Real, z::Real, beam::Beam, δθ₀::Real, coh_pre::F
 	return p
 end
 
-struct Field
+struct Field <: OceanAcoustic
 	beams::AbstractVector{Beam}
 	src::Source
 	ocn::Medium
@@ -571,18 +551,6 @@ struct Field
 	ati::Boundary
 	p::Function
 	TL::Function
-end
-
-function Base.show(io::IO, fld::Field)
-	println(io, "Field(")
-	println(io, "\tbeams::AbstractVector{Beam}")
-	println(io, "\tsrc::Source")
-	println(io, "\tocn::Medium")
-	println(io, "\tbty::Boundary")
-	println(io, "\tati::Boundary")
-	println(io, "\tp::Function")
-	println(io, "\tTL::Function")
-	print(io, ")")
 end
 
 function Field(beams::AbstractVector{T}, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0.0)) where T <: Beam
