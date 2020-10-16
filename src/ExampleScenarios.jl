@@ -1,23 +1,34 @@
 module ExampleScenarios
-# export flat
-# export smooth
-# export convergence
-# export upward
-# export parabolic
-# export channel
-# export seamount
-# export simple
-# export n2linear
-# export slopes
+export flat
+export smooth
+export convergence
+export upward
+export parabolic
+export channel
+export seamount
+export simple
+export n2linear
+export slopes
 
 ## Flat Scenario
-function flat(θ₀ = π/4*LinRange(-1.0, 1.0, 51), R = 5e2)
-	src = Source(Position(0.0, 2e2), Signal(2e2))
-	ocn = Medium(15e2)
-	bty = Boundary(5e2, R)
-	ati = Boundary(0.0, R)
+function flat()
+	# boundaries = Boundary.([0.0, 5e2])
+	ati = Boundary(0.0)
+	bty = Boundary(5e2)
+	boundaries = [ati, bty]
 
+	# media = Medium.([343, 15e2, 17e2])
+	air = Medium(343)
+	ocn = fluid_medium(15e2)
+	sed = solid_medium(17e2)
+	media = [air, ocn, sed]
 	
+	R = 10e2
+	env = Environment(boundaries, media, R)
+
+	src = Source(Position(0.0, 2e2), Signal(2e2))
+
+	θ₀ = π/4*LinRange(-1.0, 1.0, 51)
 
 	return 
 end
