@@ -21,16 +21,16 @@ export Boundary
 export Medium
 export Environment
 
-# * Scenario
-export Position
-export Signal
-export Source
-export Scenario
+# # * Scenario
+# export Position
+# export Signal
+# export Source
+# export Scenario
 
-# * Propagation
-export Ray
-export Beam
-export Field
+# # * Propagation
+# export Ray
+# export Beam
+# export Field
 
 """
 	boundary_reflection(t_inc::Vector, t_bnd::Vector) -> t_rfl::Vector
@@ -56,14 +56,13 @@ struct Boundary <: OceanAcoustic
 	dz_dr::Function
 	condition::Function
 	affect!::Function
-	R::Real
 	
 	"""
 		Boundary(z::Function)
 
 	An ocean boundary storing its depth `z` (metres) as univariate function of range (metres).
 	"""
-	function Boundary(z::Function, R::Real)
+	function Boundary(z::Function)
 		dz_dr(r) = derivative(z, r)
 		condition(u, t, ray) = z(u[1]) - u[2]
 		function affect!(ray)
@@ -78,7 +77,7 @@ struct Boundary <: OceanAcoustic
 				return reflect!(ray)
 			end
 		end
-		return new(z, dz_dr, condition, affect!, R)
+		return new(z, dz_dr, condition, affect!)
 	end
 end
 
@@ -242,297 +241,297 @@ function Environment(
 	return Environment(media, boundaries, Ωrange)
 end
 
-"""
-	Position(r::Real, z::Real)
+# """
+# 	Position(r::Real, z::Real)
 
-Position in 2D slice of ocean, with range `r` (metres) and depth `z` (metres).
-"""
-struct Position <: OceanAcoustic
-	r::Real
-	z::Real
-end
+# Position in 2D slice of ocean, with range `r` (metres) and depth `z` (metres).
+# """
+# struct Position <: OceanAcoustic
+# 	r::Real
+# 	z::Real
+# end
 
-"""
-	Signal(f::Real)
+# """
+# 	Signal(f::Real)
 
-Parameters for a signal with frequency `f` (Hertz).
-"""
-struct Signal <: OceanAcoustic
-	f::Real
+# Parameters for a signal with frequency `f` (Hertz).
+# """
+# struct Signal <: OceanAcoustic
+# 	f::Real
 
-	function Signal(f::Real)
-		if f ≤ 0
-			DomainError(f, "Frequency must be positive.") |> throw
-		end
-		return new(f)
-	end
-end
+# 	function Signal(f::Real)
+# 		if f ≤ 0
+# 			DomainError(f, "Frequency must be positive.") |> throw
+# 		end
+# 		return new(f)
+# 	end
+# end
 
-struct Source <: OceanAcoustic
-	θ₀::Union{THETA, AbstractVector{THETA}} where THETA <: Real
-	δθ₀::Union{THETA, AbstractVector{THETA}} where THETA <: Real
-	pos::Position
-	sig::Signal
-end
+# struct Source <: OceanAcoustic
+# 	θ₀::Union{THETA, AbstractVector{THETA}} where THETA <: Real
+# 	δθ₀::Union{THETA, AbstractVector{THETA}} where THETA <: Real
+# 	pos::Position
+# 	sig::Signal
+# end
 
-function Source(θ₀::AbstractVector{THETA}, pos::Position, sig::Signal) where THETA <: Real
-	δθ₀ = diff(θ₀)
-	push!(δθ₀, δθ₀[end])
-	return Source(θ₀, δθ₀, pos, sig)
-end
+# function Source(θ₀::AbstractVector{THETA}, pos::Position, sig::Signal) where THETA <: Real
+# 	δθ₀ = diff(θ₀)
+# 	push!(δθ₀, δθ₀[end])
+# 	return Source(θ₀, δθ₀, pos, sig)
+# end
 
-function Source(θ₀::Real, pos::Position, sig::Signal)
-	δθ₀ = 1.0
-	return Source(θ₀, δθ₀, pos, sig)
-end
+# function Source(θ₀::Real, pos::Position, sig::Signal)
+# 	δθ₀ = 1.0
+# 	return Source(θ₀, δθ₀, pos, sig)
+# end
 
-struct Scenario <: OceanAcoustic
-	sources::Union{SOURCE, AbstractVector{SOURCE}} where SOURCE <: Source
-	env::Environment
-	layers::Union{LOCATION, AbstractVector{LOCATION}} where LOCATION <: Integer
-end
+# struct Scenario <: OceanAcoustic
+# 	sources::Union{SOURCE, AbstractVector{SOURCE}} where SOURCE <: Source
+# 	env::Environment
+# 	layers::Union{LOCATION, AbstractVector{LOCATION}} where LOCATION <: Integer
+# end
 
-function propagation_problem(scenario::Scenario)
-	# Initialize vector of `ODEProblem`s and `CallbackSet`s
-	prop_probs = Vector{ODEProblem}(undef, 0)
-	callbacks = Vector{CallbackSet}(undef, 0)
-	δθ₀s = Vector{Real}(undef, 0)
+# function propagation_problem(scenario::Scenario)
+# 	# Initialize vector of `ODEProblem`s and `CallbackSet`s
+# 	prop_probs = Vector{ODEProblem}(undef, 0)
+# 	callbacks = Vector{CallbackSet}(undef, 0)
+# 	δθ₀s = Vector{Real}(undef, 0)
 
-	# Range condition
-	Ωr = scenario.env.Ωrange
-	rng_condition(u, t, ray) = (Ωr.hi - Ωr.lo)/2 - abs(u[1] - (Ωr.hi + Ω.lo)/2)
-	rng_affect!(ray) = terminate!(ray)
+# 	# Range condition
+# 	Ωr = scenario.env.Ωrange
+# 	rng_condition(u, t, ray) = (Ωr.hi - Ωr.lo)/2 - abs(u[1] - (Ωr.hi + Ω.lo)/2)
+# 	rng_affect!(ray) = terminate!(ray)
 
-	# Universal Initial Conditions
-	τ₀ = 0.0
-	p₀ʳ = 1.0
-	p₀ⁱ = 0.0
-	q₀ʳ = 0.0
+# 	# Universal Initial Conditions
+# 	τ₀ = 0.0
+# 	p₀ʳ = 1.0
+# 	p₀ⁱ = 0.0
+# 	q₀ʳ = 0.0
 
-	# Maximum Path Length
-	TLmax = 100.0
-	S = 10^(TLmax/10.0)
-	sSpan = (0., S)
+# 	# Maximum Path Length
+# 	TLmax = 100.0
+# 	S = 10^(TLmax/10.0)
+# 	sSpan = (0., S)
 
-	# Loop on each sound source
-	for (nSrc, src) ∈ enumerate(scenario.sources)
-		# Get Environment
-		nLayer = scenario.layers[nSrc]
-		ocn = scenario.env.media[nLayer]
-		ati = scenario.env.boundaries[nLayer]
-		bty = scenario.env.media[nLayer + 1]
-		Ωz = scenario.env.Ωdepths[nLayer]
+# 	# Loop on each sound source
+# 	for (nSrc, src) ∈ enumerate(scenario.sources)
+# 		# Get Environment
+# 		nLayer = scenario.layers[nSrc]
+# 		ocn = scenario.env.media[nLayer]
+# 		ati = scenario.env.boundaries[nLayer]
+# 		bty = scenario.env.media[nLayer + 1]
+# 		Ωz = scenario.env.Ωdepths[nLayer]
 
-		# Get Celerity
-		c = ocn.SSPₚ.c
-		∂c_∂r = ocn.SSPₚ.∂c_∂r
-		∂c_∂z = ocn.SSPₚ.∂c_∂z
+# 		# Get Celerity
+# 		c = ocn.SSPₚ.c
+# 		∂c_∂r = ocn.SSPₚ.∂c_∂r
+# 		∂c_∂z = ocn.SSPₚ.∂c_∂z
 		
-		# Equations:
-		# * eikonal equation
-		# * transport equation (first order)
-		# * dynamic ray equations
-		function propagation!(du, u, p, s)
-			r = u[1]
-			z = u[2]
-			ξ = u[3]
-			ζ = u[4]
-			τ = u[5]
-			pʳ = u[6]
-			pⁱ = u[7]
-			qʳ = u[8]
-			qⁱ = u[9]
+# 		# Equations:
+# 		# * eikonal equation
+# 		# * transport equation (first order)
+# 		# * dynamic ray equations
+# 		function propagation!(du, u, p, s)
+# 			r = u[1]
+# 			z = u[2]
+# 			ξ = u[3]
+# 			ζ = u[4]
+# 			τ = u[5]
+# 			pʳ = u[6]
+# 			pⁱ = u[7]
+# 			qʳ = u[8]
+# 			qⁱ = u[9]
 
-			# Second partial derivative WRT ray normal
-			∂²c_∂n²(r, z) = c(r, z)^2*(
-				ocn.SSPₚ.∂²c_∂r²(r, z)*ζ^2
-				- 2ocn.SSPₚ.∂²c_∂r∂z(r, z)*ξ*ζ
-				+ ocn.SSPₚ.∂²c_∂z²(r, z)*ξ^2
-			)
+# 			# Second partial derivative WRT ray normal
+# 			∂²c_∂n²(r, z) = c(r, z)^2*(
+# 				ocn.SSPₚ.∂²c_∂r²(r, z)*ζ^2
+# 				- 2ocn.SSPₚ.∂²c_∂r∂z(r, z)*ξ*ζ
+# 				+ ocn.SSPₚ.∂²c_∂z²(r, z)*ξ^2
+# 			)
 
-			# Differential Equations:
-			# * Eikonal
-			du[1] = dr_ds = c(r, z)*ξ
-			du[2] = dz_ds = c(r, z)*ζ
-			du[3] = dξ_ds = -∂c_∂r(r, z)/c(r, z)^2
-			du[4] = dζ_ds = -∂c_∂z(r, z)/c(r, z)^2
+# 			# Differential Equations:
+# 			# * Eikonal
+# 			du[1] = dr_ds = c(r, z)*ξ
+# 			du[2] = dz_ds = c(r, z)*ζ
+# 			du[3] = dξ_ds = -∂c_∂r(r, z)/c(r, z)^2
+# 			du[4] = dζ_ds = -∂c_∂z(r, z)/c(r, z)^2
 
-			# * Time
-			du[5] = dτ_ds = 1/c(r, z)
+# 			# * Time
+# 			du[5] = dτ_ds = 1/c(r, z)
 
-			# * Dynamic Ray Equations
-			du[6] = dpʳ_ds = ∂²c_∂n²(r, z)/c(r, z)^2*qʳ
-			du[7] = dpⁱ_ds = ∂²c_∂n²(r, z)/c(r, z)^2*qⁱ
-			du[8] = dqʳ_ds = c(r, z)*pʳ
-			du[9] = dqⁱ_ds = c(r, z)*pⁱ
-		end
+# 			# * Dynamic Ray Equations
+# 			du[6] = dpʳ_ds = ∂²c_∂n²(r, z)/c(r, z)^2*qʳ
+# 			du[7] = dpⁱ_ds = ∂²c_∂n²(r, z)/c(r, z)^2*qⁱ
+# 			du[8] = dqʳ_ds = c(r, z)*pʳ
+# 			du[9] = dqⁱ_ds = c(r, z)*pⁱ
+# 		end
 
-		# Boundary Callbacks
-		CbRng = ContinuousCallback(rng_condition, rng_affect!)
-		CbBty = ContinuousCallback(bty.condition, bty.affect!)
-		CbAti = ContinuousCallback(ati.condition, ati.affect!)
+# 		# Boundary Callbacks
+# 		CbRng = ContinuousCallback(rng_condition, rng_affect!)
+# 		CbBty = ContinuousCallback(bty.condition, bty.affect!)
+# 		CbAti = ContinuousCallback(ati.condition, ati.affect!)
 
-		# Callback Set
-		push!(callbacks, CallbackSet(CbRng, CbBty, CbAti))
+# 		# Callback Set
+# 		push!(callbacks, CallbackSet(CbRng, CbBty, CbAti))
 
-		# Initial conditions for source
-		r₀ = src.pos.r
-		z₀ = src.pos.z
-		ω = src.sig.f
-		λ₀ = c(r₀, z₀)/src.sig.f
-		W₀ = 100λ₀ # 10..50
-		q₀ⁱ = ω*W₀^2/2
+# 		# Initial conditions for source
+# 		r₀ = src.pos.r
+# 		z₀ = src.pos.z
+# 		ω = src.sig.f
+# 		λ₀ = c(r₀, z₀)/src.sig.f
+# 		W₀ = 100λ₀ # 10..50
+# 		q₀ⁱ = ω*W₀^2/2
 
-		# Loop for each angle
-		for (θ₀, δθ₀) ∈ [(src.θ₀[nθ₀], src.δθ₀[nθ₀]) for nθ₀ ∈ eachindex(src.θ₀)]
-			# Initial condition for angle
-			ξ₀ = cos(θ₀)/c(r₀, z₀)
-			ζ₀ = sin(θ₀)/c(r₀, z₀)
-			push!(δθ₀s, src.δθ₀)
+# 		# Loop for each angle
+# 		for (θ₀, δθ₀) ∈ [(src.θ₀[nθ₀], src.δθ₀[nθ₀]) for nθ₀ ∈ eachindex(src.θ₀)]
+# 			# Initial condition for angle
+# 			ξ₀ = cos(θ₀)/c(r₀, z₀)
+# 			ζ₀ = sin(θ₀)/c(r₀, z₀)
+# 			push!(δθ₀s, src.δθ₀)
 
-			# Initial Condition
-			u₀ = [r₀, z₀, ξ₀, ζ₀, τ₀, p₀ʳ, p₀ⁱ, q₀ʳ, q₀ⁱ]
+# 			# Initial Condition
+# 			u₀ = [r₀, z₀, ξ₀, ζ₀, τ₀, p₀ʳ, p₀ⁱ, q₀ʳ, q₀ⁱ]
 
-			# Accumulate ODEProblems
-			push!(prop_probs, ODEProblem(propagation!, u₀, sSpan))
-		end
-	end
-	return prop_probs, callbacks, δθ₀s
-end
+# 			# Accumulate ODEProblems
+# 			push!(prop_probs, ODEProblem(propagation!, u₀, sSpan))
+# 		end
+# 	end
+# 	return prop_probs, callbacks, δθ₀s
+# end
 
-function solve_propagation(prop_prob::ODEProblem, callback::CallbackSet)
-	RaySol = solve(prop_prob, AutoVern7(Rodas4()), callback = callback, reltol=1e-8, abstol=1e-8)
-end
+# function solve_propagation(prop_prob::ODEProblem, callback::CallbackSet)
+# 	RaySol = solve(prop_prob, AutoVern7(Rodas4()), callback = callback, reltol=1e-8, abstol=1e-8)
+# end
 
-struct Ray <: OceanAcoustic
-	S::Real
-	r::Function
-	z::Function
-	ξ::Function
-	ζ::Function
-	τ::Function
-	p::Function
-	q::Function
-	θ::Function
-	c::Function
-	δθ₀::Real
-end
+# struct Ray <: OceanAcoustic
+# 	S::Real
+# 	r::Function
+# 	z::Function
+# 	ξ::Function
+# 	ζ::Function
+# 	τ::Function
+# 	p::Function
+# 	q::Function
+# 	θ::Function
+# 	c::Function
+# 	δθ₀::Real
+# end
 
-function Ray(RaySol::ODESolution, δθ₀::Real)
-	S = RaySol.t[end]
-	r(s) = RaySol(s, idxs = 1)
-	z(s) = RaySol(s, idxs = 2)
-	ξ(s) = RaySol(s, idxs = 3)
-	ζ(s) = RaySol(s, idxs = 4)
-	τ(s) = RaySol(s, idxs = 5)
-	p(s) = RaySol(s, idxs = 6) + im*RaySol(s, idxs = 7)
-	q(s) = RaySol(s, idxs = 8) + im*RaySol(s, idxs = 9)
-	θ(s) = atan(ζ(s)/ξ(s))
-	c(s) = cos(θ(s))/ξ(s)
+# function Ray(RaySol::ODESolution, δθ₀::Real)
+# 	S = RaySol.t[end]
+# 	r(s) = RaySol(s, idxs = 1)
+# 	z(s) = RaySol(s, idxs = 2)
+# 	ξ(s) = RaySol(s, idxs = 3)
+# 	ζ(s) = RaySol(s, idxs = 4)
+# 	τ(s) = RaySol(s, idxs = 5)
+# 	p(s) = RaySol(s, idxs = 6) + im*RaySol(s, idxs = 7)
+# 	q(s) = RaySol(s, idxs = 8) + im*RaySol(s, idxs = 9)
+# 	θ(s) = atan(ζ(s)/ξ(s))
+# 	c(s) = cos(θ(s))/ξ(s)
 
-	return Ray(S, r, z, ξ, ζ, τ, p, q, θ, c, δθ₀)
-end
+# 	return Ray(S, r, z, ξ, ζ, τ, p, q, θ, c, δθ₀)
+# end
 
-function Ray(scenario::Scenario)
-	prop_probs, callbacks, δθ₀s = propagation_problem(scenario)
+# function Ray(scenario::Scenario)
+# 	prop_probs, callbacks, δθ₀s = propagation_problem(scenario)
 	
-	RaySols = solve_propagation.(Prob, CbBnd)
+# 	RaySols = solve_propagation.(Prob, CbBnd)
 	
-	return Ray.(RaySols, δθ₀s)
-end
+# 	return Ray.(RaySols, δθ₀s)
+# end
 
-struct Beam <: OceanAcoustic
-	ray
-	b::Function
-	W::Function
-end
+# struct Beam <: OceanAcoustic
+# 	ray
+# 	b::Function
+# 	W::Function
+# end
 
-function Beam(ray::Ray)
-	r(s) = ray.r(s)
-	z(s) = ray.z(s)
-	τ(s) = ray.τ(s)
-	p(s) = ray.p(s)
-	q(s) = ray.q(s)
-	c(s) = ray.c(s)
-	W(s) = sqrt(-2/ω/imag(p(s)/q(s)))
+# function Beam(ray::Ray)
+# 	r(s) = ray.r(s)
+# 	z(s) = ray.z(s)
+# 	τ(s) = ray.τ(s)
+# 	p(s) = ray.p(s)
+# 	q(s) = ray.q(s)
+# 	c(s) = ray.c(s)
+# 	W(s) = sqrt(-2/ω/imag(p(s)/q(s)))
 
-	c₀ = c(0)
-	ω = 2π*src.sig.f
-	λ₀ = c₀/src.sig.f
-	W₀ = W(0)
-	q₀ = q(0)
-	δθ₀ = ray.δθ₀
+# 	c₀ = c(0)
+# 	ω = 2π*src.sig.f
+# 	λ₀ = c₀/src.sig.f
+# 	W₀ = W(0)
+# 	q₀ = q(0)
+# 	δθ₀ = ray.δθ₀
 
-	A = δθ₀/c₀ * exp(im*π/4)*sqrt(q₀*ω*cos(θ₀)/2π)
-	b(s, n) = A * sqrt(c(s)/r(s)/q(s)) * exp(-im*ω * (τ(s) + p(s)/q(s)*n^2/2))
+# 	A = δθ₀/c₀ * exp(im*π/4)*sqrt(q₀*ω*cos(θ₀)/2π)
+# 	b(s, n) = A * sqrt(c(s)/r(s)/q(s)) * exp(-im*ω * (τ(s) + p(s)/q(s)*n^2/2))
 
-	return Beam(ray, b, W)
-end
+# 	return Beam(ray, b, W)
+# end
 
-function Beam(scenario::Scenario)
-	rays = Ray(scenario)
-	return Beam.(rays)
-end
+# function Beam(scenario::Scenario)
+# 	rays = Ray(scenario)
+# 	return Beam.(rays)
+# end
 
-function closest_points(r, z, beam)
-	Q(s) = (beam.ray.r(s) - r)^2 + (beam.ray.z(s) - z)^2
-	dQ(s) = derivative(Q, s)
-	sMins = find_zeros(dQ, 0, beam.ray.S)
-	d²Q(s) = derivative(dQ, s)
-	# min_cond(s) = d²Q(s) > 0 && beam.W(s) > sqrt(Q(s))
-	min_cond(s) = d²Q(s) > 0
-	min_cond.(sMins)
-	filter!(min_cond, sMins)
-	return sMins, sqrt.(Q.(sMins))
-end
+# function closest_points(r, z, beam)
+# 	Q(s) = (beam.ray.r(s) - r)^2 + (beam.ray.z(s) - z)^2
+# 	dQ(s) = derivative(Q, s)
+# 	sMins = find_zeros(dQ, 0, beam.ray.S)
+# 	d²Q(s) = derivative(dQ, s)
+# 	# min_cond(s) = d²Q(s) > 0 && beam.W(s) > sqrt(Q(s))
+# 	min_cond(s) = d²Q(s) > 0
+# 	min_cond.(sMins)
+# 	filter!(min_cond, sMins)
+# 	return sMins, sqrt.(Q.(sMins))
+# end
 
-function add_to_pressure(r::Real, z::Real, beam::Beam, δθ₀::Real, coh_pre::Function)
-	sMins, nMins = closest_points(r, z, beam)
-	p = complex(0)
-	for (n, sMin) ∈ enumerate(sMins)
-		p += coh_pre(δθ₀ * beam.b(sMin, nMins[n]))
-	end
-	return p
-end
+# function add_to_pressure(r::Real, z::Real, beam::Beam, δθ₀::Real, coh_pre::Function)
+# 	sMins, nMins = closest_points(r, z, beam)
+# 	p = complex(0)
+# 	for (n, sMin) ∈ enumerate(sMins)
+# 		p += coh_pre(δθ₀ * beam.b(sMin, nMins[n]))
+# 	end
+# 	return p
+# end
 
-struct Field <: OceanAcoustic
-	beams::AbstractVector{Beam}
-	src::Source
-	ocn::Medium
-	bty::Boundary
-	ati::Boundary
-	p::Function
-	TL::Function
-end
+# struct Field <: OceanAcoustic
+# 	beams::AbstractVector{Beam}
+# 	src::Source
+# 	ocn::Medium
+# 	bty::Boundary
+# 	ati::Boundary
+# 	p::Function
+# 	TL::Function
+# end
 
-function Field(beams::AbstractVector{T}, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0.0)) where T <: Beam
+# function Field(beams::AbstractVector{T}, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0.0)) where T <: Beam
 
-	coh_pre(p) = p
-	coh_post(p) = p
+# 	coh_pre(p) = p
+# 	coh_post(p) = p
 
-	function pressure(r::Real, z::Real)
-		p = complex(0.0)
-		for (n, beam) ∈ enumerate(beams)
-			p += add_to_pressure(r, z, beam, δθ₀[n], coh_pre)
-		end
-		return coh_post(p)
+# 	function pressure(r::Real, z::Real)
+# 		p = complex(0.0)
+# 		for (n, beam) ∈ enumerate(beams)
+# 			p += add_to_pressure(r, z, beam, δθ₀[n], coh_pre)
+# 		end
+# 		return coh_post(p)
 		
-	end
+# 	end
 
-	function transmission_loss(r::Real, z::Real)
-		pAbs = abs(pressure(r, z))
-		if isnan(pAbs)
-			return 0.0
-		else
-			TL = max(0.0, min(100.0, -20log10(pAbs)))
-			return TL
-		end
-	end
+# 	function transmission_loss(r::Real, z::Real)
+# 		pAbs = abs(pressure(r, z))
+# 		if isnan(pAbs)
+# 			return 0.0
+# 		else
+# 			TL = max(0.0, min(100.0, -20log10(pAbs)))
+# 			return TL
+# 		end
+# 	end
 
-	return Field(beams, src, ocn, bty, ati, pressure, transmission_loss)
-end
+# 	return Field(beams, src, ocn, bty, ati, pressure, transmission_loss)
+# end
 
-function Field(θ₀s::AbstractVector{T}, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0.0)) where T <: Real
-	beams = Beam.(θ₀s, src, ocn, bty, ati)
-	return Field(beams, src, ocn, bty, ati)
-end
+# function Field(θ₀s::AbstractVector{T}, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0.0)) where T <: Real
+# 	beams = Beam.(θ₀s, src, ocn, bty, ati)
+# 	return Field(beams, src, ocn, bty, ati)
+# end
