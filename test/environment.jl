@@ -12,38 +12,53 @@ end
 
 @testset "Boundary" begin
 	zFcn(r) = r^2 - sin(r)
-	dz_dr(r) = 2r - cos(r)
 
-	bnd = Boundary(zFcn)
-	@testset "Function" for r ∈ 3LinRange(-1, 1, 11)
-		@test dz_dr(r) ≈ bnd.dz_dr(r)
+	bnd = Boundary(zFcn, r -> 1500)
+	@testset "Function Input" for r ∈ 3LinRange(-1, 1, 11)
+		@test zFcn(r) ≈ bnd.z(r)
 	end
 
 	zFcns = [r -> exp(-r); r -> cos(2r)*sin(3r)]
-	dz_drs = [r -> -exp(-r); r -> 3cos(2r)*cos(3r) - 2sin(2r)*sin(3r)]
-	bnds = Boundary.(zFcns)
-	@testset "Function" for r ∈ 3LinRange(-1, 1, 11), nFcn ∈ eachindex(zFcns)
-			@test bnds[nFcn].dz_dr(r) ≈ dz_drs[nFcn](r)
+	cFcns = [r -> 1500 for nz ∈ zFcns]
+	bnds = Boundary.(zFcns, cFcns)
+	@testset "Functions Input" for r ∈ 3LinRange(-1, 1, 11), nFcn ∈ eachindex(zFcns)
+			@test zFcns[nFcn](r) ≈ bnds[nFcn].z(r)
 	end
 end
 
-# ## Medium
-# @testset "Medium" begin
-#     R = 1e3
-#     Z = 1e3
+@testset "Celerity" begin
+	R = 10e3
+	Z = 2e3
+	cFcn(r, z) = 1500 - 100r/R + 100z/Z
+	an_∂c_∂r(r, z) = -100/R
+	an_∂c_∂z(r, z) = 100/Z
+	an_∂²c(r, z) = 0
+	SSP = OceanAcoustics.Celerity(cFcn)
+	@testset "Simple Function Input" for r ∈ LinRange(0, R, 5), z ∈ LinRange(0, Z, 5)
+		@test cFcn(r, z) ≈ SSP.c(r, z)
+		@test an_∂c_∂r(r, z) ≈ SSP.∂c_∂r(r, z)
+		@test an_∂c_∂z(r, z) ≈ SSP.∂c_∂z(r, z)
+		@test an_∂²c(r, z) ≈ SSP.∂²c_∂r²(r, z)
+		@test an_∂²c(r, z) ≈ SSP.∂²c_∂r∂z(r, z)
+		@test an_∂²c(r, z) ≈ SSP.∂²c_∂z∂r(r, z)
+		@test an_∂²c(r, z) ≈ SSP.∂²c_∂z²(r, z)
+	end
 
-#     cVal = 1500.0
-#     ocn = Medium(cVal, R, Z)
-#     @test ocn.c(-1, 0) == cVal
-#     @test ocn.c(R/2, 0) == cVal
-#     @test ocn.c(R + 1, 0) == cVal
-
-#     zVec = range(0.0, Z, length = 3)
-#     cVec = [1550.0, 1500.0, 1600.0]
-#     ocn = Medium(zVec, cVec, R, Z)
-#     @test ocn.c(0.0, -1.0) == cVec[1]
-#     @test ocn.c(0.0, zVec[1]) == cVec[1]
-#     @test ocn.c(0.0, zVec[2]) == cVec[2]
-#     @test ocn.c(0.0, zVec[3]) == cVec[3]
-#     @test ocn.c(0.0, Z + 1.0) == cVec[3]
-# end
+	cFcn(r, z) = 1600 - 100z*(z - Z)/(Z^2/4) + 100r/R
+	an_∂c_∂r(r, z) = 100/R
+	an_∂c_∂z(r, z) = -400(2z - Z)/Z^2
+	an_∂²c_∂r²(r, z) = 0
+	an_∂²c_∂r∂z(r, z) = 0
+	an_∂²c_∂z∂r(r, z) = 0
+	an_∂²c_∂z²(r, z) = -800/Z^2
+	SSP = OceanAcoustics.Celerity(cFcn)
+	@testset "Parabolic Function Input" for r ∈ LinRange(0, R, 5), z ∈ LinRange(0, Z, 5)
+		@test cFcn(r, z) ≈ SSP.c(r, z)
+		@test an_∂c_∂r(r, z) ≈ SSP.∂c_∂r(r, z)
+		@test an_∂c_∂z(r, z) ≈ SSP.∂c_∂z(r, z)
+		@test an_∂²c_∂r²(r, z) ≈ SSP.∂²c_∂r²(r, z)
+		@test an_∂²c_∂r∂z(r, z) ≈ SSP.∂²c_∂r∂z(r, z)
+		@test an_∂²c_∂z∂r(r, z) ≈ SSP.∂²c_∂z∂r(r, z)
+		@test an_∂²c_∂z²(r, z) ≈ SSP.∂²c_∂z²(r, z)
+	end
+end

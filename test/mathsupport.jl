@@ -42,6 +42,7 @@ fcn_tests = [
 		(x, y) -> x^2 * 3y^2, # ∂f_∂y
 		(x, y) -> 2y^3, # ∂²f_∂x²
 		(x, y) -> 2x * 3y^2, # ∂²f_∂x∂y
+		(x, y) -> 2x * 3y^2, # ∂²f_∂y∂x
 		(x, y) -> x^2 * 6y # ∂²f_∂y²
 	), (
 		v, v,
@@ -50,6 +51,7 @@ fcn_tests = [
 		(x, y) -> 2x*exp(2y), # ∂f_∂y
 		(x, y) -> 0, # ∂²f_∂x²
 		(x, y) -> 2exp(2y), # ∂²f_∂x∂y
+		(x, y) -> 2exp(2y), # ∂²f_∂y∂x
 		(x, y) -> 4x*exp(2y) # ∂²f_∂y²
 	), (
 		v₊, v₊,
@@ -57,8 +59,9 @@ fcn_tests = [
 		(x, y) -> y^1.5/(2*√x), # ∂f_∂x
 		(x, y) -> 1.5*√(x*y), # ∂f_∂y
 		(x, y) -> -y^1.5/4*x^(-3/2), # ∂²f_∂x²
-		(x, y) -> 3*√(y/x), # ∂²f_∂x∂y
-		(x, y) -> 3*√(x/y) # ∂²f_∂y²
+		(x, y) -> 0.75*√(y/x), # ∂²f_∂x∂y
+		(x, y) -> 0.75*√(y/x), # ∂²f_∂y∂x
+		(x, y) -> 0.75*√(x/y) # ∂²f_∂y²
 	), (
 		v, v,
 		(x, y) -> x + x^2/2 + 3y^3,# f
@@ -66,15 +69,31 @@ fcn_tests = [
 		(x, y) -> 9y^2, # ∂f_∂y
 		(x, y) -> 1, # ∂²f_∂x²
 		(x, y) -> 0, # ∂²f_∂x∂y
+		(x, y) -> 0, # ∂²f_∂y∂x
 		(x, y) -> 18y # ∂²f_∂y²
 	)
 ]
 
-@testset "Bivariate Partial Derivatives" for (xs, ys, f, analytic_∂f_∂x, analytic_∂f_∂y, analytic_∂²f_∂x², analytic_∂²f_∂x∂y, analytic_∂²f_∂y²) ∈ fcn_tests
-	∂f_∂x, ∂f_∂y, ∂²f_∂x², ∂²f_∂x∂y, ∂²f_∂y² = OceanAcoustics.bivariate_partial_derivatives(f)
+@testset "Bivariate Partial Derivatives" for (
+	xs, ys,
+	f, analytic_∂f_∂x, analytic_∂f_∂y,
+	analytic_∂²f_∂x²,
+	analytic_∂²f_∂x∂y, analytic_∂²f_∂y∂x,
+	analytic_∂²f_∂y²
+	) ∈ fcn_tests
+
+	∂f_∂x, ∂f_∂y, ∂²f_∂x², ∂²f_∂x∂y, ∂²f_∂y∂x, ∂²f_∂y² = OceanAcoustics.bivariate_derivatives(f)
 	for x ∈ xs, y ∈ ys
 		@test ∂f_∂x(x, y) ≈ analytic_∂f_∂x(x, y)
 		@test ∂f_∂y(x, y) ≈ analytic_∂f_∂y(x, y)
 		@test ∂²f_∂x²(x, y) ≈ analytic_∂²f_∂x²(x, y)
+		@test ∂²f_∂x∂y(x, y) ≈ ∂²f_∂y∂x(x, y)
+		@test ∂²f_∂x∂y(x, y) ≈ analytic_∂²f_∂x∂y(x, y)
+		@test ∂²f_∂y∂x(x, y) ≈ analytic_∂²f_∂y∂x(x, y)
 	end
+end
+
+@testset "Find Nearest Indices" begin
+	@test_throws OceanAcoustics.NotSorted OceanAcoustics.findnearestindices(1, [2, 1, 3])
+	@test_throws OceanAcoustics.Duplicates OceanAcoustics.findnearestindices(1, [1, 1, 2])
 end
