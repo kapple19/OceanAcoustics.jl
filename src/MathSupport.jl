@@ -1,8 +1,3 @@
-using ForwardDiff: derivative
-using Interpolations:
-LinearInterpolation,
-Flat
-
 export interpolated_function
 export bivariate_derivatives
 export univariate_interpolation

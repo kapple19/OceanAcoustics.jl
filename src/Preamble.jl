@@ -1,3 +1,22 @@
+# Dependencies
+using ForwardDiff: derivative
+using Interpolations:
+LinearInterpolation,
+Flat
+using IntervalArithmetic:
+Interval,
+(..)
+using OrdinaryDiffEq:
+ODEProblem,
+solve,
+ContinuousCallback,
+CallbackSet,
+terminate!,
+AutoVern7,
+Rodas4
+using DiffEqBase: AbstractODESolution
+
+# OceanAcoustic Abstract Type
 abstract type OceanAcoustic <: Any end
 
 function Base.show(io::IO, oac::OceanAcoustic)

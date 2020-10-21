@@ -1,45 +1,21 @@
-function fcn(TupVecs::NTuple{N, V}) where {N, V <: AbstractVector}
-	x = 1
-	for nFcn ∈ eachindex(TupVecs)
-		y = TupVecs[nFcn][2]
-		println(y)
-	end
-end
+using OceanAcoustics
+using Plots
 
-function fcn(TupFcns::Tuple{Vararg{F}}) where F <: Function
-	x = 1
-	for nFcn ∈ eachindex(TupFcns)
-		y = TupFcns[nFcn](x)
-		println(y)
-	end
-end
+# Environment
+ocn = Medium(1500)
+bty = Boundary(1e3, 1600)
+env = Environment(5e3, ocn, bty)
 
-function fcn(VecFcns::AbstractVector{F}) where F<: Function
-	x = 1
-	for nFcn ∈ eachindex(VecFcns)
-		y = VecFcns[nFcn](x)
-		println(y)
-	end
-end
+# Scenario
+spk = Spark(π/4)
+fan = Fan(spk)
+src = Source(Position(0, 2e2), Signal(50), fan)
+sno = Scenario(env, src)
 
-TupVecs = (
-	[1, 3, 5],
-	[1, 4, 6, 9],
-	[1, 5]
-)
+# Trace
+trc = Trace(sno)
 
-TupFcns = (
-	x -> x^2,
-	x -> x^3,
-	x -> x^4
-)
-
-VecFcns = [
-	x -> x^2,
-	x -> x^3,
-	x -> x^4
-]
-
-fcn(TupVecs)
-fcn(VecFcns)
-fcn(TupFcns)
+# Plot
+pt = plot(legend = false)
+plot!.([trc.rays[nRay].sol for nRay = eachindex(trc.rays)], vars = (1, 2))
+display(pt)

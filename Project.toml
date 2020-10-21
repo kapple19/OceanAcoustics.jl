@@ -4,6 +4,7 @@ authors = ["Aaron Kaw"]
 version = "0.1.0"
 
 [deps]
+DiffEqBase = "2b5f629d-d688-5b77-993f-72d75c75574e"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 GRUtils = "0337cf30-a0fd-11e9-31db-a79914c9d7ac"

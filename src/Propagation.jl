@@ -1,21 +1,15 @@
-using ForwardDiff: derivative
-using IntervalArithmetic:
-Interval,
-(..)
-using OrdinaryDiffEq:
-ODEProblem,
-solve,
-ContinuousCallback,
-CallbackSet,
-terminate!,
-AutoVern7,
-Rodas4,
-ODESolution
-
 export (..)
 export Boundary
 export Medium
 export Environment
+export Position
+export Signal
+export Spark
+export Fan
+export Source
+export Scenario
+export Ray
+export Trace
 
 const SOUND_SPEED_AIR = 343
 
@@ -124,9 +118,10 @@ struct Environment <: OceanAcoustic
 
 		Ωz_ati = ati.z(Ωr)
 		Ωz_bty = bty.z(Ωr)
-		Ωz = Ωz_ati ∪ Ωz_bty
+		Ωz′ = Ωz_ati ∪ Ωz_bty
+		Ωz = Ωz′[1]..Ωz′[2]
 
-		condition(u, t, ray) = (Ωr.hi - Ω.lo)/2 - abs(u[1] - (Ωr.hi + Ω.lo)/2)
+		condition(u, t, ray) = (Ωr.hi - Ωr.lo)/2 - abs(u[1] - (Ωr.hi + Ωr.lo)/2)
 		affect!(ray) = terminate!(ray)
 		callback = ContinuousCallback(condition, affect!)
 
@@ -141,6 +136,7 @@ end
 struct Position <: OceanAcoustic
 	r::Real
 	z::Real
+	Position(r::Real, z::Real) = new(r, z)
 end
 
 struct Signal <: OceanAcoustic
@@ -151,11 +147,29 @@ end
 
 struct Spark <: OceanAcoustic
 	θ₀::Real
+	Spark(θ₀::Real) = new(θ₀)
 end
 
 struct Fan <: OceanAcoustic
-	δθ₀::Union{R, AbstractVector{R}} where R <: Real
-	spks::Union{S, AbstractVector{S}} where S <: Spark
+	spks::AbstractVector{S} where S <: Spark
+	δθ₀s::AbstractVector{R} where R <: Real
+	function Fan(
+		spks::AbstractVector{S},
+		δθ₀::AbstractVector{R}
+		) where {S <: Spark, R <: Real}
+		return new(spks, δθ₀)
+	end
+end
+
+function Fan(spks::AbstractVector{S}) where S <: Spark
+	δθ₀s = [spks[nSpk].θ₀ for nSpk ∈ eachindex(spks)] |> diff
+	push!(δθ₀s, δθ₀s[end])
+	return Fan(spks, δθ₀s)
+end
+
+function Fan(spk::Spark)
+	δθ₀ = 1.0
+	return Fan([spk], [δθ₀])
 end
 
 struct Source <: OceanAcoustic
@@ -169,11 +183,13 @@ struct Scenario <: OceanAcoustic
 	srcs::Union{S, AbstractVector{S}} where S <: Source
 	function Scenario(
 		env::Environment,
-		srcs::Union{S, AbstractVector{S}}
+		srcs::AbstractVector{S}
 	) where S <: Source
 		return new(env, srcs)
 	end
 end
+
+Scenario(env::Environment, src::Source) = Scenario(env, [src])
 
 function propagation(sno::Scenario)
 	callbacks = CallbackSet(
@@ -182,7 +198,12 @@ function propagation(sno::Scenario)
 		sno.env.bty.callback
 	)
 
-	c = ocn.SSP.c
+	c(r, z) = sno.env.ocn.SSP.c(r, z)
+	∂c_∂r(r, z) = sno.env.ocn.SSP.∂c_∂r(r, z)
+	∂c_∂z(r, z) = sno.env.ocn.SSP.∂c_∂z(r, z)
+	∂²c_∂r²(r, z) = sno.env.ocn.SSP.∂²c_∂r²(r, z)
+	∂²c_∂r∂z(r, z) = sno.env.ocn.SSP.∂²c_∂r∂z(r, z)
+	∂²c_∂z²(r, z) = sno.env.ocn.SSP.∂²c_∂z²(r, z)
 	
 	function propagate!(du, u, p, s)
 		r = u[1]
@@ -197,9 +218,9 @@ function propagation(sno::Scenario)
 
 		# Second partial derivative WRT ray normal
 		∂²c_∂n²(r, z) = c(r, z)^2*(
-			ocn.SSP.∂²c_∂r²(r, z)*ζ^2
-			- 2ocn.SSP.∂²c_∂r∂z(r, z)*ξ*ζ
-			+ ocn.SSP.∂²c_∂z²(r, z)*ξ^2
+			∂²c_∂r²(r, z)*ζ^2
+			- 2∂²c_∂r∂z(r, z)*ξ*ζ
+			+ ∂²c_∂z²(r, z)*ξ^2
 		)
 
 		# Differential Equations:
@@ -225,17 +246,26 @@ function propagation(sno::Scenario)
 	p₀ⁱ = 0.0
 	q₀ʳ = 0.0
 
-	# Initialize vector of ODEProblems
+	# Maximum ray length
+	TLmax = 100.0
+	S = 10^(TLmax/10)
+	sspan = (0.0, S)
+
+	# Initialize vector of ODEProblems and ray launch deltas
 	probs = Vector{ODEProblem}(undef, 0)
+	δθ₀s = Vector{Real}(undef, 0)
 	for src ∈ sno.srcs
 		# Initial conditions for each source
 		r₀ = src.pos.r
 		z₀ = src.pos.z
 		λ₀ = c(r₀, z₀)/src.sig.f
 		W₀ = 100λ₀ # 10..50
-		q₀ⁱ = src.sig.ω*W₀^2/2
+		q₀ⁱ = src.sig.ω * W₀^2/2
 
-		for spk ∈ src.fan.spks
+		for (nSpk, spk) ∈ enumerate(src.fan.spks)
+			# Populate launch angle deltas
+			push!(δθ₀s, src.fan.δθ₀s[nSpk])
+
 			# Initial conditions for each angle
 			ξ₀ = cos(spk.θ₀)/c(r₀, z₀)
 			ζ₀ = sin(spk.θ₀)/c(r₀, z₀)
@@ -249,18 +279,17 @@ function propagation(sno::Scenario)
 	end
 
 	function propagate(prob::ODEProblem)
-		sol = solve(
+		sol = @time solve(
 			prob,
 			AutoVern7(Rodas4()),
 			callback = callbacks
 		)
 	end
 
-	return propagate.(probs)
+	return propagate.(probs), δθ₀s
 end
 
 struct Ray <: OceanAcoustic
-	spk::Spark
 	r::Function
 	z::Function
 	ξ::Function
@@ -270,7 +299,9 @@ struct Ray <: OceanAcoustic
 	q::Function
 	θ::Function
 	c::Function
-	function Ray(spk::Spark, sol::ODESolution)
+	δθ₀::Real
+	sol::AbstractODESolution
+	function Ray(sol::AbstractODESolution, δθ₀)
 		r(s) = sol(s, idxs = 1)
 		z(s) = sol(s, idxs = 2)
 		ξ(s) = sol(s, idxs = 3)
@@ -280,15 +311,15 @@ struct Ray <: OceanAcoustic
 		q(s) = sol(s, idxs = 8) + im*sol(s, idxs = 9)
 		θ(s) = atan(ζ(s)/ξ(s))
 		c(s) = cos(θ(s))/ξ(s)
-		return new(spk, r, z, ξ, ζ, τ, p, q, θ, c)
+		return new(r, z, ξ, ζ, τ, p, q, θ, c, δθ₀, sol)
 	end
 end
 
 struct Trace <: OceanAcoustic
 	sno::Scenario
-	rays::Union{R, AbstractVector{R}} where R <: Ray
+	rays::AbstractVector{R} where R <: Ray
 	function Trace(sno::Scenario)
-		sols = propagation(sno)
-		return Ray.(sno.spks, sols)
-	end	
+		sols, δθ₀s = propagation(sno)
+		return new(sno, Ray.(sols, δθ₀s))
+	end
 end
