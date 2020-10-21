@@ -97,7 +97,7 @@ function Medium(c::Function)
 	return Medium(SSP)
 end
 
-function Medium(c::Any)
+function Medium(c::Tuple)
 	cFcn = bivariate_interpolation(c...)
 	return Medium(cFcn)
 end
@@ -123,25 +123,22 @@ struct Environment <: OceanAcoustic
 			if Ω isa Interval
 				return Ω
 			elseif length(Ω) == 2
-				return @show Ω = Ω[1]..Ω[2]
+				return Ω = Ω[1]..Ω[2]
 			elseif length(Ω) == 1
-				return @show Ω = Ω..Ω
+				return Ω = Ω..Ω
 			else
 				error("Unknown parsing error.")
 			end
 		end
 		Ωz_ati = parse_interval(Ωz_ati)
 		Ωz_bty = parse_interval(Ωz_bty)
-		@show Ωz = Ωz_ati ∪ Ωz_bty
+		Ωz = Ωz_ati ∪ Ωz_bty
 		Ωz = parse_interval(Ωz)
-		@show typeof(Ωz)
 
 		condition(u, t, ray) = (Ωr.hi - Ωr.lo)/2 - abs(u[1] - (Ωr.hi + Ωr.lo)/2)
 		affect!(ray) = terminate!(ray)
 		callback = ContinuousCallback(condition, affect!)
 
-		@show typeof(Ωr)
-		@show typeof(Ωz)
 		return new(Ωr, Ωz, callback, ocn, bty, ati)
 	end
 end
@@ -206,15 +203,16 @@ end
 struct Scenario <: OceanAcoustic
 	env::Environment
 	srcs::Union{S, AbstractVector{S}} where S <: Source
+	name::AbstractString
 	function Scenario(
 		env::Environment,
-		srcs::AbstractVector{S}
-	) where S <: Source
-		return new(env, srcs)
+		srcs::AbstractVector{S},
+		name::AbstractString = "") where S <: Source
+		return new(env, srcs, name)
 	end
 end
 
-Scenario(env::Environment, src::Source) = Scenario(env, [src])
+Scenario(env::Environment, src::Source, name::AbstractString = "") = Scenario(env, [src], name)
 
 function propagation(sno::Scenario)
 	callbacks = CallbackSet(
@@ -315,6 +313,7 @@ function propagation(sno::Scenario)
 end
 
 struct Ray <: OceanAcoustic
+	S::Real
 	r::Function
 	z::Function
 	ξ::Function
@@ -327,6 +326,7 @@ struct Ray <: OceanAcoustic
 	δθ₀::Real
 	sol::AbstractODESolution
 	function Ray(sol::AbstractODESolution, δθ₀)
+		S = sol.t[end]
 		r(s) = sol(s, idxs = 1)
 		z(s) = sol(s, idxs = 2)
 		ξ(s) = sol(s, idxs = 3)
@@ -336,7 +336,7 @@ struct Ray <: OceanAcoustic
 		q(s) = sol(s, idxs = 8) + im*sol(s, idxs = 9)
 		θ(s) = atan(ζ(s)/ξ(s))
 		c(s) = cos(θ(s))/ξ(s)
-		return new(r, z, ξ, ζ, τ, p, q, θ, c, δθ₀, sol)
+		return new(S, r, z, ξ, ζ, τ, p, q, θ, c, δθ₀, sol)
 	end
 end
 

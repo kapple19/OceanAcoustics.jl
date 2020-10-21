@@ -32,3 +32,12 @@ for nTrc ∈ eachindex(trcs)
 	plot!.([trcs[nTrc].rays[nRay].sol for nRay = eachindex(trcs[nTrc].rays)], vars = (1, 2), yaxis = :flip)
 	display(pt)
 end
+
+## Plotting Functionality
+using OceanAcoustics
+
+trcs = run_example.(OAC_EXAMPLE_NAMES)
+
+fs = oac_plot.(trcs)
+
+save_oac_plot.(fs, "examples", "trace", String.(OAC_EXAMPLE_NAMES))
