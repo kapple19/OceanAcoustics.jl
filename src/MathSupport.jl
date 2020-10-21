@@ -1,4 +1,3 @@
-# module MathSupport
 using ForwardDiff: derivative
 using Interpolations:
 LinearInterpolation,
@@ -30,85 +29,91 @@ function bivariate_derivatives(f::Function)
 	return ∂f_∂x, ∂f_∂y, ∂²f_∂x², ∂²f_∂x∂y, ∂²f_∂y∂x, ∂²f_∂y²
 end
 
-struct NotSorted <: Exception
-	vec::AbstractVector
-	msg::Vector{AbstractString}
-	function NotSorted(
-		vec::AbstractVector)
-		msg = ["Vector not sorted: ", "."]
-		return new(vec, msg)
-	end
-end
-
-Base.showerror(io::IO, e::NotSorted) = print(io, e.msg[1], e.vec, e.msg[2])
-
-struct Duplicates <: Exception
-	vec::AbstractVector
-	msg::Vector{AbstractString}
-	function Duplicates(
-		vec::AbstractVector)
-		msg = ["Vector has duplicates: ", "."]
-		return new(vec, msg)
-	end
-end
-
-Base.showerror(io::IO, e::Duplicates) = print(io, e.msg[1], e.vec, e.msg[2])
-
-function findnearestindices(x::T, xVec::AbstractVector{T}) where T <: Real
-	if !issorted(xVec)
-		NotSorted(xVec) |> throw
-	end
-	if !allunique(xVec)
-		Duplicates(xVec) |> throw
-	end
-	if x ∉ xVec[1]..xVec[end]
-		ErrorException("Input value not in input vector range.") |> throw
-	end
-	if x == xVec[end]
-		return nx
-	end
-	for nx ∈ 1:length(xVec) - 1
-		if x == xVec[nx]
-			return nx
-		elseif x ∈ xVec[nx]..xVec[nx+1]
-			return nx, nx+1
-		end
-	end
-	ErrorException("Could not find indices.") |> throw
-end
-
 univariate_interpolation(f::Function) = x -> f(x)
-univariate_interpolation(f::Real) = x -> f
-univariate_interpolation(f::AbstractVector{T}, x::AbstractVector{T}) where T <: Real = interpolated_function(x, f)
-
-bivariate_interpolation(f::Function) = (x, y) -> f(x, y)
-bivariate_interpolation(f::Real) = (x, y) -> f
-function bivariate_interpolation(f::AbstractVector{T}, y::AbstractVector{T}) where T <: Real
-	itp = interpolated_function(y, f)
-	fFcn(x, y) = itp(y)
-	return fFcn
+univariate_interpolation(v::Real) = x -> v
+function univariate_interpolation(
+	x::AbstractVector{T},
+	y::AbstractVector{T}
+	) where T <: Real
+	itp = 
+	return interpolated_function(x, y)
 end
-bivariate_interpolation(f::AbstractArray{T}, x::AbstractVector{T}, y::AbstractVector{T}) where T <: Real = interpolated_function((x, y), f)
+
+"""
+Returns a bivariate function.
+"""
+bivariate_interpolation(f::Function) = (x, y) -> f(x, y)
+
+"""
+Returns a bivariate constant function.
+"""
+bivariate_interpolation(v::Real) = (x, y) -> v
 function bivariate_interpolation(
-	fTup::Tuple{V},
-	xVec::AbstractVector{T},
-	yTup::Tuple{V}) where {T <: Real, V <: AbstractVector{T}}
+	x::AbstractVector{T},
+	y::AbstractVector{T}
+	) where T <: Real
+	itp = interpolated_function(x, y)
+	return (x, y) -> itp(y)
+end
 
-	fFcns_wrt_y = Vector{Function}(undef, 0)
-	for nx ∈ eachindex(xVec)
-		push!(fFcns_wrt_y, interpolated_function(yTup[nx], fTup[nx]))
-	end
+"""
+Returns a bivariate function defined by a grid of values. Can be irregularly spaced.
+"""
+function bivariate_interpolation(
+	x::AbstractVector{T},
+	y::AbstractVector{T},
+	z::AbstractArray{T}
+	) where T <: Real
+	return interpolated_function(x, y, z)
+end
 
-	function f(x, y)
-		nx = findnearestindices(x, xVec)
-		if length(nx) == 1
-			return fFcns_wrt_y[nx](y)
-		elseif length(nx) == 2
-			xVals = [xVec[nx[1]], xVec[nx[2]]]
-			fVals = [fFcns_wrt_y[xInd](y) for xInd ∈ nx]
-			return f_wrt_x_at_y = interpolated_function(xVals, fVals)
-		end
-	end
+"""
+Returns a bivariate function interpolated first in depth, then between the provided ranges. I.e. each `(nx, x) ∈ enumerate(xVec)` has a specified profile output `zTup[nx]::AbstractVector` interpolated linearly with `yTup[nx]::AbstractVector`.
+
+`length(x)Vec`
+
+```julia
+x = [0, 1, 2, 5]
+y = [
+	[0, 1, 2, 4, 6],
+	[0, 5, 15, 50],
+	[0, 100],
+	[0, 10, 20, 40]
+]
+z = []
+	[10, 9, 10, 11, 12],
+	[5, 4, 3, 4],
+	[20, 25],
+	[1, 2, 3, 10]
+]
+
+f = bivariate_interpolation(x, y, z)
+nx = 2, ny = 3
+
+f(x[nx], y[nx][ny]) == z[nx][ny]
+```
+"""
+# function bivariate_interpolation(
+# 	xVec::AbstractVector{T},
+# 	yTup::Tuple{V},
+# 	zTup::Tuple{V}) where {T <: Real, V <: AbstractVector{T}}
+function bivariate_interpolation(
+	xVec::AbstractVector{R},
+	yTup::AbstractVector{V},
+	zTup::AbstractVector{V}) where {R <: Real, V <: AbstractVector{R}}
+
+	z_wrt_y_fcns = interpolated_function.(yTup, zTup)
+	f = bivariate_interpolation(xVec, z_wrt_y_fcns)
 	return f
 end
-# end
+
+function bivariate_interpolation(
+	xVec::AbstractVector{R},
+	zVecFcns::AbstractVector{F}
+	) where {R <: Real, F <: Function}
+	function f(x, y)
+		z_at_y_vals = [zVecFcns[nFcn](y) for nFcn ∈ eachindex(zVecFcns)]
+		itp = interpolated_function(xVec, z_at_y_vals)
+		return itp(x)
+	end
+end

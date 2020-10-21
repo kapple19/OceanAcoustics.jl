@@ -93,7 +93,47 @@ fcn_tests = [
 	end
 end
 
-@testset "Find Nearest Indices" begin
-	@test_throws OceanAcoustics.NotSorted OceanAcoustics.findnearestindices(1, [2, 1, 3])
-	@test_throws OceanAcoustics.Duplicates OceanAcoustics.findnearestindices(1, [1, 1, 2])
+@testset "Univariate Interpolation" begin
+	
+end
+
+@testset "Bivariate Interpolation" begin
+	xVec = [0, 1, 2, 5.]
+	yVecVecs = [
+		[0, 1, 2, 4, 6.],
+		[0, 5, 15, 50.],
+		[0, 100.],
+		[0, 10, 20, 40.]
+	]
+	zVecVecs = [
+		[10, 9, 10, 11, 12.],
+		[5, 4, 3, 4.],
+		[20, 25.],
+		[1, 2, 3, 10.]
+	]
+
+	f = bivariate_interpolation(xVec, yVecVecs, zVecVecs)
+
+	@testset "Ranged Depth Vectors" for nx = eachindex(xVec), ny = eachindex(yVecVecs[nx])
+		@test f(xVec[nx], yVecVecs[nx][ny]) == zVecVecs[nx][ny]
+	end
+
+	@testset "Outside" begin
+		@test zVecVecs[1][1] == f(xVec[1] - 1, yVecVecs[1][1])
+		@test zVecVecs[1][1] == f(xVec[1], yVecVecs[1][1] - 1)
+		@test zVecVecs[1][1] == f(xVec[1] - 1, yVecVecs[1][1] - 1)
+	end
+
+	xVec = [0, 10, 20, 50]
+	zVecFcns = [
+		y -> sin(y),
+		y -> exp(-y),
+		y -> y - 1/y,
+		y -> y^2 - y^3
+	]
+	f = bivariate_interpolation(xVec, zVecFcns)
+	@testset "Ranged Depth Functions" for (nx, x) ∈ enumerate(xVec), y ∈ LinRange(-1, 10, 5)
+		@test f(x, y) == zVecFcns[nx](y)
+	end
+
 end
