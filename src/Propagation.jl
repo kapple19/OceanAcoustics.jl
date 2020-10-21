@@ -63,8 +63,8 @@ struct Boundary <: OceanAcoustic
 end
 
 function Boundary(z::Any, c::Any)
-	zFcn = univariate_interpolation(z...)
-	cFcn = univariate_interpolation(c...)
+	zFcn = univariate_interpolation(z)
+	cFcn = univariate_interpolation(c)
 	return Boundary(zFcn, cFcn)
 end
 
@@ -118,13 +118,30 @@ struct Environment <: OceanAcoustic
 
 		Ωz_ati = ati.z(Ωr)
 		Ωz_bty = bty.z(Ωr)
-		Ωz′ = Ωz_ati ∪ Ωz_bty
-		Ωz = Ωz′[1]..Ωz′[2]
+
+		function parse_interval(Ω)
+			if Ω isa Interval
+				return Ω
+			elseif length(Ω) == 2
+				return @show Ω = Ω[1]..Ω[2]
+			elseif length(Ω) == 1
+				return @show Ω = Ω..Ω
+			else
+				error("Unknown parsing error.")
+			end
+		end
+		Ωz_ati = parse_interval(Ωz_ati)
+		Ωz_bty = parse_interval(Ωz_bty)
+		@show Ωz = Ωz_ati ∪ Ωz_bty
+		Ωz = parse_interval(Ωz)
+		@show typeof(Ωz)
 
 		condition(u, t, ray) = (Ωr.hi - Ωr.lo)/2 - abs(u[1] - (Ωr.hi + Ωr.lo)/2)
 		affect!(ray) = terminate!(ray)
 		callback = ContinuousCallback(condition, affect!)
 
+		@show typeof(Ωr)
+		@show typeof(Ωz)
 		return new(Ωr, Ωz, callback, ocn, bty, ati)
 	end
 end
