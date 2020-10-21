@@ -29,7 +29,7 @@ trcs = run_example.(OAC_EXAMPLE_NAMES)
 trc = trcs[1]
 
 pt = plot(legend = false)
-plot!.([trc.rays[nRay].sol for nRay = eachindex(trc.rays)], vars = (1, 2))
+plot!.([trc.rays[nRay].sol for nRay = eachindex(trc.rays)], vars = (1, 2), yaxis = :flip)
 display(pt)
 
 ##

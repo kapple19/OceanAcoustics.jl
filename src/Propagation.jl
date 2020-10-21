@@ -47,13 +47,13 @@ struct Boundary <: OceanAcoustic
 			)
 
 			if ξₒ < 0
-				return terminate!
+				terminate!(ray)
 			else
 				function reflect!(ray)
 					ray.u[3] = ξₒ
 					ray.u[4] = ζₒ
 				end
-				return reflect!
+				reflect!(ray)
 			end
 		end
 		callback = ContinuousCallback(condition, affect!)
