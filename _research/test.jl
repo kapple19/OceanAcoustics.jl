@@ -1,3 +1,4 @@
+## Simple Example
 using OceanAcoustics
 using Plots
 
@@ -19,3 +20,26 @@ trc = Trace(sno)
 pt = plot(legend = false)
 plot!.([trc.rays[nRay].sol for nRay = eachindex(trc.rays)], vars = (1, 2))
 display(pt)
+
+## Running built-in examples
+using OceanAcoustics
+using Plots
+
+trcs = run_example.(OAC_EXAMPLE_NAMES)
+trc = trcs[1]
+
+pt = plot(legend = false)
+plot!.([trc.rays[nRay].sol for nRay = eachindex(trc.rays)], vars = (1, 2))
+display(pt)
+
+##
+module MyModule
+	a = 1
+	module MyModuleExamples
+		using .MyModule
+		export f
+		f() = println(a)
+	end
+end
+
+MyModuleExamples.f()

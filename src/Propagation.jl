@@ -172,6 +172,14 @@ function Fan(spk::Spark)
 	return Fan([spk], [δθ₀])
 end
 
+function Fan(θ₀s::AbstractVector{R}) where R <: Real
+	return Fan(Spark.(θ₀s))
+end
+
+function Fan(θ₀::Real)
+	return Fan(Spark(θ₀))
+end
+
 struct Source <: OceanAcoustic
 	pos::Position
 	sig::Signal
