@@ -1,4 +1,4 @@
-abstract type OceanAcoustic end
+abstract type OceanAcoustic <: Any end
 
 function Base.show(io::IO, oac::OceanAcoustic)
 	println(io, string(typeof(oac)), "(")
