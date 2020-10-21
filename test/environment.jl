@@ -12,7 +12,6 @@ end
 
 @testset "Boundary" begin
 	zFcn(r) = r^2 - sin(r)
-
 	bnd = Boundary(zFcn, r -> 1500)
 	@testset "Function Input" for r ∈ 3LinRange(-1, 1, 11)
 		@test zFcn(r) ≈ bnd.z(r)
@@ -23,6 +22,31 @@ end
 	bnds = Boundary.(zFcns, cFcns)
 	@testset "Functions Input" for r ∈ 3LinRange(-1, 1, 11), nFcn ∈ eachindex(zFcns)
 			@test zFcns[nFcn](r) ≈ bnds[nFcn].z(r)
+			@test cFcns[nFcn](r) ≈ bnds[nFcn].c(r)
+	end
+
+	zVals = [0, 200, 1e3]
+	cVals = [1500, 1520, 1600]
+	bnds = Boundary.(zVals, cVals)
+	@testset "Constants" for (nVal, z, c) ∈ [(nVal, zVals[nVal], cVals[nVal]) for nVal ∈ eachindex(zVals)], r ∈ LinRange(-1, 1e3, 3)
+		@test bnds[nVal].z(r) == z
+		@test bnds[nVal].c(r) == c
+	end
+
+	rzVec = [0, 15, 50, 150, 200, 300.]
+	zVec = [1e3, 1.1e3, 9.8e2, 1.5e3, 1.2e3, 1e3]
+	zInp = [rzVec, zVec]
+	rcVec = [0, 10, 20, 50, 100.]
+	cVec = [1520, 1480, 1490, 1500, 1510]
+	cInp = [rcVec, cVec]
+	bnd = Boundary(zInp, cInp)
+	@testset "Range Dependent Vectors" begin
+		@testset "Depth" for (r, z) ∈ [(rzVec[n], zVec[n]) for n ∈ eachindex(zVec)]
+			@test z == bnd.z(r)
+		end
+		@testset "Celerity" for (r, c) ∈ [(rcVec[n], cVec[n]) for n ∈ eachindex(cVec)]
+			@test c == bnd.c(r)
+		end
 	end
 end
 
@@ -61,4 +85,8 @@ end
 		@test an_∂²c_∂z∂r(r, z) ≈ SSP.∂²c_∂z∂r(r, z)
 		@test an_∂²c_∂z²(r, z) ≈ SSP.∂²c_∂z²(r, z)
 	end
+end
+
+@testset "Medium" begin
+	
 end

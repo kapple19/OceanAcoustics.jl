@@ -94,10 +94,33 @@ fcn_tests = [
 end
 
 @testset "Univariate Interpolation" begin
-	
+	f(x) = sin(x)*cos(x)
+	g = univariate_interpolation(f)
+	@testset "Function -> Function" for x ∈ LinRange(-1, 10e3, 20)
+		@test g(x) == f(x)
+	end
+
+	v = 3.14159
+	f = univariate_interpolation(v)
+	@testset "Constant" for x ∈ LinRange(-1, 10e3, 20)
+		@test f(x) == v
+	end
+
+	xVec = [0, 10, 15, 30, 40, 45, 100.]
+	yVec = [1500, 1200, 1700, 1415.926, 1520, 1600, 1480]
+	f = univariate_interpolation(xVec, yVec)
+	@testset "Vectors" for (nx, x) ∈ enumerate(xVec)
+		@test f(x) == yVec[nx]
+	end
 end
 
 @testset "Bivariate Interpolation" begin
+	f(x, y) = x^2 * sin(y)
+	g = bivariate_interpolation(f)
+	@testset "Function -> Function" for x ∈ LinRange(-1, 1e3, 11), y ∈ LinRange(-1, 5e2, 5)
+		@test f(x, y) == g(x, y)
+	end
+
 	xVec = [0, 1, 2, 5.]
 	yVecVecs = [
 		[0, 1, 2, 4, 6.],

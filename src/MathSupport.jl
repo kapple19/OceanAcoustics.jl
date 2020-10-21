@@ -29,46 +29,59 @@ function bivariate_derivatives(f::Function)
 	return ∂f_∂x, ∂f_∂y, ∂²f_∂x², ∂²f_∂x∂y, ∂²f_∂y∂x, ∂²f_∂y²
 end
 
-univariate_interpolation(f::Function) = x -> f(x)
-univariate_interpolation(v::Real) = x -> v
+univariate_interpolation(f::Function) = x::Real -> f(x)
+univariate_interpolation(v::Real) = x::Real -> v
 function univariate_interpolation(
 	x::AbstractVector{T},
 	y::AbstractVector{T}
 	) where T <: Real
-	itp = 
 	return interpolated_function(x, y)
 end
 
 """
 Returns a bivariate function.
 """
-bivariate_interpolation(f::Function) = (x, y) -> f(x, y)
+bivariate_interpolation(f::Function) = (x::Real, y::Real) -> f(x, y)
 
 """
 Returns a bivariate constant function.
 """
-bivariate_interpolation(v::Real) = (x, y) -> v
+bivariate_interpolation(v::Real) = (x::Real, y::Real) -> v
 function bivariate_interpolation(
 	x::AbstractVector{T},
 	y::AbstractVector{T}
 	) where T <: Real
 	itp = interpolated_function(x, y)
-	return (x, y) -> itp(y)
+	return (x::Real, y::Real) -> itp(y)
 end
 
 """
 Returns a bivariate function defined by a grid of values. Can be irregularly spaced.
 """
 function bivariate_interpolation(
-	x::AbstractVector{T},
-	y::AbstractVector{T},
-	z::AbstractArray{T}
+	xVec::AbstractVector{T},
+	yVec::AbstractVector{T},
+	zVec::AbstractArray{T}
 	) where T <: Real
-	return interpolated_function(x, y, z)
+	return interpolated_function(xVec, yVec, zVec)
 end
 
 """
-Returns a bivariate function interpolated first in depth, then between the provided ranges. I.e. each `(nx, x) ∈ enumerate(xVec)` has a specified profile output `zTup[nx]::AbstractVector` interpolated linearly with `yTup[nx]::AbstractVector`.
+Returns a bivarite function interpolated between each function depth in range, i.e. for depth `y`, interpolation occurs between the outputted values of each range's depth function.
+"""
+function bivariate_interpolation(
+	xVec::AbstractVector{R},
+	zVecFcns::AbstractVector{F}
+	) where {R <: Real, F <: Function}
+	function f(x::Real, y::Real)
+		z_at_y_vals = [zVecFcns[nFcn](y) for nFcn ∈ eachindex(zVecFcns)]
+		itp = interpolated_function(xVec, z_at_y_vals)
+		return itp(x)
+	end
+end
+
+"""
+Returns a bivariate function interpolated first in depth, then between the provided ranges, i.e. each `(nx, x) ∈ enumerate(xVec)` has a specified profile output `zTup[nx]::AbstractVector` interpolated linearly with `yTup[nx]::AbstractVector`.
 
 `length(x)Vec`
 
@@ -105,15 +118,4 @@ function bivariate_interpolation(
 	z_wrt_y_fcns = interpolated_function.(yTup, zTup)
 	f = bivariate_interpolation(xVec, z_wrt_y_fcns)
 	return f
-end
-
-function bivariate_interpolation(
-	xVec::AbstractVector{R},
-	zVecFcns::AbstractVector{F}
-	) where {R <: Real, F <: Function}
-	function f(x, y)
-		z_at_y_vals = [zVecFcns[nFcn](y) for nFcn ∈ eachindex(zVecFcns)]
-		itp = interpolated_function(xVec, z_at_y_vals)
-		return itp(x)
-	end
 end
