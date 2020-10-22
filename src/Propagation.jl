@@ -97,6 +97,11 @@ function Medium(c::Function)
 	return Medium(SSP)
 end
 
+function Medium(c::Real)
+	cFcn = bivariate_interpolation(c)
+	return Medium(cFcn)
+end
+
 function Medium(c::Tuple)
 	cFcn = bivariate_interpolation(c...)
 	return Medium(cFcn)
@@ -305,7 +310,9 @@ function propagation(sno::Scenario)
 		sol = @time solve(
 			prob,
 			AutoVern7(Rodas4()),
-			callback = callbacks
+			callback = callbacks,
+			atol = 1e-10,
+			rtol = 1e-10
 		)
 	end
 

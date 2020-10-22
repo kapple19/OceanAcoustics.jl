@@ -6,31 +6,34 @@ Flat
 using IntervalArithmetic:
 Interval,
 (..)
-# using OrdinaryDiffEq:
-# ODEProblem,
-# solve,
-# ContinuousCallback,
-# CallbackSet,
-# terminate!,
-# AutoVern7,
-# Rodas4
-using DifferentialEquations
+using OrdinaryDiffEq:
+ODEProblem,
+solve,
+ContinuousCallback,
+CallbackSet,
+terminate!,
+AutoVern7,
+Rodas4
 using DiffEqBase: AbstractODESolution
 using DrWatson
 using GRUtils:
 Figure,
 plot!,
+plot,
 contourf!,
+heatmap!,
 hold!,
 yflip!,
 xlabel!,
 ylabel!,
 colorscheme!,
+colormap!,
 color,
 title!,
 gcf,
 savefig,
 Figure,
+subplot,
 xlim,
 ylim
 
