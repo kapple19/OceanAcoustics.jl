@@ -26,9 +26,15 @@ function oac_plot(env::Environment)
 	r = LinRange(env.Ωr.lo, env.Ωr.hi, 1001)
 	z = LinRange(env.Ωz.lo, env.Ωz.hi, 501)
 
-	contourf!(f, r, z, env.ocn.SSP.c.(r', z),
+	function c(r, z)
+		if env.ati.z(r) < z < env.bty.z(r)
+			return env.ocn.SSP.c.(r, z)
+		else
+			return NaN
+		end
+	end
+	contourf!(f, r, z, c.(r', z),
 		levels = 10, majorlevels = 20)
-	# heatmap!(f, r, z, env.ocn.SSP.c.(r', z))
 	colormap!(f, "Winter")
 
 	plot!(f, r, env.bty.z,

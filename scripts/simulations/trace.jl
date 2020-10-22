@@ -10,7 +10,7 @@ save_oac_plot.(fs, "examples", "trace", String.(OAC_EXAMPLE_NAMES))
 ## One
 using OceanAcoustics
 
-example = :convergence
+example = :channel
 
 trc = trace_example(example)
 

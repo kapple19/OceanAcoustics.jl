@@ -8,6 +8,8 @@ export slopes
 export parabolic
 export upward
 export convergence
+export wavy
+export channel
 
 function flat()
 	# Environment
@@ -94,19 +96,82 @@ function convergence()
 	# Scenario
 	r₀ = 0
 	z₀ = 20
+	θ_crit = ocn.SSP.c(r₀, z₀)/ocn.SSP.c(r₀, Z) |> acosd |> deg2rad
 
-	fan = Fan(acos(ocn.SSP.c(r₀, z₀)/ocn.SSP.c(r₀, Z)) * LinRange(0.5, 1, 10))
-	src = Source(Position(r₀, z₀), Signal(100), fan)
+	fan = Fan(θ_crit * LinRange(0.5, 1, 11))
+	src = Source(Position(r₀, z₀), Signal(200), fan)
 	sno = Scenario(env, src, "Convergence-Zone Propagation")
 end
 
-function upward_to_downward()
+# function upward_to_downward()
+# 	# Environment
+# 	R = 1e3
+# 	Z = 5e3
+# 	cr = [0, R]
+# 	cz = [0, Z]
+# 	c = []
+# end
+
+function wavy()
+	# Altimetry
+	zAtiMin = 0.
+	zAtiMax = 50.
+	zAti(r) = zAtiMin + (zAtiMax - zAtiMin)*(sin(r/1e3) + 1.)/2
+
+	# Bathymetry
+	rBtyPeak = 5e3
+	zBtyMax = 1e3
+	zBtyMin = 8e2
+	Aᵣ = (2rBtyPeak/3)^2/log((9.0zBtyMax - 11.0zBtyMin)/(10.0(zBtyMax - zBtyMin)))
+	zBty(r) = zBtyMax - (zBtyMax - zBtyMin)*exp(-(r - rBtyPeak)^2/4e5)
+
+	# Ocean
+	rOcnMax = 10e3
+	cOcnMin = 1500.
+	cOcnMax = 1600.
+	cSolve(r) = [1.0 zAti(r) zAti(r)^2
+		1.0 (zAti(r) + zBty(r))/2 ((zAti(r) + zBty(r))/2.0)^2
+		1.0 zBty(r) zBty(r)^2]
+	cSolved(r) = cSolve(r)\[cOcnMax, cOcnMin, cOcnMax]
+	cCoeff₀(r) = cSolved(r)[1]
+	cCoeff₁(r) = cSolved(r)[2]
+	cCoeff₂(r) = cSolved(r)[3]
+	cOcn(r, z) = cCoeff₀(r) + cCoeff₁(r)*z + cCoeff₂(r)*z^2
+
 	# Environment
-	R = 1e3
-	Z = 5e3
-	cr = [0, R]
-	cz = [0, Z]
-	c = []
+	ocn = Medium(cOcn)
+	bty = Boundary(zBty, 1600)
+	ati = Boundary(zAti, 343)
+	env = Environment(rOcnMax, ocn, bty, ati)
+
+	# Scenario
+	r₀ = 0
+	z₀ =(zBty(r₀) + zAti(r₀))/2
+
+	fan = Fan(acos(cOcn(r₀, z₀)/cOcnMax).*(-1.5:0.125:1.5))
+	src = Source(Position(r₀, z₀), Signal(200), fan)
+	sno = Scenario(env, src, "Wavy Environment")
+end
+
+function channel()
+	# Environment
+	z = [0.0, 500/3, 500/2, 500, 1000, 1500, 4e3]
+	c = [1480, 1500, 1485, 1475, 1480, 1485, 1525.]
+	R = 250e3
+	Z = z[end]
+
+	ocn = Medium((z, c))
+	bty = Boundary(Z, 1600)
+	env = Environment(R, ocn, bty)
+
+	# Scenario
+	r₀ = 0
+	z₀ = 500
+	θ_crit = ocn.SSP.c(0.0, z₀)/1500.0 |> acos
+
+	fan = Fan(θ_crit * LinRange(-1, 1, 31))
+	src = Source(Position(r₀, z₀), Signal(150), fan)
+	sno = Scenario(env, src, "Deep Sound Channel")
 end
 
 end # ExampleScenarios
