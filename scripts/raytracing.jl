@@ -21,17 +21,23 @@ end
 include("scenarios.jl")
 include("simulations.jl")
 
+# scenarios_rays = [
+# 	flat,
+# 	smooth,
+# 	convergence,
+# 	upward,
+# 	parabolic,
+# 	channel,
+# 	seamount,
+# 	simple,
+# 	n2linear,
+# 	slopes
+# ]
+
 scenarios_rays = [
-	flat,
 	smooth,
-	convergence,
-	upward,
-	parabolic,
-	channel,
-	seamount,
-	simple,
-	n2linear,
-	slopes
+	convergence
 ]
+
 
 run_sims(sim_rays, scenarios_rays)

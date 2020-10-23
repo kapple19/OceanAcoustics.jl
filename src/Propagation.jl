@@ -15,19 +15,6 @@ derivative,
 gradient
 using Base: broadcastable
 using Roots: find_zeros
-using GRUtils:
-Figure,
-plot!,
-contourf!,
-hold!,
-yflip!,
-xlabel!,
-ylabel!,
-colorscheme!,
-color,
-title!,
-gcf,
-display
 
 export Position
 export Signal
@@ -74,7 +61,7 @@ end
 
 Position in 2D slice of ocean, with range `r` (metres) and depth `z` (metres).
 """
-struct Position
+struct Position <: OceanAcoustic
 	r::Real
 	z::Real
 end
@@ -84,7 +71,7 @@ end
 
 Parameters for a signal with frequency `f` (Hertz).
 """
-struct Signal
+struct Signal <: OceanAcoustic
 	f::Real
 
 	function Signal(f::Real)
@@ -100,7 +87,7 @@ end
 
 An ocean sound source with position `pos` and signal `sig`.
 """
-struct Source
+struct Source <: OceanAcoustic
 	pos::Position
 	sig::Signal
 end
@@ -112,7 +99,7 @@ function Base.show(io::IO, src::Source)
 	print(io, ")")
 end
 
-struct Boundary
+struct Boundary <: OceanAcoustic
 	z::Function
 	dz_dr::Function
 	condition::Function
@@ -193,7 +180,7 @@ function Boundary(z::Real, R::Real = 1.0)
 	return Boundary(zFcn, R)
 end
 
-struct Medium
+struct Medium <: OceanAcoustic
 	c::Function
 	∂c_∂r::Function
 	∂c_∂z::Function
@@ -311,7 +298,7 @@ function Medium(c::Real, R::Real, Z::Real)
 	return Medium(cFcn, R, Z)
 end
 
-# struct Environment
+# struct Environment <: OceanAcoustic
 # 	media::AbstractVector{M} where M <: Medium
 # 	bounds::AbstractVector{B} where B <: Boundary
 # end
@@ -416,7 +403,7 @@ function solve_propagation(prob::ODEProblem, CbBnd::Union{ContinuousCallback, Ca
 	return RaySol
 end
 
-struct Ray
+struct Ray <: OceanAcoustic
 	θ₀::Real
 	sol
 	S::Real
@@ -485,7 +472,7 @@ function Ray(θ₀::Real, src::Source, ocn::Medium, bty::Boundary, ati::Boundary
 	return Ray(θ₀, sol, S, r, z, ξ, ζ, τ, p, q, θ, c)
 end
 
-struct Beam
+struct Beam <: OceanAcoustic
 	ray
 	b::Function
 	W::Function
@@ -563,7 +550,7 @@ function add_to_pressure(r::Real, z::Real, beam::Beam, δθ₀::Real, coh_pre::F
 	return p
 end
 
-struct Field
+struct Field <: OceanAcoustic
 	beams::AbstractVector{Beam}
 	src::Source
 	ocn::Medium
@@ -617,66 +604,4 @@ end
 function Field(θ₀s::AbstractVector{T}, src::Source, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0.0)) where T <: Real
 	beams = Beam.(θ₀s, src, ocn, bty, ati)
 	return Field(beams, src, ocn, bty, ati)
-end
-
-## Plots
-function acoustic_plot()
-	f = Figure()
-	hold!(f, true)
-	xlabel!(f, "Range (m)")
-	ylabel!(f, "Depth (m)")
-	colorscheme!(f, "light")
-	return f
-end
-
-function acoustic_plot!(title::AbstractString)
-	f = gcf()
-	title!(f, title)
-end
-
-function acoustic_plot!()
-	f = gcf()
-	yflip!(f, true)
-end
-
-function acoustic_plot!(bnd::Boundary)
-	f = gcf()
-	r = LinRange(0.0, bnd.R, 1001)
-	plot!(f, r, bnd.z,
-		linecolor = color(0, 0, 0))
-end
-
-function acoustic_plot(bnd::Boundary)
-	f = acoustic_plot()
-	acoustic_plot!(bnd)
-	acoustic_plot!()
-	return f
-end
-
-function acoustic_plot!(ray::Ray)
-	f = gcf()
-	s = LinRange(0.0, ray.S, 1001)
-	plot!(f, ray.r(s), ray.z(s))
-end
-
-function acoustic_plot(ray::Ray)
-	f = acoustic_plot()
-	acoustic_plot!(ray)
-	acoustic_plot!()
-	return f
-end
-
-function acoustic_plot!(fld::Field)
-	f = gcf()
-	r = LinRange(0.0, fld.ocn.R, 11)
-	z = LinRange(0.0, fld.ocn.Z, 5)
-	contourf(r, z, fld.TL.(r', z),
-		levels = 21, majorlevels = 2)
-end
-
-function acoustic_plot(fld::Field)
-	f = acoustic_plot()
-	acoustic_plot!(fld)
-	acoustic_plot!()
-	return f
 end

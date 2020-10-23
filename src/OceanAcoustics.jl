@@ -5,6 +5,10 @@ A Julia package implementation of acoustic propagation in an ocean environment.
 """
 module OceanAcoustics
 
-include("AcousticPropagation.jl")
+include("Preamble.jl")
+include("MathSupport.jl")
+include("Propagation.jl")
+include("OACPlots.jl")
+include("ExampleScenarios.jl")
 
 end
