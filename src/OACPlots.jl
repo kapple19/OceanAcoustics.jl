@@ -49,12 +49,12 @@ function oac_plot(env::Environment)
 end
 
 function oac_plot(trc::Trace)
-	f = oac_plot(trc.sno.env)
+	f = oac_plot(trc.scn.env)
 	for ray = trc.rays
 		s = LinRange(0.0, ray.S, 1001)
 		plot!(f, ray.r.(s), ray.z.(s))
 	end
-	oac_plot!("Ray Trace: " * trc.sno.name)
+	oac_plot!("Ray Trace: " * trc.scn.name)
 	oac_plot!()
 	return f
 end

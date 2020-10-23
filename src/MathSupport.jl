@@ -5,6 +5,8 @@ export bivariate_interpolation
 
 function interpolated_function(x, y)
 	itp = LinearInterpolation(x, y, extrapolation_bc = Flat())
+	@show x
+	@show y
 	return itp_fcn(x::Real) = itp(x)
 end
 function interpolated_function(x, y, z)
@@ -24,14 +26,40 @@ function bivariate_derivatives(f::Function)
 	return ∂f_∂x, ∂f_∂y, ∂²f_∂x², ∂²f_∂x∂y, ∂²f_∂y∂x, ∂²f_∂y²
 end
 
+# using ForwardDiff: gradient
+# function bivariate_derivatives(f::Function)
+# 	f′(x) = f(x[1], x[2])
+# 	∇f′(x) = gradient(f′, x)
+# 	∂f_∂x(x, y) = ∇f′([x, y])[1]
+# 	∂f_∂y(x, y) = ∇f′([x, y])[2]
+
+# 	∂f_∂x′(x) = ∂f_∂x(x[1], x[2])
+# 	∇∂f_∂x′(x) = gradient(∂f_∂x′, x)
+# 	∂²f_∂x²(x, y) = ∇∂f_∂x′([x, y])[1]
+# 	∂²f_∂y∂x(x, y) = ∇∂f_∂x′([x, y])[2]
+
+# 	∂f_∂y′(x) = ∂f_∂y(x[1], x[2])
+# 	∇∂f_∂y′(x) = gradient(∂f_∂y′, x)
+# 	∂²f_∂x∂y(x, y) = ∇∂f_∂y′([x, y])[1]
+# 	∂²f_∂y²(x, y) = ∇∂f_∂y′([x, y])[2]
+
+# 	return (
+# 		∂f_∂x, ∂f_∂y,
+# 		∂²f_∂x²,
+# 		∂²f_∂x∂y, ∂²f_∂y∂x,
+# 		∂²f_∂y²
+# 	)
+# end
+
 univariate_interpolation(f::Function) = x::Real -> f(x)
 univariate_interpolation(v::Real) = x::Real -> v
 function univariate_interpolation(
-	x::AbstractVector{T},
-	y::AbstractVector{T}
-	) where T <: Real
+	x::AbstractVector{Tx},
+	y::AbstractVector{Ty}
+	) where {Tx <: Real, Ty <: Real}
 	return interpolated_function(x, y)
 end
+univariate_interpolation(t::Tuple) = univariate_interpolation(t...)
 
 """
 Returns a bivariate function.
@@ -43,9 +71,9 @@ Returns a bivariate constant function.
 """
 bivariate_interpolation(v::Real) = (x::Real, y::Real) -> v
 function bivariate_interpolation(
-	x::AbstractVector{T},
-	y::AbstractVector{T}
-	) where T <: Real
+	x::AbstractVector{Tx},
+	y::AbstractVector{Ty}
+	) where {Tx <: Real, Ty <: Real}
 	itp = interpolated_function(x, y)
 	return (x::Real, y::Real) -> itp(y)
 end
@@ -54,16 +82,13 @@ end
 Returns a bivariate function defined by a grid of values. Can be irregularly spaced.
 """
 function bivariate_interpolation(
-	xVec::AbstractVector{T},
-	yVec::AbstractVector{T},
-	zVec::AbstractArray{T}
-	) where T <: Real
+	xVec::AbstractVector{Tx},
+	yVec::AbstractVector{Ty},
+	zVec::AbstractArray{Tz, 2}
+	) where {Tx <: Real, Ty <: Real, Tz <: Real}
 	return interpolated_function(xVec, yVec, zVec)
 end
 
-"""
-Returns a bivarite function interpolated between each function depth in range, i.e. for depth `y`, interpolation occurs between the outputted values of each range's depth function.
-"""
 function bivariate_interpolation(
 	xVec::AbstractVector{R},
 	zVecFcns::AbstractVector{F}
@@ -101,10 +126,6 @@ nx = 2, ny = 3
 f(x[nx], y[nx][ny]) == z[nx][ny]
 ```
 """
-# function bivariate_interpolation(
-# 	xVec::AbstractVector{T},
-# 	yTup::Tuple{V},
-# 	zTup::Tuple{V}) where {T <: Real, V <: AbstractVector{T}}
 function bivariate_interpolation(
 	xVec::AbstractVector{R},
 	yTup::AbstractVector{V},

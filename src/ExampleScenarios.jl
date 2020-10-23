@@ -3,13 +3,14 @@ export trace_example
 
 module ExampleScenarios
 using OceanAcoustics
-export flat
-export slopes
-export parabolic
-export upward
-export convergence
-export wavy
-export channel
+# export flat
+# export slopes
+# export parabolic
+# export upward
+# export convergence
+# export wavy
+# export channel
+# export flip
 
 function flat()
 	# Environment
@@ -20,7 +21,7 @@ function flat()
 	# Scenario
 	fan = Fan(π/4 * LinRange(-1, 1, 51))
 	src = Source(Position(0, 2e2), Signal(50), fan)
-	sno = Scenario(env, src, "Flat Environment")
+	scn = Scenario(env, src, "Flat Environment")
 end
 
 function slopes()
@@ -42,7 +43,7 @@ function slopes()
 
 	fan = Fan(acos(c(r₀, z₀)/c(r₀, Z)) * (-2:0.2:2))
 	src = Source(Position(r₀, z₀), Signal(50), fan)
-	sno = Scenario(env, src, "Sloped Environment")
+	scn = Scenario(env, src, "Sloped Environment")
 end
 
 function parabolic()
@@ -60,7 +61,7 @@ function parabolic()
 	# Scenario
 	fan = Fan(LinRange(atan(5e3/2e3), atan(5e3/20e3), 30))
 	src = Source(Position(0, 0), Signal(50), fan)
-	sno = Scenario(env, src, "Parabolic Bathymetry")
+	scn = Scenario(env, src, "Parabolic Bathymetry")
 end
 
 function upward()
@@ -79,7 +80,7 @@ function upward()
 
 	fan = Fan(acos(c(r₀, z₀)/c(r₀, Z)) * LinRange(0.1, 1.0, 10))
 	src = Source(Position(r₀, z₀), Signal(100), fan)
-	sno = Scenario(env, src, "Upward-Refracting Rays")
+	scn = Scenario(env, src, "Upward-Refracting Rays")
 end
 
 function convergence()
@@ -100,17 +101,32 @@ function convergence()
 
 	fan = Fan(θ_crit * LinRange(0.5, 1, 11))
 	src = Source(Position(r₀, z₀), Signal(200), fan)
-	sno = Scenario(env, src, "Convergence-Zone Propagation")
+	scn = Scenario(env, src, "Convergence-Zone Propagation")
 end
 
-# function upward_to_downward()
-# 	# Environment
-# 	R = 1e3
-# 	Z = 5e3
-# 	cr = [0, R]
-# 	cz = [0, Z]
-# 	c = []
-# end
+function flip()
+	# Environment
+	R = 30e3
+	Z = 5e2
+	cr = [0, R]
+	zc = [0, Z]
+	c₋ = 1460
+	c₊ = 1540
+	c = [c₋ c₊; c₊ c₋]
+
+	ocn = Medium((cr, zc, c))
+	bty = Boundary(Z, 1600)
+	env = Environment(R, ocn, bty)
+
+	# Scenario
+	r₀ = 1.0
+	z₀ = Z/2
+	θ_crit = ocn.SSP.c(r₀, z₀)/c₊ |> acos
+
+	fan = Fan(θ_crit*LinRange(0, 1, 11))
+	src = Source(Position(r₀, z₀), Signal(50), fan)
+	scn = Scenario(env, src, "Profile Flip")
+end
 
 function wavy()
 	# Altimetry
@@ -150,7 +166,7 @@ function wavy()
 
 	fan = Fan(acos(cOcn(r₀, z₀)/cOcnMax).*(-1.5:0.125:1.5))
 	src = Source(Position(r₀, z₀), Signal(200), fan)
-	sno = Scenario(env, src, "Wavy Environment")
+	scn = Scenario(env, src, "Wavy Environment")
 end
 
 function channel()
@@ -171,7 +187,35 @@ function channel()
 
 	fan = Fan(θ_crit * LinRange(-1, 1, 31))
 	src = Source(Position(r₀, z₀), Signal(150), fan)
-	sno = Scenario(env, src, "Deep Sound Channel")
+	scn = Scenario(env, src, "Deep Sound Channel")
+end
+
+function seamount()
+	# Environment
+	zc = [0, 100, 200, 350, 500, 1500, 3100.]
+	c = [1480, 1470, 1475, 1473, 1475, 1488, 1505.]
+
+	rBty = 1e3*[0, 40, 45, 50, 55, 60, 70, 140]
+	zBty = [Z, Z, 2900, 2850, 2000, 500, Z, Z]
+
+	R = rBty[end]
+	Z = zc[end]
+
+	ocn = Medium((zc, c))
+	bty = Boundary((rBty, zBty), 1600)
+	env = Environment(R, ocn, bty)
+
+	# Scenario
+	fan = Fan(atan(363/2e3) * LinRange(-1, 1, 31))
+	src = Source(Position(0, 363), Signal(200), fan)
+	scn = Scenario(env, src, "Seamount")
+end
+
+# Export all
+for n in names(@__MODULE__; all=true)
+    if Base.isidentifier(n) && n ∉ (Symbol(@__MODULE__), :eval, :include)
+        @eval export $n
+    end
 end
 
 end # ExampleScenarios
@@ -185,6 +229,6 @@ const OAC_EXAMPLE_NAMES = example_names()
 
 function trace_example(name::Symbol)
 	ex = getfield(ExampleScenarios, name)
-	sno = ex()
-	return trc = Trace(sno)
+	scn = ex()
+	return trc = Trace(scn)
 end

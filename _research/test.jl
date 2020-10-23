@@ -1,43 +1,44 @@
-## Simple Example
+## Seamount
 using OceanAcoustics
 using Plots
 
-# Environment
-ocn = Medium(1500)
-bty = Boundary(1e3, 1600)
-env = Environment(5e3, ocn, bty)
+##
+zc = [0, 100, 200, 350, 500, 1500, 3100.]
+c = [1480, 1470, 1475, 1473, 1475, 1488, 1505.]
 
-# Scenario
-spk = Spark(π/4)
-fan = Fan(spk)
-src = Source(Position(0, 2e2), Signal(50), fan)
-sno = Scenario(env, src)
+plot(c, zc, yaxis = :flip)
 
-# Trace
-trc = Trace(sno)
+##
+Z = zc[end]
 
-# Plot
-pt = plot(legend = false)
-plot!.([trc.rays[nRay].sol for nRay = eachindex(trc.rays)], vars = (1, 2))
-display(pt)
+##
+rBty = 1e3*[0, 40, 45, 50, 55, 60, 70, 140]
+zBty = [Z, Z, 2900, 2850, 2000, 500, Z, Z]
 
-## Running built-in examples
-using OceanAcoustics
-using Plots
+R = rBty[end]
 
-trcs = run_example.(OAC_EXAMPLE_NAMES)
+plot(rBty, zBty, yaxis = :flip)
 
-for nTrc ∈ eachindex(trcs)
-	pt = plot(legend = false)
-	plot!.([trcs[nTrc].rays[nRay].sol for nRay = eachindex(trcs[nTrc].rays)], vars = (1, 2), yaxis = :flip)
-	display(pt)
-end
+##
+ocn = Medium((zc, c))
 
-## Plotting Functionality
-using OceanAcoustics
+r = LinRange(0, R, 101)
+z = LinRange(0, Z, 101)
 
-trcs = run_example.(OAC_EXAMPLE_NAMES)
+heatmap(r, z, ocn.SSP.c, yaxis = :flip)
 
-fs = oac_plot.(trcs)
+##
+bty = Boundary((rBty, zBty), 1600)
 
-save_oac_plot.(fs, "examples", "trace", String.(OAC_EXAMPLE_NAMES))
+plot(r, bty.z, yaxis = :flip)
+
+##
+env = Environment(R, ocn, bty)
+
+Ωr = 0..140000
+Ωr |> bty.z
+
+## Scenario
+fan = Fan(atan(363/2e3) * LinRange(-1, 1, 31))
+src = Source(Position(0, 363), Signal(200), fan)
+scn = Scenario(env, src, "Seamount")

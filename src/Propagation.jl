@@ -121,8 +121,10 @@ struct Environment <: OceanAcoustic
 		bty::Boundary,
 		ati::Boundary = Boundary(0, SOUND_SPEED_AIR))
 
-		Ωz_ati = ati.z(Ωr)
-		Ωz_bty = bty.z(Ωr)
+		@show Ωr
+		@show Ωz_ati = ati.z(Ωr)
+		@show bty.z |> typeof |> supertype
+		@show Ωz_bty = bty.z(Ωr)
 
 		function parse_interval(Ω)
 			if Ω isa Interval
@@ -219,19 +221,19 @@ end
 
 Scenario(env::Environment, src::Source, name::AbstractString = "") = Scenario(env, [src], name)
 
-function propagation(sno::Scenario)
+function propagation(scn::Scenario)
 	callbacks = CallbackSet(
-		sno.env.callback,
-		sno.env.ati.callback,
-		sno.env.bty.callback
+		scn.env.callback,
+		scn.env.ati.callback,
+		scn.env.bty.callback
 	)
 
-	c(r, z) = sno.env.ocn.SSP.c(r, z)
-	∂c_∂r(r, z) = sno.env.ocn.SSP.∂c_∂r(r, z)
-	∂c_∂z(r, z) = sno.env.ocn.SSP.∂c_∂z(r, z)
-	∂²c_∂r²(r, z) = sno.env.ocn.SSP.∂²c_∂r²(r, z)
-	∂²c_∂r∂z(r, z) = sno.env.ocn.SSP.∂²c_∂r∂z(r, z)
-	∂²c_∂z²(r, z) = sno.env.ocn.SSP.∂²c_∂z²(r, z)
+	c(r, z) = scn.env.ocn.SSP.c(r, z)
+	∂c_∂r(r, z) = scn.env.ocn.SSP.∂c_∂r(r, z)
+	∂c_∂z(r, z) = scn.env.ocn.SSP.∂c_∂z(r, z)
+	∂²c_∂r²(r, z) = scn.env.ocn.SSP.∂²c_∂r²(r, z)
+	∂²c_∂r∂z(r, z) = scn.env.ocn.SSP.∂²c_∂r∂z(r, z)
+	∂²c_∂z²(r, z) = scn.env.ocn.SSP.∂²c_∂z²(r, z)
 	
 	function propagate!(du, u, p, s)
 		r = u[1]
@@ -282,7 +284,7 @@ function propagation(sno::Scenario)
 	# Initialize vector of ODEProblems and ray launch deltas
 	probs = Vector{ODEProblem}(undef, 0)
 	δθ₀s = Vector{Real}(undef, 0)
-	for src ∈ sno.srcs
+	for src ∈ scn.srcs
 		# Initial conditions for each source
 		r₀ = src.pos.r
 		z₀ = src.pos.z
@@ -310,9 +312,7 @@ function propagation(sno::Scenario)
 		sol = @time solve(
 			prob,
 			AutoVern7(Rodas4()),
-			callback = callbacks,
-			atol = 1e-10,
-			rtol = 1e-10
+			callback = callbacks
 		)
 	end
 
@@ -348,10 +348,10 @@ struct Ray <: OceanAcoustic
 end
 
 struct Trace <: OceanAcoustic
-	sno::Scenario
+	scn::Scenario
 	rays::AbstractVector{R} where R <: Ray
-	function Trace(sno::Scenario)
-		sols, δθ₀s = propagation(sno)
-		return new(sno, Ray.(sols, δθ₀s))
+	function Trace(scn::Scenario)
+		sols, δθ₀s = propagation(scn)
+		return new(scn, Ray.(sols, δθ₀s))
 	end
 end
