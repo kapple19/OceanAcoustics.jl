@@ -9,12 +9,16 @@ solve,
 terminate!,
 ODESolution,
 Rodas4,
-AutoVern7
+AutoVern7,
+ODECompositeSolution
 using ForwardDiff:
 derivative,
 gradient
 using Base: broadcastable
 using Roots: find_zeros
+using IntervalArithmetic:
+(..),
+Interval
 
 abstract type OceanAcoustic <: Any end
 
@@ -27,6 +31,9 @@ function Base.show(io::IO, oac::OceanAcoustic)
 end
 
 Base.broadcastable(oac::OceanAcoustic) = Ref(oac)
+
+parse_interval(Ω::Interval) = Ω
+parse_interval(V::Real) = V..V
 
 function interpolated_function(x, y)
 	Itp = LinearInterpolation(x, y, extrapolation_bc = Flat())
@@ -54,8 +61,7 @@ end
 struct Boundary <: OceanAcoustic
 	z::Function
 	dz_dr::Function
-	condition::Function
-	affect!::Function
+	callback::ContinuousCallback
 	R::Real
 	
 	function Boundary(z::Function, R::Real)
@@ -73,7 +79,8 @@ struct Boundary <: OceanAcoustic
 				return reflect!(ray)
 			end
 		end
-		return new(z, dz_dr, condition, affect!, R)
+		callback = ContinuousCallback(condition, affect!)
+		return new(z, dz_dr, callback, R)
 	end
 end
 
@@ -157,8 +164,26 @@ function Medium(c::Real, R::Real, Z::Real)
 end
 
 struct Environment <: OceanAcoustic
+	Ωr::Interval
+	Ωz::Interval
+	callback::ContinuousCallback
+	ocn::Medium
+	bty::Boundary
+	ati::Boundary
+	function Environment(Ωr::Interval, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0))
+		bty_Ωz = bty.z(Ωr) |> parse_interval
+		ati_Ωz = ati.z(Ωr) |> parse_interval
+		Ωz = bty_Ωz ∪ ati_Ωz
 
+		condition(u, t, ray) = (Ωr.hi - Ωr.lo)/2 - abs(u[1] - (Ωr.hi - Ωr.lo)/2)
+		affect!(ray) = terminate!(ray)
+		callback = ContinuousCallback(condition, affect!)
+
+		return new(Ωr, Ωz, callback, ocn, bty, ati)
+	end
 end
+
+Environment(R::Real, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0)) = Environment(0..R, ocn, bty, ati)
 
 struct Position <: OceanAcoustic
 	r::Real
@@ -167,18 +192,38 @@ end
 
 struct Signal <: OceanAcoustic
 	f::Real
-
+	ω::Real
 	function Signal(f::Real)
 		if f ≤ 0
 			DomainError(f, "Frequency must be positive.") |> throw
 		end
-		return new(f)
+		return new(f, 2π*f)
 	end
 end
+
+struct Fan
+	θ₀s::AbstractVector{R} where R <: Real
+	δθ₀s::AbstractVector{R} where R <: Real
+
+	function Fan(θ₀s::AbstractVector{R}) where R <: Real
+		δθ₀s = diff(θ₀s)
+		push!(δθ₀s, δθ₀s[end])
+		return new(θ₀s, δθ₀s)
+	end
+end
+
+Fan(θ₀::Real) = Fan([θ₀])
 
 struct Source <: OceanAcoustic
 	pos::Position
 	sig::Signal
+	fan::Fan
+end
+
+struct Scenario <: OceanAcoustic
+	env::Environment
+	src::Source
+	name::AbstractString
 end
 
 function propagation_problem(
@@ -248,6 +293,84 @@ function propagation_problem(
 	return prob, CbBnd
 end
 
+function propagation_problem2(scn::Scenario)
+	c(r, z) = scn.env.ocn.SSP.c(r, z)
+	∂c_∂r(r, z) = scn.env.ocn.SSP.∂c_∂r(r, z)
+	∂c_∂z(r, z) = scn.env.ocn.SSP.∂c_∂z(r, z)
+	∂²c_∂r²(r, z) = scn.env.ocn.SSP.∂²c_∂r²(r, z)
+	∂²c_∂z²(r, z) = scn.env.ocn.SSP.∂²c_∂z²(r, z)
+	∂²c_∂r∂z(r, z) = scn.env.ocn.SSP.∂²c_∂r∂z(r, z)
+
+	function propagation!(du, u, p, s)
+		r = u[1]
+		z = u[2]
+		ξ = u[3]
+		ζ = u[4]
+		τ = u[5]
+		pʳ = u[6]
+		pⁱ = u[7]
+		qʳ = u[8]
+		qⁱ = u[9]
+
+		∂²c_∂n²(r, z) = c(r, z)^2 * (
+			∂²c_∂r²(r, z) * ζ^2
+			- 2∂²c_∂r∂z(r, z) * ξ * ζ
+			+ ∂²c_∂z²(r, z) * ξ^2
+		)
+
+		du[1] = dr_ds = c(r, z) * ξ
+		du[2] = dz_ds = c(r, z) * ζ
+		du[3] = dξ_ds = -∂c_∂r(r, z) / c(r, z)^2
+		du[4] = dζ_ds = -∂c_∂z(r, z) / c(r, z)^2
+		du[5] = dτ_ds = 1/c(r, z)
+		du[6] = dpʳ_ds = ∂²c_∂n²(r, z) / c(r, z)^2 * qʳ
+		du[7] = dpⁱ_ds = ∂²c_∂n²(r, z) / c(r, z)^2 * qⁱ
+		du[8] = dqʳ_ds = c(r, z) * pʳ
+		du[9] = dqⁱ_ds = c(r, z) * pⁱ
+	end
+
+	callbacks = CallbackSet(
+		scn.env.callback,
+		scn.env.bty.callback,
+		scn.env.ati.callback
+	)
+
+	r₀ = scn.src.pos.r
+	z₀ = scn.src.pos.z
+	τ₀ = 0.0
+
+	λ₀ = c(r₀, z₀) / scn.src.sig.f
+	pʳ₀ = 1.0
+	pⁱ₀ = 0.0
+	W₀ = 100λ₀
+	qʳ₀ = 0.0
+	qⁱ₀ = scn.src.sig.ω * W₀^2 / 2
+
+	TLmax = 100.0
+	S = 10^(TLmax/10)
+	sSpan = (0.0, S)
+
+	sols = Vector{ODECompositeSolution}(undef, 0)
+	for θ₀ ∈ scn.src.fan.θ₀s
+		ξ₀ = cos(θ₀) / c(r₀, z₀)
+		ζ₀ = sin(θ₀) / c(r₀, z₀)
+		u₀ = [r₀, z₀, ξ₀, ζ₀, τ₀, pʳ₀, pⁱ₀, qʳ₀, qⁱ₀]
+	
+		prob = ODEProblem(propagation!, u₀, sSpan)
+		push!(
+			sols,
+			solve(
+				prob,
+				AutoVern7(Rodas4()),
+				callback = callbacks,
+				reltol=1e-8, abstol=1e-8
+			)
+		)
+	end
+
+	return sols
+end
+
 function solve_propagation(prob::ODEProblem, CbBnd::Union{ContinuousCallback, CallbackSet})
 	RaySol = solve(prob, AutoVern7(Rodas4()), callback = CbBnd, reltol=1e-8, abstol=1e-8)
 	return RaySol
@@ -292,20 +415,48 @@ z = [0., 300., 1200., 2e3, 5000.]
 Z = z[end]
 R = 250e3
 
-src = Source(Position(0., 0.), Signal(200.))
 ocn = Medium(z, c, R, Z)
 bty = Boundary(5e3, R)
 ati = Boundary(0., R)
+env = Environment(R, ocn, bty, ati)
 
 θ_crit = acos(ocn.SSP.c(0.0, 0.0)/ocn.SSP.c(0.0, 5e3))
-θ₀ = θ_crit*LinRange(0.5, 1.0, 10)
+θ₀s = θ_crit*LinRange(0.5, 1.0, 10)
 
-##
-rays = Ray.(θ₀, src, ocn, bty, ati)
+fan = Fan(θ₀s)
+src = Source(Position(0., 0.), Signal(200.), fan)
+scn = Scenario(env, src, "Convergence Zone Propagation")
 
-##
+sols = propagation_problem2(scn)
+
 using Plots
 
 p = plot(yaxis = :flip)
-plot!.([rays[n].sol for n ∈ eachindex(rays)], vars = (1, 2))
+plot!.(sols, vars = (1, 2))
 display(p)
+
+
+
+
+
+##
+# c = [1520, 1500, 1515, 1495, 1545.]
+# z = [0., 300., 1200., 2e3, 5000.]
+# Z = z[end]
+# R = 250e3
+
+# src = Source(Position(0., 0.), Signal(200.))
+# ocn = Medium(z, c, R, Z)
+# bty = Boundary(5e3, R)
+# ati = Boundary(0., R)
+
+# θ_crit = acos(ocn.SSP.c(0.0, 0.0)/ocn.SSP.c(0.0, 5e3))
+# θ₀ = θ_crit*LinRange(0.5, 1.0, 10)
+
+# rays = Ray.(θ₀, src, ocn, bty, ati)
+
+# using Plots
+
+# p = plot(yaxis = :flip)
+# plot!.([rays[n].sol for n ∈ eachindex(rays)], vars = (1, 2))
+# display(p)
