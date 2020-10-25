@@ -319,26 +319,76 @@ struct Ray <: OceanAcoustic
 	c::Function
 end
 
+function convergence()
+	c = [1520, 1500, 1515, 1495, 1545.]
+	z = [0., 300., 1200., 2e3, 5000.]
+	Z = z[end]
+	R = 250e3
+
+	ocn = Medium(z, c, R, Z)
+	bty = Boundary(5e3, R)
+	ati = Boundary(0., R)
+	env = Environment(R, ocn, bty, ati)
+
+	θ_crit = acos(ocn.SSP.c(0.0, 0.0)/ocn.SSP.c(0.0, 5e3))
+	θ₀s = θ_crit*LinRange(0.5, 1.0, 10)
+
+	fan = Fan(θ₀s)
+	src = Source(Position(0., 0.), Signal(200.), fan)
+	scn = Scenario(env, src, "Convergence Zone Propagation")
+end
+
+function wavy()
+	# Altimetry
+	zAtiMin = 0.
+	zAtiMax = 50.
+	zAti(r) = zAtiMin + (zAtiMax - zAtiMin)*(sin(r/1e3) + 1.)/2
+
+	# Bathymetry
+	rBtyPeak = 5e3
+	zBtyMax = 1e3
+	zBtyMin = 8e2
+	Aᵣ = (2rBtyPeak/3)^2/log((9.0zBtyMax - 11.0zBtyMin)/(10.0(zBtyMax - zBtyMin)))
+	zBty(r) = zBtyMax - (zBtyMax - zBtyMin)*exp(-(r - rBtyPeak)^2/4e5)
+
+	# Ocean
+	rOcnMax = 10e3
+	cOcnMin = 1500.
+	cOcnMax = 1600.
+	cSolve(r) = [
+		1.0 zAti(r) zAti(r)^2
+		1.0 (zAti(r) + zBty(r))/2 ((zAti(r) + zBty(r))/2)^2
+		1.0 zBty(r) zBty(r)^2
+	]
+	cCoeff(r) = cSolve(r)\[cOcnMax, cOcnMin, cOcnMax]
+	# cCoeff₀(r) = cCoeff(r)[1]
+	# cCoeff₁(r) = cCoeff(r)[2]
+	# cCoeff₂(r) = cCoeff(r)[3]
+	# cOcn(r, z) = cCoeff₀(r) + cCoeff₁(r)*z + cCoeff₂(r)*z^2
+	cOcn(r, z) = cCoeff(r)' * [1, z, z^2]
+
+	# Environment
+	ocn = Medium(cOcn, rOcnMax, zBtyMax)
+	bty = Boundary(zBty, rOcnMax)
+	ati = Boundary(zAti, rOcnMax)
+	env = Environment(rOcnMax, ocn, bty, ati)
+
+	# Scenario
+	r₀ = 0.0
+	z₀ = (zBty(r₀) + zAti(r₀))/2
+	θ_crit = acos(cOcn(r₀, z₀)/cOcnMax)
+
+	fan = Fan(θ_crit*(-1.5:0.125:1.5))
+	src = Source(Position(r₀, z₀), Signal(250.), fan)
+	scn = Scenario(env, src, "Wavy Environment")
+end
+
 ##
-c = [1520, 1500, 1515, 1495, 1545.]
-z = [0., 300., 1200., 2e3, 5000.]
-Z = z[end]
-R = 250e3
-
-ocn = Medium(z, c, R, Z)
-bty = Boundary(5e3, R)
-ati = Boundary(0., R)
-env = Environment(R, ocn, bty, ati)
-
-θ_crit = acos(ocn.SSP.c(0.0, 0.0)/ocn.SSP.c(0.0, 5e3))
-θ₀s = θ_crit*LinRange(0.5, 1.0, 10)
-
-fan = Fan(θ₀s)
-src = Source(Position(0., 0.), Signal(200.), fan)
-scn = Scenario(env, src, "Convergence Zone Propagation")
+scn = wavy()
 
 sols = propagation(scn)
 
+##
 using Plots
 
 p = plot(yaxis = :flip)
