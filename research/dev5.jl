@@ -58,13 +58,12 @@ function boundary_reflection(t_inc::Vector, t_bnd::Vector)
 	return [cos(θ_rfl), sin(θ_rfl)]/c
 end
 
-struct Boundary <: OceanAcoustic
+mutable struct Boundary <: OceanAcoustic
 	z::Function
-	dz_dr::Function
 	callback::ContinuousCallback
-	R::Real
+	Ωz::Interval
 	
-	function Boundary(z::Function, R::Real)
+	function Boundary(z::Function)
 		dz_dr(r) = derivative(z, r)
 		condition(u, t, ray) = z(u[1]) - u[2]
 		function affect!(ray)
@@ -80,27 +79,28 @@ struct Boundary <: OceanAcoustic
 			end
 		end
 		callback = ContinuousCallback(condition, affect!)
-		return new(z, dz_dr, callback, R)
+		return new(z, callback)
 	end
 end
 
-function Boundary(
-	r::Vector{T},
-	z::Vector{T},
-	R::T = r[end]) where T <: Real
+function Boundary(r::Vector{T}, z::Vector{T}) where T <: Real
 	zFcn = interpolated_function(r, z)
-	return Boundary(zFcn, R)
+	bnd = Boundary(zFcn)
+	bnd.Ωz = minimum(z)..maximum(z)
+	return bnd
 end
 
-function Boundary(rz::AbstractArray{T}, R::T = rz[end, 1]) where T <: Real
+function Boundary(rz::AbstractArray{T}) where T <: Real
 	r = [rng for rng ∈ rz[:, 1]]
 	z = [dpt for dpt ∈ rz[:, 2]]
-	return Boundary(r, z, R)
+	return Boundary(r, z)
 end
 
-function Boundary(z::Real, R::Real = 1.0)
+function Boundary(z::Real)
 	zFcn(r) = z
-	return Boundary(zFcn, R)
+	bnd = Boundary(zFcn)
+	bnd.Ωz = z..z
+	return bnd
 end
 
 struct Celerity <: OceanAcoustic
@@ -135,32 +135,30 @@ end
 
 struct Medium <: OceanAcoustic
 	SSP::Celerity
-	R::Real
-	Z::Real
 
-	function Medium(c::Function, R::Real, Z::Real)
+	function Medium(c::Function)
 		SSP = Celerity(c)
-		return new(SSP, R, Z)
+		return new(SSP)
 	end
 end
 
-function Medium(c::AbstractArray, R::Real = c[end, 1], Z::Real = c[1, end])
+function Medium(c::AbstractArray)
 	r_ = [rc for rc ∈ c[1, 2:end]]
 	z_ = [zc for zc ∈ c[2:end, 1]]
 	c_ = c[2:end, 2:end]'
 	
 	cFcn = interpolated_function(r_, z_, c_)
-	return Medium(cFcn, R, Z)
+	return Medium(cFcn)
 end
 
-function Medium(z::AbstractVector, c::AbstractVector, R::Real, Z::Real = z[end])
-	cMat = vcat([0 0 R], hcat(z, c, c))
-	return Medium(cMat, R, Z)
+function Medium(z::AbstractVector, c::AbstractVector)
+	cMat = vcat([0 0 1.0], hcat(z, c, c))
+	return Medium(cMat)
 end
 
-function Medium(c::Real, R::Real, Z::Real)
+function Medium(c::Real)
 	cFcn(r, z) = c
-	return Medium(cFcn, R, Z)
+	return Medium(cFcn)
 end
 
 struct Environment <: OceanAcoustic
@@ -171,9 +169,14 @@ struct Environment <: OceanAcoustic
 	bty::Boundary
 	ati::Boundary
 	function Environment(Ωr::Interval, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0))
-		bty_Ωz = bty.z(Ωr) |> parse_interval
-		ati_Ωz = ati.z(Ωr) |> parse_interval
-		Ωz = bty_Ωz ∪ ati_Ωz
+
+		if !isdefined(bty, :Ωz)
+			bty.Ωz = bty.z(Ωr)
+		end
+		if !isdefined(ati, :Ωz)
+			ati.Ωz = ati.z(Ωr)
+		end
+		Ωz = bty.Ωz ∪ ati.Ωz
 
 		condition(u, t, ray) = (Ωr.hi - Ωr.lo)/2 - abs(u[1] - (Ωr.hi - Ωr.lo)/2)
 		affect!(ray) = terminate!(ray)
@@ -325,9 +328,9 @@ function convergence()
 	Z = z[end]
 	R = 250e3
 
-	ocn = Medium(z, c, R, Z)
-	bty = Boundary(5e3, R)
-	ati = Boundary(0., R)
+	ocn = Medium(z, c)
+	bty = Boundary(5e3)
+	ati = Boundary(0.)
 	env = Environment(R, ocn, bty, ati)
 
 	θ_crit = acos(ocn.SSP.c(0.0, 0.0)/ocn.SSP.c(0.0, 5e3))
@@ -361,16 +364,12 @@ function wavy()
 		1.0 zBty(r) zBty(r)^2
 	]
 	cCoeff(r) = cSolve(r)\[cOcnMax, cOcnMin, cOcnMax]
-	# cCoeff₀(r) = cCoeff(r)[1]
-	# cCoeff₁(r) = cCoeff(r)[2]
-	# cCoeff₂(r) = cCoeff(r)[3]
-	# cOcn(r, z) = cCoeff₀(r) + cCoeff₁(r)*z + cCoeff₂(r)*z^2
 	cOcn(r, z) = cCoeff(r)' * [1, z, z^2]
 
 	# Environment
-	ocn = Medium(cOcn, rOcnMax, zBtyMax)
-	bty = Boundary(zBty, rOcnMax)
-	ati = Boundary(zAti, rOcnMax)
+	ocn = Medium(cOcn)
+	bty = Boundary(zBty)
+	ati = Boundary(zAti)
 	env = Environment(rOcnMax, ocn, bty, ati)
 
 	# Scenario
@@ -383,14 +382,109 @@ function wavy()
 	scn = Scenario(env, src, "Wavy Environment")
 end
 
+function flat()
+	# Environment
+	ocn = Medium(1500)
+	bty = Boundary(5e2)
+	env = Environment(10e2, ocn, bty)
+
+	# Scenario
+	fan = Fan(π/4 * LinRange(-1, 1, 51))
+	src = Source(Position(0, 2e2), Signal(50), fan)
+	scn = Scenario(env, src, "Flat Environment")
+end
+
+function slopes()
+	# Environment
+	R = 10e3
+	Z = 2e3
+	c(r, z) = 1500 - 100r/R + 100z/Z
+	zBty(r) = Z - 500r/R
+	zAti(r) = 100r/R
+
+	ocn = Medium(c)
+	bty = Boundary(zBty)
+	ati = Boundary(zAti)
+	env = Environment(R, ocn, bty, ati)
+
+	# Scenario
+	r₀ = 0
+	z₀ = Z/4
+
+	fan = Fan(acos(c(r₀, z₀)/c(r₀, Z)) * (-2:0.2:2))
+	src = Source(Position(r₀, z₀), Signal(50), fan)
+	scn = Scenario(env, src, "Sloped Environment")
+end
+
+function parabolic()
+	# Environment
+	c = 250
+	b = 2.5e5
+	zBty(r) = 2e-3b * √(1 + r/c)
+	R = 20e3
+	Z = 5e3
+
+	ocn = Medium(c)
+	bty = Boundary(zBty)
+	env = Environment(R, ocn, bty)
+
+	# Scenario
+	fan = Fan(LinRange(atan(5e3/2e3), atan(5e3/20e3), 30))
+	src = Source(Position(0, 0), Signal(50), fan)
+	scn = Scenario(env, src, "Parabolic Bathymetry")
+end
+
+function upward()
+	# Environment
+	R = 1e5
+	Z = 5e3
+	c(r, z) = 1500 + 100z/Z
+
+	ocn = Medium(c)
+	bty = Boundary(Z)
+	env = Environment(R, ocn, bty)
+
+	# Scenario
+	r₀ = 0
+	z₀ = 0
+
+	fan = Fan(acos(c(r₀, z₀)/c(r₀, Z)) * LinRange(0.1, 1.0, 10))
+	src = Source(Position(r₀, z₀), Signal(100), fan)
+	scn = Scenario(env, src, "Upward-Refracting Rays")
+end
+
+function seamount()
+	# Environment
+	zc = [0, 100, 200, 350, 500, 1500, 3100.]
+	c = [1480, 1470, 1475, 1473, 1475, 1488, 1505.]
+
+	Z = zc[end]
+
+	rBty = 1e3*[0, 40, 45, 50, 55, 60, 70, 140]
+	zBty = [Z, Z, 2900, 2850, 2000, 500, Z, Z]
+
+	R = rBty[end]
+
+	ocn = Medium(zc, c)
+	bty = Boundary(rBty, zBty)
+	env = Environment(R, ocn, bty)
+
+	# Scenario
+	fan = Fan(atan(363/2e3) * LinRange(-1, 1, 31))
+	src = Source(Position(0, 363), Signal(200), fan)
+	scn = Scenario(env, src, "Seamount")
+end
+
 ##
-scn = wavy()
+scn = convergence()
 
 sols = propagation(scn)
 
 ##
-using Plots
+using GRUtils
 
-p = plot(yaxis = :flip)
-plot!.(sols, vars = (1, 2))
-display(p)
+f = Figure()
+plot.(sols, vars = (1, 2))
+display(f)
+
+##

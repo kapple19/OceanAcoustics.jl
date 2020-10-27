@@ -13,16 +13,14 @@ An implementation of ocean acoustics models found in literature, written in the 
 Note, this package is still under development, and not yet registered.
 
 ## Installation
-At the Julia REPL, execute the following commands.
-
+At the Julia REPL, execute:
 ```julia
 using Pkg
 Pkg.add("OceanAcoustics")
 ```
 
 ## Usage
-At the Julia REPL, execute
-
+To load, execute:
 ```julia
 using OceanAcoustics
 ```
