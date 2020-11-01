@@ -124,4 +124,6 @@ This package stands on the shoulders of Julia giants.
 
 > [Roots.jl](https://github.com/JuliaMath/Roots.jl)
 
+> [IntervalArithmetic.jl](https://github.com/JuliaIntervals/IntervalArithmetic.jl)
+
 > [GRUtils.jl](https://github.com/heliosdrm/GRUtils.jl)
