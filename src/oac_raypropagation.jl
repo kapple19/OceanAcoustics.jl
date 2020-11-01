@@ -195,7 +195,7 @@ struct Scenario <: OceanAcoustic
 	name::AbstractString
 end
 
-function propagation(scn::Scenario)
+function ray_propagation(scn::Scenario)
 	c(r, z) = scn.env.ocn.SSP.c(r, z)
 	∂c_∂r(r, z) = scn.env.ocn.SSP.∂c_∂r(r, z)
 	∂c_∂z(r, z) = scn.env.ocn.SSP.∂c_∂z(r, z)
@@ -203,7 +203,7 @@ function propagation(scn::Scenario)
 	∂²c_∂z²(r, z) = scn.env.ocn.SSP.∂²c_∂z²(r, z)
 	∂²c_∂r∂z(r, z) = scn.env.ocn.SSP.∂²c_∂r∂z(r, z)
 
-	function propagation!(du, u, p, s)
+	function ray_propagation!(du, u, p, s)
 		r = u[1]
 		z = u[2]
 		ξ = u[3]
@@ -237,6 +237,8 @@ function propagation(scn::Scenario)
 		scn.env.ati.callback
 	)
 
+	δθ₀s = Vector{Real}(undef, 0)
+
 	r₀ = scn.src.pos.r
 	z₀ = scn.src.pos.z
 	τ₀ = 0.0
@@ -253,12 +255,14 @@ function propagation(scn::Scenario)
 	sSpan = (0.0, S)
 
 	sols = Vector{ODECompositeSolution}(undef, 0)
-	for θ₀ ∈ scn.src.fan.θ₀s
+	for (nRay, θ₀) ∈ enumerate(scn.src.fan.θ₀s)
+		push!(δθ₀s, scn.src.fan.δθ₀s[nRay])
+
 		ξ₀ = cos(θ₀) / c(r₀, z₀)
 		ζ₀ = sin(θ₀) / c(r₀, z₀)
 		u₀ = [r₀, z₀, ξ₀, ζ₀, τ₀, pʳ₀, pⁱ₀, qʳ₀, qⁱ₀]
 	
-		prob = ODEProblem(propagation!, u₀, sSpan)
+		prob = ODEProblem(ray_propagation!, u₀, sSpan)
 		push!(
 			sols,
 			solve(
@@ -270,13 +274,12 @@ function propagation(scn::Scenario)
 		)
 	end
 
-	return sols
+	return sols, δθ₀s
 end
 
 struct Ray <: OceanAcoustic
-	θ₀::Real
-	sol
-	S::Real
+	Ωₛ::Interval
+	δθₛ::Real
 	r::Function
 	z::Function
 	ξ::Function
@@ -286,6 +289,29 @@ struct Ray <: OceanAcoustic
 	q::Function
 	θ::Function
 	c::Function
+
+	function Ray(sol::ODECompositeSolution, δθ₀::Real)
+		S = sol.t[end]
+		r(s) = sol(s, idxs = 1)
+		z(s) = sol(s, idxs = 2)
+		ξ(s) = sol(s, idxs = 3)
+		ζ(s) = sol(s, idxs = 4)
+		τ(s) = sol(s, idxs = 5)
+		p(s) = sol(s, idxs = 6) + im*sol(s, idxs = 7)
+		q(s) = sol(s, idxs = 8) + im*sol(s, idxs = 9)
+		θ(s) = atan(ζ(s)/ξ(s))
+		c(s) = cos(θ(s))/ξ(s)
+		return new(0..S, δθ₀, r, z, ξ, ζ, τ, p, q, θ, c)
+	end
 end
 
-struct Trace end
+struct Trace <: OceanAcoustic
+	scn::Scenario
+	rays::AbstractVector{R} where R <: Ray
+
+	function Trace(scn::Scenario)
+		sols, δθ₀s = ray_propagation(scn)
+		rays = Ray.(sols, δθ₀s)
+		return new(scn, rays)
+	end
+end
