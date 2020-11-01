@@ -47,13 +47,6 @@ function plot_oac!(env::Environment)
 	)
 end
 
-# function plot_oac(env::Environment)
-# 	f = plot_oac()
-# 	plot_oac!(env)
-# 	plot_oac!()
-# 	return f
-# end
-
 function plot_oac!(ray::Ray)
 	f = gcf()
 
@@ -64,31 +57,25 @@ function plot_oac!(ray::Ray)
 	)
 end
 
-# function plot_oac(ray::Ray)
-# 	f = plot_oac()
-# 	plot_oac!(ray)
-# 	plot_oac!()
-# 	return f
-# end
-
 function plot_oac!(trc::Trace)
 	f = gcf()
 	plot_oac!(trc.scn.env)
+	plot_oac!(trc.scn.name)
 	for nRay ∈ 1:length(trc.rays)
 		plot_oac!(trc.rays[nRay])
 	end
 end
 
-# function plot_oac(trc::Trace)
-# 	f = plot_oac()
-# 	plot_oac!(trc)
-# 	plot_oac!()
-# 	return f
-# end
+function save_oac_plot(
+	f::Figure,
+	file_dir_name::AbstractString...)
+	gcf(f)
+	plotsdir(file_dir_name...) * ".png" |> savefig
+end
 
 function save_oac_plot(
 	f::Figure,
-	filedirname::AbstractString...)
-	gcf(f)
-	plotsdir(filedirname...) * ".png" |> savefig
+	file_dir_name...)
+	fdn = [String(dir) for dir ∈ file_dir_name]
+	save_oac_plot(f, fdn...)
 end

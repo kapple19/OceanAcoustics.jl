@@ -1,6 +1,6 @@
 export ExampleScenarios
 export OAC_EXAMPLE_NAMES
-export trace_example
+export example_trace
 
 module ExampleScenarios
 using OceanAcoustics
@@ -174,8 +174,15 @@ end
 
 const OAC_EXAMPLE_NAMES = example_names()
 
-function trace_example(name::Symbol)
-	ex = getfield(ExampleScenarios, name)
-	scn = ex()
-	return trc = Trace(scn)
+function example_trace(name::Symbol)
+	xmp = getfield(ExampleScenarios, name)
+	scn = xmp()
+	trc = Trace(scn)
+end
+
+example_trace(name::String) = String(name) |> example_trace
+
+function all_example_traces()
+	trcs = example_trace.(OAC_EXAMPLE_NAMES)
+
 end
