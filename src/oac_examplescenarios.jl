@@ -1,5 +1,6 @@
 export ExampleScenarios
 export OAC_EXAMPLE_NAMES
+export example_scenario
 export example_trace
 
 module ExampleScenarios
@@ -174,15 +175,16 @@ end
 
 const OAC_EXAMPLE_NAMES = example_names()
 
-function example_trace(name::Symbol)
+function example_scenario(name::Symbol)
 	xmp = getfield(ExampleScenarios, name)
 	scn = xmp()
+end
+
+example_scenario(name::String) = Symbol(name) |> example_scenario
+
+function example_trace(name::Symbol)
+	scn = example_scenario(name)
 	trc = Trace(scn)
 end
 
-example_trace(name::String) = String(name) |> example_trace
-
-function all_example_traces()
-	trcs = example_trace.(OAC_EXAMPLE_NAMES)
-
-end
+example_trace(name::String) = Symbol(name) |> example_trace

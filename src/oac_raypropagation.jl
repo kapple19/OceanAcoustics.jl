@@ -9,6 +9,8 @@ export Source
 export Scenario
 export Ray
 export Trace
+export Beam
+export Field
 
 function boundary_reflection(t_inc::Vector, t_bnd::Vector)
 	MyAngle(tng) = atan(tng[2]/tng[1])
@@ -279,7 +281,7 @@ end
 
 struct Ray <: OceanAcoustic
 	Ωₛ::Interval
-	δθₛ::Real
+	δθ₀::Real
 	r::Function
 	z::Function
 	ξ::Function
@@ -315,3 +317,84 @@ struct Trace <: OceanAcoustic
 		return new(scn, rays)
 	end
 end
+
+struct Beam <: OceanAcoustic
+	ray::Ray
+	p::Function
+	function Beam(ray::Ray, src::Source)
+		r(s) = ray.r(s)
+		z(s) = ray.z(s)
+		τ(s) = ray.τ(s)
+		p(s) = ray.p(s)
+		q(s) = ray.q(s)
+		c(s) = ray.c(s)
+
+		c₀ = c(0)
+		ω = src.sig.ω
+		λ₀ = c₀/ω
+		q₀ = q(0)
+		θ₀ = ray.θ(0)
+		δθ₀ = ray.δθ₀
+		
+		A = δθ₀/c₀ * exp(im*π/4) * √(q₀ * ω * cos(θ₀) / 2π)
+		p(s, n) = A * √(c(s) / r(s) / q(s)) * exp(-im * ω * (τ(s) + p(s)/q(s) * n^2 / 2))
+
+		return new(ray, p)
+	end
+end
+
+struct Coherence <: OceanAcoustic
+	coherence::Symbol
+	pre_summation::Function
+	post_summation::Function
+end
+
+function Coherence(coh::Symbol = :Coherent)
+	if coh == :Coherent
+		return Coherence(
+			coh,
+			p -> p,
+			p -> p
+		)
+	elseif coh == :Incoherent
+		return Coherence(
+			coh,
+			p -> abs(p),
+			p -> p
+		)
+	else
+		error("Unrecognized coherence.")
+	end
+end
+
+Coherence(coh::AbstractString) = Symbol(coh) |> Coherence
+
+struct Field <: OceanAcoustic
+	beams::AbstractVector{Beam}
+	coh::Coherence
+	p::Function
+
+	function Field(
+		beams::AbstractVector{B},
+		coh::Coherence = Coherence()
+		) where B <: Beam
+
+		function pressure(r, z)
+			p = [
+				beam.p(s, n)
+				for beam ∈ beams
+				for (s, n) ∈ closest_points(r, z, beam)
+			] |> sum
+		end
+
+		return new(
+			beams,
+			coh,
+			pressure
+		)
+	end
+end
+
+Field(trc::Trace, coh::Coherence = Coherence()) = Field(Beam.(trc.rays, trc.scn.src), coh)
+
+Field(scn::Scenario, coh::Coherence = Coherence()) = Field(Trace(scn), coh)

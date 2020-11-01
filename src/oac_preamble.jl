@@ -16,7 +16,8 @@ terminate!,
 AutoVern7,
 Rodas4,
 ODECompositeSolution
-using DrWatson
+using DrWatson: plotsdir
+using Roots: find_zeros
 using GRUtils:
 Figure,
 hold!,
