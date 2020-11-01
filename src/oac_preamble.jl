@@ -17,7 +17,18 @@ AutoVern7,
 Rodas4,
 ODECompositeSolution
 using DrWatson
-using GRUtils
+using GRUtils:
+Figure,
+hold!,
+yflip!,
+xlabel!,
+ylabel!,
+gcf,
+plot!,
+colorscheme!,
+title!,
+savefig,
+color
 
 abstract type OceanAcoustic <: Any end
 
