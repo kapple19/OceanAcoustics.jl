@@ -29,6 +29,7 @@ end
 mutable struct Boundary <: OceanAcoustic
 	z::Function
 	callback::ContinuousCallback
+	Ωr::Interval
 	Ωz::Interval
 	
 	function Boundary(z::Function)
@@ -101,8 +102,10 @@ struct Celerity <: OceanAcoustic
 	end
 end
 
-struct Medium <: OceanAcoustic
+mutable struct Medium <: OceanAcoustic
 	SSP::Celerity
+	Ωr::Interval
+	Ωz::Interval
 
 	function Medium(c::Function)
 		SSP = Celerity(c)
@@ -136,7 +139,10 @@ struct Environment <: OceanAcoustic
 	ocn::Medium
 	bty::Boundary
 	ati::Boundary
+
 	function Environment(Ωr::Interval, ocn::Medium, bty::Boundary, ati::Boundary = Boundary(0))
+
+		ocn.Ωr = bty.Ωr = ati.Ωr = Ωr
 
 		if !isdefined(bty, :Ωz)
 			bty.Ωz = bty.z(Ωr)
@@ -144,7 +150,16 @@ struct Environment <: OceanAcoustic
 		if !isdefined(ati, :Ωz)
 			ati.Ωz = ati.z(Ωr)
 		end
-		Ωz = bty.Ωz ∪ ati.Ωz
+		ocn.Ωz = Ωz = bty.Ωz ∪ ati.Ωz
+
+		# function c(r, z)
+		# 	if ati.z(r) ≤ z ≤ bty.z(r)
+		# 		return ocn.SSP.c(r, z)
+		# 	else
+		# 		return NaN
+		# 	end
+		# end
+		# ocn.SSP = Celerity(c)
 
 		condition(u, t, ray) = (Ωr.hi - Ωr.lo)/2 - abs(u[1] - (Ωr.hi - Ωr.lo)/2)
 		affect!(ray) = terminate!(ray)

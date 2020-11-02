@@ -5,15 +5,15 @@ scn = example_scenario(name)
 fld = Field(scn)
 
 ##
-rng = LinRange(scn.env.Ωr.lo, scn.env.Ωr.hi, 7)
-dpt = LinRange(scn.env.Ωz.hi, scn.env.Ωz.hi, 5)
-p = [fld.p(r, z) for r ∈ rng, z ∈ dpt]
+rng = LinRange(scn.env.Ωr.lo, scn.env.Ωr.hi, 41)
+dpt = LinRange(scn.env.Ωz.lo, scn.env.Ωz.hi, 27)
+p = @time [fld.p(r, z) for r ∈ rng, z ∈ dpt]
+TL = min.(100, -20log10.(abs.(p)))
 
 ##
 using Plots
 
-contourf(
-	rng,
-	dpt,
-	abs.(p)
+heatmap(rng, dpt, TL',
+	yaxis = :flip,
+	seriescolor = cgrad(:jet, rev = true)
 )

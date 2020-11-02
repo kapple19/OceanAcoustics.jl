@@ -29,7 +29,9 @@ plot!,
 colorscheme!,
 title!,
 savefig,
-color
+color,
+contourf!,
+colormap!
 
 abstract type OceanAcoustic <: Any end
 

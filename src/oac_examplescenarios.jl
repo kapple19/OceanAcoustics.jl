@@ -159,6 +159,27 @@ function seamount()
 	scn = Scenario(env, src, "Seamount")
 end
 
+function channel()
+	# Environment
+	z = [0.0, 500/3, 500/2, 500, 1000, 1500, 4e3]
+	c = [1480, 1500, 1485, 1475, 1480, 1485, 1525.]
+	R = 250e3
+	Z = z[end]
+
+	ocn = Medium(z, c)
+	bty = Boundary(Z)
+	env = Environment(R, ocn, bty)
+
+	# Scenario
+	r₀ = 0
+	z₀ = 500
+	θ_crit = ocn.SSP.c(0.0, z₀)/1500.0 |> acos
+
+	fan = Fan(θ_crit * LinRange(-1, 1, 31))
+	src = Source(Position(r₀, z₀), Signal(150), fan)
+	scn = Scenario(env, src, "Deep Sound Channel")
+end
+
 # Export all
 for n in names(@__MODULE__; all=true)
     if Base.isidentifier(n) && n ∉ (Symbol(@__MODULE__), :eval, :include)
