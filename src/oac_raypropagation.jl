@@ -385,11 +385,14 @@ end
 Coherence(coh::AbstractString) = Symbol(coh) |> Coherence
 
 struct Field <: OceanAcoustic
+	scn::Scenario
 	beams::AbstractVector{Beam}
 	coh::Coherence
 	p::Function
+	TL::Function
 
 	function Field(
+		scn::Scenario,
 		beams::AbstractVector{B},
 		coh::Coherence = Coherence()
 		) where B <: Beam
@@ -402,14 +405,18 @@ struct Field <: OceanAcoustic
 			] |> sum
 		end
 
+		transmission_loss(r, z) = min(100.0, -20log10(abs(pressure(r, z))))
+
 		return new(
+			scn,
 			beams,
 			coh,
-			pressure
+			pressure,
+			transmission_loss
 		)
 	end
 end
 
-Field(trc::Trace, coh::Coherence = Coherence()) = Field(Beam.(trc.rays, trc.scn.src), coh)
+Field(trc::Trace, coh::Coherence = Coherence()) = Field(trc.scn, Beam.(trc.rays, trc.scn.src), coh)
 
 Field(scn::Scenario, coh::Coherence = Coherence()) = Field(Trace(scn), coh)

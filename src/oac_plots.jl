@@ -30,24 +30,11 @@ function plot_oac!(ttl::AbstractString)
 	title!(f, ttl)
 end
 
-# function plot_oac!(bnd::Boundary)
-# 	f = gcf()
-# 	r = gridpoints(bnd.Ωr)
-# 	plot!(f, r, bnd.z.(r), linecolor = 'k')
-# end
-
-# function plot_oac!(med::Medium)
-# 	f = gcf()
-# 	r, z = gridpoints.([med.Ωr, med.Ωz])
-# 	colormap!(f, "bluescale")
-# 	heatmap!(f, r, z, med.SSP.c.(r', z))
-# end
-
 function plot_oac!(env::Environment)
 	f = gcf()
 
 	function c(r, z)
-		if env.ati.z(r) < z < env.bty.z(r)
+		if env.ati.z(r) ≤ z ≤ env.bty.z(r)
 			return env.ocn.SSP.c.(r, z)
 		else
 			return NaN
@@ -68,9 +55,8 @@ function plot_oac!(ray::Ray)
 	s = gridpoints(ray.Ωₛ)
 	plot!(
 		f, ray.r.(s), ray.z.(s),
-		linecolor = color(0, 0, 0.5)
+		linecolor = color(0, 0, 0)
 	)
-	# color(0, 0.4, 0.7)
 end
 
 function plot_oac!(trc::Trace)
@@ -81,6 +67,22 @@ function plot_oac!(trc::Trace)
 	# 	plot_oac!(trc.rays[nRay])
 	# end
 	plot_oac!("Ray Trace: " * trc.scn.name)
+end
+
+function plot_oac!(fld::Field)
+	f = gcf()
+	r, z = gridpoints.([fld.scn.env.Ωr, fld.scn.env.Ωz])
+
+	function TL(r, z)
+		if fld.scn.env.ati.z(r) ≤ z ≤ fld.scn.env.bty.z(r)
+			return fld.TL(r, z)
+		else
+			return NaN
+		end
+	end
+
+	# heatmap!(r, z, fld.TL.(r', z))
+	contourf!(r, z, TL.(r', z))
 end
 
 function save_oac_plot(
