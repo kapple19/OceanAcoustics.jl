@@ -173,11 +173,31 @@ function channel()
 	# Scenario
 	r₀ = 0
 	z₀ = 500
-	θ_crit = ocn.SSP.c(0.0, z₀)/1500.0 |> acos
+	θ_crit = ocn.SSP.c(r₀, z₀)/1500.0 |> acos
 
 	fan = Fan(θ_crit * LinRange(-1, 1, 31))
 	src = Source(Position(r₀, z₀), Signal(150), fan)
 	scn = Scenario(env, src, "Deep Sound Channel")
+end
+
+function munk()
+	# Environment
+	z_(z) = 2(z - 1300)/1300
+	ϵ = 7.37e-3
+	c(r, z) = 1500*(1 + ϵ*(z_(z) - 1 + exp(-z_(z))))
+
+	ocn = Medium(c)
+	bty = Boundary(5e3)
+	env = Environment(100e3, ocn, bty)
+
+	# Scenario
+	r₀ = 0.0
+	z₀ = 1e3
+	θ_crit = ocn.SSP.c(r₀, z₀)/ocn.SSP.c(r₀, 0) |> acos
+
+	fan = Fan(θ_crit * LinRange(-1, 1, 31))
+	src = Source(Position(r₀, z₀), Signal(150), fan)
+	scn = Scenario(env, src, "Munk Profile")
 end
 
 # Export all
