@@ -200,6 +200,27 @@ function munk()
 	scn = Scenario(env, src, "Munk Profile")
 end
 
+function n2linear()
+	# Environment
+	c₀ = 1550
+	c(r, z) = c₀/√(1 + 2.4z/c₀)
+	R = 4e3
+	Z = 1e3
+
+	ocn = Medium(c)
+	bty = Boundary(Z)
+	env = Environment(R, ocn, bty)
+
+	# Scenario
+	r₀ = 0.0
+	z₀ = Z
+	θ_crit = ocn.SSP.c(r₀, z₀)/ocn.SSP.c(r₀, 0) |> acos
+
+	fan = Fan(θ_crit * LinRange(-1.2, -0.8, 21))
+	src = Source(Position(r₀, z₀), Signal(2e3), fan)
+	scn = Scenario(env, src, "n^2-Linear Profile")
+end
+
 # Export all
 for n in names(@__MODULE__; all=true)
     if Base.isidentifier(n) && n ∉ (Symbol(@__MODULE__), :eval, :include)

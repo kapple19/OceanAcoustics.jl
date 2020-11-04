@@ -1,7 +1,7 @@
 ## One
 using OceanAcoustics
 # name = OAC_EXAMPLE_NAMES[2]
-name = :munk
+name = :n2linear
 trc = example_trace(name)
 fig = plot_oac(trc)
 save_oac_plot(fig, :raytrace, name)
