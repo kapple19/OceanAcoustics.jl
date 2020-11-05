@@ -1,5 +1,14 @@
-using Plots
-using Plots: Plot
+using Plots:
+Plot,
+plot,
+xlabel!,
+ylabel!,
+plot!,
+heatmap!,
+cgrad,
+contourf!
+using DrWatson: plotsdir
+using ProgressMeter: @showprogress
 
 export plot_oac
 export save_oac_plot
@@ -63,12 +72,14 @@ function plot_oac!(trc::Trace)
 end
 
 function plot_oac!(fld::Field)
-	r, z = gridpoints.([fld.scn.env.Ωr, fld.scn.env.Ωz], [31, 17])
+	r, z = gridpoints.([fld.scn.env.Ωr, fld.scn.env.Ωz], [1001, 801])
 
 	TL(r, z) = fld.scn.env.ati.z(r) ≤ z ≤ fld.scn.env.bty.z(r) ? min(100.0, fld.TL(r, z)) : NaN
 
-	@time heatmap!(
-		r, z, TL,
+	TLgrid = @showprogress 1 "Transmission Loss Grid" [TL(r′, z′) for z′ ∈ z, r′ ∈ r]
+
+	heatmap!(
+		r, z, TLgrid,
 		seriescolor = cgrad(:jet, rev = true),
 		colorbar = true,
 		colorbar_title = "Transmission Loss (dB)"

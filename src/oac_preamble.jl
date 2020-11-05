@@ -16,7 +16,6 @@ terminate!,
 AutoVern7,
 Rodas4,
 ODECompositeSolution
-using DrWatson: plotsdir
 using Roots: find_zeros
 
 abstract type OceanAcoustic <: Any end
