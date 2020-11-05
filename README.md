@@ -48,27 +48,27 @@ z₀ = depth_max
 θ₀s = θ_crit * LinRange(-1.2, -0.8, 21)
 
 fan = Fan(θ₀s)
-src = Source(
-  Position(r₀, z₀),
-  Signal(2e3),
-  fan
-)
+src = Source(Position(r₀, z₀), Signal(2e3), fan)
 scn = Scenario(env, src, "n²-Linear Profile")
 ```
 
-3. Trace rays:
+3. Trace and plot rays:
 
 ```julia
 trc = Trace(scn)
-```
-
-4. Plot rays:
-
-```julia
 plot_oac(trc)
 ```
 
-![](plots/raytrace/n2linear.png)
+![](plots/raytraces/n2linear.png)
+
+4. Calculate transmission loss field:
+
+```julia
+fld = Field(scn)
+plot_oac(fld)
+```
+
+![](plots/fields/n2linear.png)
 
 ## Motivation
 There are a variety of ocean acoustics modelling software available online, which prompts asking for the purpose of yet another one.
