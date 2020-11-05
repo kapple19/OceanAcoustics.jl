@@ -1,14 +1,14 @@
 # OceanAcoustics.jl
 
 | Feature  | Status  |
---- | --- |
+| --- | --- |
 | Linux | [![Build Status](https://travis-ci.com/kapple19/OceanAcoustics.jl.svg?branch=master)](https://travis-ci.com/kapple19/OceanAcoustics.jl) |
 | Windows | [![Build Status](https://ci.appveyor.com/api/projects/status/github/kapple19/OceanAcoustics.jl?svg=true)](https://ci.appveyor.com/project/kapple19/OceanAcoustics-jl) |
 | Coverage | [![Coverage](https://codecov.io/gh/kapple19/OceanAcoustics.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/kapple19/OceanAcoustics.jl) [![Coverage](https://coveralls.io/repos/github/kapple19/OceanAcoustics.jl/badge.svg?branch=master)](https://coveralls.io/github/kapple19/OceanAcoustics.jl?branch=master) |
 | Docs | |
 | License | |
 
-An implementation of ocean acoustics models found in literature, written in the Julia programming language.
+An implementation of ocean acoustics models in literature, written in the Julia programming language.
 
 Note, this package is still under development, and not yet registered.
 
@@ -26,46 +26,49 @@ using OceanAcoustics
 ```
 
 ### Ray Tracing
-1. Define the environment parameters:
+1. Define the environment:
 
 ```julia
-c(r, z) = 1500 + 100z/5e3 # sound speed
-zBty = 5e3 # bathymetry
-zAti = 0.0 # altimetry
-r₀ = 0.0 # source range
-z₀ = 0.0 # source depth
-θ_crit = acos(c(r₀, z₀)/c(r₀, zBty)) # critical angle
-θ₀ = θ_crit*range(0.1, 1, length = 10) # initial ray angles
-f = 2e2 # frequency
-R = 1e5 # maximum range
-Z = zBty # maximum depth
+c₀ = 1550
+c(r, z) = c₀/√(1 + 2.4z/c₀)
+range_max = 4e3
+depth_max = 1e3
+
+ocn = Medium(c)
+bty = Boundary(depth_max)
+env = Environment(range_max, ocn, bty)
 ```
 
-2. Parse the scenario:
+2. Specify the scenario:
 
 ```julia
-ocn = Medium(c, R, Z)
-bty = Boundary(zBty)
-ati = Boundary(zAti)
-src = Source(Position(r₀, z₀), Signal(f))
+r₀ = 0.0
+z₀ = depth_max
+θ_crit = ocn.SSP.c(r₀, z₀)/ocn.SSP.c(r₀, 0) |> acos
+θ₀s = θ_crit * LinRange(-1.2, -0.8, 21)
+
+fan = Fan(θ₀s)
+src = Source(
+  Position(r₀, z₀),
+  Signal(2e3),
+  fan
+)
+scn = Scenario(env, src, "n²-Linear Profile")
 ```
 
 3. Trace rays:
 
 ```julia
-rays = Ray.(θ₀, src, ocn, bty, ati)
+trc = Trace(scn)
 ```
 
 4. Plot rays:
 
 ```julia
-f = acoustic_plot(rays)
-acoustic_plot!(ati)
-acoustic_plot!(bty)
-acoustic_plot!("Ray Trace: Upward Refracting Rays")
+plot_oac(trc)
 ```
 
-![](plots/sim_rays/upward.png)
+![](plots/raytrace/n2linear.png)
 
 ## Motivation
 There are a variety of ocean acoustics modelling software available online, which prompts asking for the purpose of yet another one.
