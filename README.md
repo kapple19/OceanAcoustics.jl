@@ -8,7 +8,7 @@
 | Docs | |
 | License | |
 
-An implementation of ocean acoustics models found in literature, written in the Julia programming language.
+An implementation of ocean acoustics models in literature, written in the Julia programming language.
 
 Note, this package is still under development, and not yet registered.
 
