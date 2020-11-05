@@ -1,3 +1,18 @@
+using GRUtils:
+Figure,
+hold!,
+yflip!,
+xlabel!,
+ylabel!,
+gcf,
+plot!,
+colorscheme!,
+title!,
+savefig,
+color,
+contourf!,
+colormap!
+
 export plot_oac
 export plot_oac!
 export save_oac_plot

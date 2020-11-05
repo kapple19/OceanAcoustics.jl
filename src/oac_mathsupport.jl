@@ -14,7 +14,7 @@ end
 function closest_points(r, z, beam)
 	Q(s) = (beam.ray.r(s) - r)^2 + (beam.ray.z(s) - z)^2
 	dQ(s) = derivative(Q, s)
-	sMins = find_zeros(dQ, beam.ray.Ωₛ.lo, beam.ray.Ωₛ.hi)
+	sMins = find_zeros(dQ, beam.ray.Ωs.lo, beam.ray.Ωs.hi)
 	d²Q(s) = derivative(dQ, s)
 	# min_cond(s) = d²Q(s) > 0 && beam.W(s) > sqrt(Q(s))
 	min_cond(s) = d²Q(s) > 0

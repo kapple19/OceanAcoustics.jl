@@ -106,10 +106,13 @@ mutable struct Medium <: OceanAcoustic
 	SSP::Celerity
 	Ωr::Interval
 	Ωz::Interval
+	input_data_type::Symbol
 
 	function Medium(c::Function)
 		SSP = Celerity(c)
-		return new(SSP)
+		med = new(SSP)
+		med.input_data_type = :Function
+		return med
 	end
 end
 
@@ -119,17 +122,23 @@ function Medium(c::AbstractArray)
 	c_ = c[2:end, 2:end]'
 	
 	cFcn = interpolated_function(r_, z_, c_)
-	return Medium(cFcn)
+	med = Medium(cFcn)
+	med.input_data_type = :RangeAndDepthDependent
+	return med
 end
 
 function Medium(z::AbstractVector, c::AbstractVector)
 	cMat = vcat([0 0 1.0], hcat(z, c, c))
-	return Medium(cMat)
+	med = Medium(cMat)
+	med.input_data_type = :DepthDependent
+	return med
 end
 
 function Medium(c::Real)
 	cFcn(r, z) = c
-	return Medium(cFcn)
+	med = Medium(cFcn)
+	med.input_data_type = :Constant
+	return med
 end
 
 struct Environment <: OceanAcoustic
@@ -295,7 +304,7 @@ function ray_propagation(scn::Scenario)
 end
 
 struct Ray <: OceanAcoustic
-	Ωₛ::Interval
+	Ωs::Interval
 	δθ₀::Real
 	r::Function
 	z::Function
@@ -405,7 +414,7 @@ struct Field <: OceanAcoustic
 			] |> sum
 		end
 
-		transmission_loss(r, z) = min(100.0, -20log10(abs(pressure(r, z))))
+		transmission_loss(r, z) = -20log10(abs(pressure(r, z)))
 
 		return new(
 			scn,

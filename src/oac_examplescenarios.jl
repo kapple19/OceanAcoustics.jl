@@ -2,6 +2,7 @@ export ExampleScenarios
 export OAC_EXAMPLE_NAMES
 export example_scenario
 export example_trace
+export example_field
 
 module ExampleScenarios
 using OceanAcoustics
@@ -218,7 +219,7 @@ function n2linear()
 
 	fan = Fan(θ_crit * LinRange(-1.2, -0.8, 21))
 	src = Source(Position(r₀, z₀), Signal(2e3), fan)
-	scn = Scenario(env, src, "n^2-Linear Profile")
+	scn = Scenario(env, src, "n²-Linear Profile")
 end
 
 # Export all
@@ -245,8 +246,15 @@ end
 example_scenario(name::String) = Symbol(name) |> example_scenario
 
 function example_trace(name::Symbol)
+	println("Ray Trace: " * String(name))
 	scn = example_scenario(name)
 	trc = Trace(scn)
+end
+
+function example_field(name::Symbol)
+	println("Field: " * String(name))
+	scn = example_scenario(name)
+	fld = Field(scn)
 end
 
 example_trace(name::String) = Symbol(name) |> example_trace
