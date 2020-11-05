@@ -13,16 +13,14 @@ An implementation of ocean acoustics models found in literature, written in the 
 Note, this package is still under development, and not yet registered.
 
 ## Installation
-At the Julia REPL, execute the following commands.
-
+At the Julia REPL, execute:
 ```julia
 using Pkg
 Pkg.add("OceanAcoustics")
 ```
 
 ## Usage
-At the Julia REPL, execute
-
+To load, execute:
 ```julia
 using OceanAcoustics
 ```
@@ -125,5 +123,7 @@ This package stands on the shoulders of Julia giants.
 > [Interpolations.jl](https://github.com/JuliaMath/Interpolations.jl)
 
 > [Roots.jl](https://github.com/JuliaMath/Roots.jl)
+
+> [IntervalArithmetic.jl](https://github.com/JuliaIntervals/IntervalArithmetic.jl)
 
 > [GRUtils.jl](https://github.com/heliosdrm/GRUtils.jl)

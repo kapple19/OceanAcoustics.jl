@@ -1,37 +1,21 @@
-## Preamble
+## One
 using OceanAcoustics
-using DrWatson
-using GRUtils
+# name = OAC_EXAMPLE_NAMES[2]
+name = :convergence
+trc = example_trace(name)
+p = plot_oac(trc)
 
-## Simulate Rays
-function sim_rays(scen::Function)
-	θ₀, src, ocn, bty, ati, title = scen()
-	println("Simulating Rays for ", title)
+## All
+using OceanAcoustics
+trcs = example_trace.(OAC_EXAMPLE_NAMES)
+ps = plot_oac.(trcs)
+save_oac_plot.(ps, :raytrace, OAC_EXAMPLE_NAMES)
 
-	rays = Ray.(θ₀, src, ocn, bty, ati)
-	
-	f = acoustic_plot(ati)
-	acoustic_plot!(bty)
-	acoustic_plot!.(rays)
-	acoustic_plot!("Ray Trace: " * title)
-	return f
+## Loop
+using OceanAcoustics
+for name ∈ OAC_EXAMPLE_NAMES
+	println(name)
+	trc = example_trace(name)
+	p = plot_oac(trc)
+	save_oac_plot(p, :raytrace, name)
 end
-
-## Run Scenarios
-include("scenarios.jl")
-include("simulations.jl")
-
-scenarios_rays = [
-	flat,
-	smooth,
-	convergence,
-	upward,
-	parabolic,
-	channel,
-	seamount,
-	simple,
-	n2linear,
-	slopes
-]
-
-run_sims(sim_rays, scenarios_rays)

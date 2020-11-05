@@ -1,10 +1,9 @@
-"""
-OceanAcoustics
-
-A Julia package implementation of acoustic propagation in an ocean environment.
-"""
 module OceanAcoustics
 
-include("AcousticPropagation.jl")
+include("oac_preamble.jl")
+include("oac_mathsupport.jl")
+include("oac_raypropagation.jl")
+include("oac_plots_plots.jl")
+include("oac_examplescenarios.jl")
 
-end
+end # Module: OceanAcoustics
