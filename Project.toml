@@ -16,6 +16,7 @@ ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
 
 [compat]
+DiffEqBase = "6.48"
 Documenter = "0.25"
 ForwardDiff = "0.10"
 Interpolations = "0.13"
