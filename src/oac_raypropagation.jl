@@ -26,6 +26,13 @@ function boundary_reflection(t_inc::Vector, t_bnd::Vector)
 	return [cos(θ_rfl), sin(θ_rfl)]/c
 end
 
+"""
+Boundary(z::Function)
+Boundary(r::AbstractVector{Tr}, z::AbstractVector::{Tz}) where {Tr <: Real, Tz <: Real}
+Boundary(z::Real)
+
+Processes the depth of an ocean boundary layer. Can be range-dependent or constant.
+"""
 mutable struct Boundary <: OceanAcoustic
 	z::Function
 	callback::ContinuousCallback
