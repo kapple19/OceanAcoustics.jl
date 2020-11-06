@@ -20,6 +20,7 @@ Documenter = "0.25"
 ForwardDiff = "0.10"
 Interpolations = "0.13"
 OrdinaryDiffEq = "5"
+ProgressMeter = "1.4"
 Roots = "1.0"
 julia = "1.5"
 
