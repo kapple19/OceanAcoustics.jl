@@ -6,7 +6,8 @@ ylabel!,
 plot!,
 heatmap!,
 cgrad,
-contourf!
+contourf!,
+savefig
 using DrWatson: plotsdir
 using ProgressMeter: @showprogress
 
@@ -72,11 +73,12 @@ function plot_oac!(trc::Trace)
 end
 
 function plot_oac!(fld::Field)
-	r, z = gridpoints.([fld.scn.env.Ωr, fld.scn.env.Ωz], [1001, 801])
+	# r, z = gridpoints.([fld.scn.env.Ωr, fld.scn.env.Ωz], [1001, 801])
+	r, z = gridpoints.([fld.scn.env.Ωr, fld.scn.env.Ωz], [31, 25])
 
 	TL(r, z) = fld.scn.env.ati.z(r) ≤ z ≤ fld.scn.env.bty.z(r) ? min(100.0, fld.TL(r, z)) : NaN
 
-	TLgrid = @showprogress 1 "Transmission Loss Grid" [TL(r′, z′) for z′ ∈ z, r′ ∈ r]
+	TLgrid = @time @showprogress 1 "Transmission Loss Grid " [TL(r′, z′) for z′ ∈ z, r′ ∈ r]
 
 	heatmap!(
 		r, z, TLgrid,

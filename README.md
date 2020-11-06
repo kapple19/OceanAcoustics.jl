@@ -61,14 +61,14 @@ plot_oac(trc)
 
 ![](plots/raytraces/n2linear.png)
 
-4. Calculate transmission loss field:
+4. Calculate transmission loss field (dev):
 
 ```julia
 fld = Field(scn)
 plot_oac(fld)
 ```
 
-![](plots/fields/n2linear.png)
+![](plots/fields/n2linear_keep.png)
 
 ## Motivation
 There are a variety of ocean acoustics modelling software available online, which prompts asking for the purpose of yet another one.
@@ -78,7 +78,7 @@ There are a variety of ocean acoustics modelling software available online, whic
 * **Reliable programming suite**: Julia's packages are community-driven and -proven, ensuring quality performance and reliability.
   * DifferentialEquations.jl: Differential equation solver suite.
   * Interpolations.jl: Trustworthy interpolation.
-  * ForwardDiff.jl: Modern methods in calculating derivatives - minimisation of discretization.
+  * ForwardDiff.jl: Latest methods in calculating derivatives - minimisation of discretization.
 
 ## Development Plan
 The following features are under development:
