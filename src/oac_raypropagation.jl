@@ -27,16 +27,63 @@ function boundary_reflection(t_inc::Vector, t_bnd::Vector)
 end
 
 """
-Boundary(z::Function)
-Boundary(r::AbstractVector{Tr}, z::AbstractVector::{Tz}) where {Tr <: Real, Tz <: Real}
-Boundary(z::Real)
+```
+Boundary(z, c, ρ) <: OceanAcoustics
+```
 
-Processes the depth of an ocean boundary layer. Can be range-dependent or constant.
+Mutable struct that processes a boundary layer of a vertical slice of an ocean environment.
+
+| Property | Property | Type |
+|---|---|---|
+| `z` | Depth | `Function` |
+| `c` | Sound speed | `Function` |
+| `ρ` | Density | `Function` |
+
+Each input is versatile. Whatever type is passed, is used to interpolate a function. The valid types are as follows.
+
+| Type | Processing |
+|---|---|
+| `Function` | A univariate function dependent on range. |
+| `Tuple{Vr,Vz}`* | A pair of real-valued vectors. The first defines range points, and the second defines respective depth. |
+| `Real` | A constant boundary parameter value. |
+
+*The full `Tuple{Vr,Vz}` signature is
+```
+Tuple{Vr,Vz} where {
+	Rr <: Real,
+	Rz <: Real,
+	Vr <: AbstractVector{Rr},
+	Vz <: AbstractVector{Rz}
+}
+```
 """
 mutable struct Boundary <: OceanAcoustic
+	"""
+	`z::Function`
+	
+	Range-dependent boundary depth univariate function.
+	"""
 	z::Function
+
+	"""
+	`callback::ContinuousCallback`
+	
+	Continuous callback for differential equation solver.
+	"""
 	callback::ContinuousCallback
+
+	"""
+	`Ωr::Interval`
+	
+	Interval of range values.
+	"""
 	Ωr::Interval
+
+	"""
+	`Ωz::Interval`
+	
+	Interval of depth values.
+	"""
 	Ωz::Interval
 	
 	function Boundary(z::Function)
@@ -59,6 +106,7 @@ mutable struct Boundary <: OceanAcoustic
 	end
 end
 
+"Docstring to be removed."
 function Boundary(r::Vector{T}, z::Vector{T}) where T <: Real
 	zFcn = interpolated_function(r, z)
 	bnd = Boundary(zFcn)
@@ -109,6 +157,9 @@ struct Celerity <: OceanAcoustic
 	end
 end
 
+"""
+`mutable struct Medium <: OceanAcoustic`
+"""
 mutable struct Medium <: OceanAcoustic
 	SSP::Celerity
 	Ωr::Interval
