@@ -21,7 +21,7 @@ using Roots: find_zeros
 """
 `OceanAcoustic <: Any`
 
-An abstract type for all `struct`s defined for the ocean acoustics modelling implementation.
+An abstract supertype for all `struct`s defined for the ocean acoustics modelling implementation.
 """
 abstract type OceanAcoustic <: Any end
 

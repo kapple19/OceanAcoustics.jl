@@ -12,12 +12,18 @@ using DrWatson: plotsdir
 using ProgressMeter: @showprogress
 
 export plot_oac
+export plot_oac!
 export save_oac_plot
 
 SSP_COLORMAP = :winter
 SSP_LEVEL_COLOURS = :ice
+DEFAULT_GRID_N = 1001
 
-gridpoints(Ω::Interval, N::Integer = 1001) = LinRange(Ω.lo, Ω.hi, N)
+gridpoints(Ω_lo::Real, Ω_hi::Real, N::Integer = DEFAULT_GRID_N) = LinRange(Ω_lo, Ω_hi, N)
+
+gridpoints(Ω::Tuple{Rlo, Rhi}, N::Integer = DEFAULT_GRID_N) where {Rlo <: Real, Rhi <: Real} = gridpoints(Ω[1], Ω[2], N)
+
+gridpoints(Ω::Interval, N::Integer = DEFAULT_GRID_N) = gridpoints(Ω.lo, Ω.hi, N)
 
 function plot_oac()
 	p = plot(yaxis = :flip, legend = false)
@@ -28,13 +34,20 @@ function plot_oac!()
 	ylabel!("Depth (m)")
 end
 
-function plot_oac!(bnd::Boundary)
-	r = gridpoints(bnd.Ωr)
-	plot!(r, bnd.z)
+function plot_oac!(bnd::Boundary, Ωr)
+	r = gridpoints(Ωr)
+	plot!(
+		r, bnd.z,
+		color = :black
+	)
 end
 
-function plot_oac!(med::Medium)
-	r, z = gridpoints.([med.Ωr, med.Ωz])
+function plot_oac!(bnd::Boundary)
+	plot_oac!(bnd, bnd.Ωr)
+end
+
+function plot_oac!(med::Medium, Ωr, Ωz)
+	r, z = gridpoints.([Ωr, Ωz])
 	if med.input_data_type ≠ :Constant
 		heatmap!(
 			r, z, med.SSP.c,
@@ -44,6 +57,10 @@ function plot_oac!(med::Medium)
 			colorbar_title = "Sound Speed Profile (m/s)"
 		)
 	end
+end
+
+function plot_oac!(med::Medium)
+	plot_oac!(med, med.Ωr, med.Ωz)
 end
 
 function plot_oac!(env::Environment)
@@ -93,6 +110,13 @@ end
 function plot_oac(oac::OceanAcoustic)
 	p = plot_oac()
 	plot_oac!(oac)
+	plot_oac!()
+	return p
+end
+
+function plot_oac(oac::OceanAcoustic, args::Any...)
+	p = plot_oac()
+	plot_oac!(oac, args...)
 	plot_oac!()
 	return p
 end

@@ -307,6 +307,9 @@ struct Fan
 	δθ₀s::AbstractVector{R} where R <: Real
 
 	function Fan(θ₀s::AbstractVector{R}) where R <: Real
+		if ~all(-π/2 .≤ θ₀s .≤ π/2)
+			error("Invalid fan angles.")
+		end
 		δθ₀s = diff(θ₀s)
 		push!(δθ₀s, δθ₀s[end])
 		return new(θ₀s, δθ₀s)

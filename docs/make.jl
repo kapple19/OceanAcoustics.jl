@@ -1,12 +1,7 @@
-push!(LOAD_PATH,"../src/")
-using Documenter
-using OceanAcoustics
-
-makedocs(
-    sitename = "Ocean Acoustics",
-    format = Documenter.HTML(),
-    modules = [OceanAcoustics]
-)
+# push!(LOAD_PATH,"../src/")
+include("make_general_1.jl")
+include("make_external_1.jl")
+include("make_general_2.jl")
 
 # deploydocs(
 #     deps = Deps.pip("pygments", "mkdocs", "python-markdown-math")
