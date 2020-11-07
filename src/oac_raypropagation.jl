@@ -467,9 +467,9 @@ struct Beam <: OceanAcoustic
 		δθ₀ = ray.δθ₀
 		
 		A = δθ₀/c₀ * exp(im*π/4) * √(q₀ * ω * cos(θ₀) / 2π)
-		p(s, n) = A * √(c(s) / r(s) / q(s)) * exp(-im * ω * (τ(s) + p(s)/q(s) * n^2 / 2))
+		pressure_beam(s, n) = A * √(c(s) / r(s) / q(s)) * exp(-im * ω * (τ(s) + p(s)/q(s) * n^2 / 2))
 
-		return new(ray, p)
+		return new(ray, pressure_beam)
 	end
 end
 
