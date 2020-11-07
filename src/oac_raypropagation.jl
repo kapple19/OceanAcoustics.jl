@@ -27,33 +27,29 @@ function boundary_reflection(t_inc::Vector, t_bnd::Vector)
 end
 
 """
-```
-Boundary(z, c, ρ) <: OceanAcoustics
-```
+`Boundary(z, c, ρ) <: OceanAcoustics`
 
 Mutable struct that processes a boundary layer of a vertical slice of an ocean environment.
 
-| Property | Property | Type |
+| Property | Parameter | Type |
 |---|---|---|
 | `z` | Depth | `Function` |
 | `c` | Sound speed | `Function` |
 | `ρ` | Density | `Function` |
 
-Each input is versatile. Whatever type is passed, is used to interpolate a function. The valid types are as follows.
+Each input is versatile. The type passed is used to define a function via linear interpolation. The valid types are as follows.
 
 | Type | Processing |
 |---|---|
 | `Function` | A univariate function dependent on range. |
-| `Tuple{Vr,Vz}`* | A pair of real-valued vectors. The first defines range points, and the second defines respective depth. |
+| `Tuple{Vr,Vz}`* | A pair of real-valued vectors. The first defines range points, and the second defines respective parameter value. |
 | `Real` | A constant boundary parameter value. |
 
 *The full `Tuple{Vr,Vz}` signature is
 ```
-Tuple{Vr,Vz} where {
-	Rr <: Real,
-	Rz <: Real,
-	Vr <: AbstractVector{Rr},
-	Vz <: AbstractVector{Rz}
+Tuple{Vr, Vz} where {
+	Rr <: Real, Vr <: AbstractVector{Rr},
+	Rz <: Real, Vz <: AbstractVector{Rz}
 }
 ```
 """
@@ -106,7 +102,6 @@ mutable struct Boundary <: OceanAcoustic
 	end
 end
 
-"Docstring to be removed."
 function Boundary(r::Vector{T}, z::Vector{T}) where T <: Real
 	zFcn = interpolated_function(r, z)
 	bnd = Boundary(zFcn)
@@ -127,6 +122,11 @@ function Boundary(z::Real)
 	return bnd
 end
 
+"""
+`Celerity <: OceanAcoustic`
+
+struct that processes first and second order partial derivatives of a bivariate celerity function.
+"""
 struct Celerity <: OceanAcoustic
 	c::Function
 	∂c_∂r::Function
@@ -158,7 +158,55 @@ struct Celerity <: OceanAcoustic
 end
 
 """
-`mutable struct Medium <: OceanAcoustic`
+`Medium <: OceanAcoustic`
+
+Mutable struct that processes an acoustic medium in a vertical slice of an ocean environment.
+
+| Property | Parameter | Type |
+|---|---|---|
+| `c` | Sound Speed | Function |
+| `ρ` | Density | Function |
+| `α` | Attenuation | Function |
+
+Each input is versatile. The type passed is used to interpolate a function. The valid types are as follows.
+
+| Type | Processing |
+|---|---|
+| `Function` | A bivariate function dependent on range then depth. |
+| `Tuple{Vr,Vz,Mp}`* | Two real-valued vectors followed by a matrix. The first defines range points, the second depth points, then a respective matrix of parameter values. |
+| `Tuple{Vr,Tz,Tp}`** | A real-valued vector of ranges followed by two tuples. |
+| `Tuple{Vz,Vp}`*** | A pair of real-valued vectors giving depth-parameter value pairs. |
+| `Real` | A constant parameter value. |
+
+*The full `Tuple{Vr, Vz, Mp}` signature is
+```
+Tuple{Vr, Vz, Mp} where {
+	Rr <: Real,
+	Rz <: Real,
+	Rp <: Real,
+	Vr <: AbstractVector{Rr},
+	Vz <: AbstractVector{Rz},
+	Mp <: AbstractArray{Rp}
+}
+```
+
+**The full `Tuple{Vr, Tz, Tp}` signature is
+```
+Tuple{Tr, Tz, Tp} where {
+	where Nr <: Integer,
+	Rr <: Real, Tr <: NTuple{Nr, Rr},
+	Rz <: Real, Tz <: NTuple{Nr, AbstractVector{Rz}},
+	Rp <: Real, Tp <: NTuple{Nr, AbstractVector{Rp}}
+}
+```
+
+***The full `Tuple{Vz, Vp}` signature is
+```
+Tuple{Vz, Vp} where {
+	Rz <: Real, Vz <: AbstractVector{Rz},
+	Rp <: Real, Vp <: AbstractVector{Rp}
+}
+```
 """
 mutable struct Medium <: OceanAcoustic
 	SSP::Celerity
