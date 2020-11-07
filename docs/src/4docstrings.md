@@ -1,5 +1,8 @@
 # Docstrings
 
+```@index
+```
+
 ```@meta
 CurrentModule = OceanAcoustics
 DocTestSetup = quote

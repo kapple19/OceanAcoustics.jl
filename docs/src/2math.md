@@ -1,6 +1,10 @@
 # Mathematical Background
 This section expounds the mathematical background implemented in the OceanAcoustics package.
 
+```@contents
+Pages = ["2math.md"]
+```
+
 ## Ray Theory
 The following theory is taken from Jensen.
 
@@ -8,7 +12,7 @@ We are interested in propagation within a slice of ocean. We take cylindrical co
 
 Acoustic propagation in the ocean is modelled with the **wave equation**. Under a frequency-time Fourier transform, the **Helmholtz equation** is obtained. While there are a number of ocean variables that represent wave motion (e.g. pressure, particle velocity, velocity potential, etc.) we focus on pressure.
 
-Perturbation analysis via expressing the solution as a ray series yields the **eikonal equation**, and an infinite set of **transport equations**. The **dynamic ray equations** are employed to complete the calculation of the ray.
+Perturbation analysis via expressing the solution as a ray series yields the **eikonal equation**, and an infinite set of **transport equations**. The **dynamic ray equations** are employed to complete the calculation of the ray pressure.
 
 ### Eikonal Equation
 The **eikonal equation** is re-expressed and parameterised with respect to ray length $s$, and the second-order derivatives of $s$ are split into respective systems of equations in terms of the local ray tangent $c(s) (\xi(s), \zeta(s))$. This yields

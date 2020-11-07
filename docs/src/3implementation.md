@@ -1,13 +1,29 @@
-# Source Code Implementation
-This chapter details the implementation of the mathematical theory in the OceanAcoustics package.
+# Implementation Method
+This chapter details methods of implementation for the mathematical theory in the OceanAcoustics package.
+
+```@contents
+Pages = ["3implementation.md"]
+```
+
+## Boundary
+
+## Medium
 
 ## Environment
 
+## Position
+
+## Signal
+
+## Fan
+
+## Source
+
 ## Scenario
 
-## Ray Tracing
+## Trace
 
-## Beam Theory
+## Beam
 
 ## Field
 
@@ -16,7 +32,7 @@ The solution to the ray tracing provides a coordinates system of the vertical sl
 
 Given a point $(r', z')$ in the field, we seek $(s, n)$ for a ray whose coordinates are given by $(r(s), z(s))$.
 
-We define the distance quadrature $Q(s)$ as
+We define the distance quadrature $Q(s)$ as the square of the distance of the field point from the the ray at ray length $s$,
 
 ```math
 \newcommand{\Par}[1]{\left({#1}\right)}
