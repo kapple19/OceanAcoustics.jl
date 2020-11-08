@@ -521,6 +521,10 @@ struct Field <: OceanAcoustic
 				for beam ∈ beams
 				for (s, n) ∈ closest_points(r, z, beam)
 			] |> sum
+			# p = complex(0.0)
+			# for beam ∈ beams, (s, n) ∈ closest_points(r, z, beam)
+			# 	p += beam.p(s, n)
+			# end
 		end
 
 		transmission_loss(r, z) = -20log10(abs(pressure(r, z)))

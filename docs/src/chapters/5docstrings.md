@@ -14,6 +14,8 @@ end
 Modules = [OceanAcoustics]
 Pages   = [
     "oac_preamble.jl",
-    "oac_raypropagation.jl"
+    "oac_parameters.jl",
+    "oac_raypropagation.jl",
+    "oac_sonar.jl"
 ]
 ```
