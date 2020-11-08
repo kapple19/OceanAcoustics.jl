@@ -11,6 +11,7 @@ export Ray
 export Trace
 export Beam
 export Field
+export Grid
 
 function boundary_reflection(t_inc::Vector, t_bnd::Vector)
 	MyAngle(tng) = atan(tng[2]/tng[1])
@@ -507,7 +508,6 @@ struct Field <: OceanAcoustic
 	beams::AbstractVector{Beam}
 	coh::Coherence
 	p::Function
-	TL::Function
 
 	function Field(
 		scn::Scenario,
@@ -527,14 +527,11 @@ struct Field <: OceanAcoustic
 			# end
 		end
 
-		transmission_loss(r, z) = -20log10(abs(pressure(r, z)))
-
 		return new(
 			scn,
 			beams,
 			coh,
-			pressure,
-			transmission_loss
+			pressure
 		)
 	end
 end
@@ -542,3 +539,54 @@ end
 Field(trc::Trace, coh::Coherence = Coherence()) = Field(trc.scn, Beam.(trc.rays, trc.scn.src), coh)
 
 Field(scn::Scenario, coh::Coherence = Coherence()) = Field(Trace(scn), coh)
+
+struct Sonar <: OceanAcoustic
+	
+end
+
+struct Grid <: OceanAcoustic
+	scn::Scenario
+	r::AbstractVector{Rr} where Rr <: Real
+	z::AbstractVector{Rz} where Rz <: Real
+	p::AbstractArray{Cp, 2} where Cp <: Number
+	TL::AbstractArray{RTL, 2} where RTL <: Real
+
+	function Grid(
+		fld::Field,
+		r::AbstractVector{Rr},
+		z::AbstractVector{Rz}
+		) where {Rr <: Real, Rz <: Real}
+		
+		DEF_NAME = "Pressure Grid"
+		progress_name(name) = length(name) == 0 ? DEF_NAME : name * ": " * DEF_NAME * " "
+		pn = progress_name(fld.scn.name)
+
+		function pressure(r, z)
+			if fld.scn.env.ati.z(r) < z < fld.scn.env.bty.z(r)
+				return fld.p(r, z)
+			else
+				return NaN
+			end
+		end
+
+		p = @showprogress 1 pn [pressure(r′, z′) for z′ ∈ z, r′ ∈ r]
+
+		TL = min.(100, SonarEqs.transmission_loss.(p))
+
+		return new(fld.scn, r, z, p, TL)
+	end
+end
+
+function Grid(fld::Field, Nr::Integer, Nz::Integer)
+	r = gridpoints(fld.scn.env.Ωr, Nr)
+	z = gridpoints(fld.scn.env.Ωz, Nz)
+
+	return Grid(fld, r, z)
+end
+
+function Grid(scn::Scenario, args...)
+	fld = Field(scn)
+	return Grid(fld, args...)
+end
+
+Grid(oac::OceanAcoustic) = Grid(oac, 11, 7)

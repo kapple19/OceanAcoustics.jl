@@ -9,7 +9,6 @@ cgrad,
 contourf!,
 savefig
 using DrWatson: plotsdir
-using ProgressMeter: @showprogress
 
 export plot_oac
 export plot_oac!
@@ -18,12 +17,6 @@ export save_oac_plot
 SSP_COLORMAP = :winter
 SSP_LEVEL_COLOURS = :ice
 DEFAULT_GRID_N = 1001
-
-gridpoints(Ω_lo::Real, Ω_hi::Real, N::Integer = DEFAULT_GRID_N) = LinRange(Ω_lo, Ω_hi, N)
-
-gridpoints(Ω::Tuple{Rlo, Rhi}, N::Integer = DEFAULT_GRID_N) where {Rlo <: Real, Rhi <: Real} = gridpoints(Ω[1], Ω[2], N)
-
-gridpoints(Ω::Interval, N::Integer = DEFAULT_GRID_N) = gridpoints(Ω.lo, Ω.hi, N)
 
 function plot_oac()
 	p = plot(yaxis = :flip, legend = false)
@@ -95,7 +88,7 @@ function plot_oac!(fld::Field)
 
 	TL(r, z) = fld.scn.env.ati.z(r) ≤ z ≤ fld.scn.env.bty.z(r) ? min(100.0, fld.TL(r, z)) : NaN
 
-	DEF_NAME = "TL Grid"
+	DEF_NAME = "Pressure Grid"
 	progress_name(name) = length(name) == 0 ? 
 	DEF_NAME : name * ": " * DEF_NAME * " "
 	pn = progress_name(fld.scn.name)
@@ -109,6 +102,17 @@ function plot_oac!(fld::Field)
 	)
 	
 	plot!(title = "Field: " * fld.scn.name)
+end
+
+function plot_oac!(grid::Grid)
+	heatmap!(
+		grid.r, grid.z, grid.TL,
+		seriescolor = cgrad(:jet, rev = true),
+		colorbar = true,
+		colorbar_title = "Transmission Loss (dB)"
+	)
+
+	plot!(title = "Grid: " * grid.scn.name)
 end
 
 function plot_oac(oac::OceanAcoustic)

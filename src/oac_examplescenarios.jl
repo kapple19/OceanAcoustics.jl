@@ -3,6 +3,7 @@ export OAC_EXAMPLE_NAMES
 export example_scenario
 export example_trace
 export example_field
+export example_grid
 
 module ExampleScenarios
 using OceanAcoustics
@@ -251,10 +252,20 @@ function example_trace(name::Symbol)
 	trc = Trace(scn)
 end
 
+example_trace(name::String) = Symbol(name) |> example_trace
+
 function example_field(name::Symbol)
 	println("Field: " * String(name))
 	scn = example_scenario(name)
 	fld = Field(scn)
 end
 
-example_trace(name::String) = Symbol(name) |> example_trace
+example_field(name::String) = Symbol(name) |> example_field
+
+function example_grid(name::Symbol)
+	println("Grid: " * String(name))
+	scn = example_scenario(name)
+	grid = Grid(scn)
+end
+
+example_grid(name::String) = Symbol(name) |> example_grid

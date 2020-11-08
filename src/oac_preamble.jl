@@ -17,6 +17,7 @@ AutoVern7,
 Rodas4,
 ODECompositeSolution
 using Roots: find_zeros
+using ProgressMeter: @showprogress
 
 """
 `OceanAcoustic <: Any`
