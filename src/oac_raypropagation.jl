@@ -379,16 +379,19 @@ function ray_propagation(scn::Scenario)
 
 	δθ₀s = Vector{Real}(undef, 0)
 
+	ω = scn.src.sig.ω
+
 	r₀ = scn.src.pos.r
 	z₀ = scn.src.pos.z
+	c₀ = c(r₀, z₀)
 	τ₀ = 0.0
 
 	λ₀ = c(r₀, z₀) / scn.src.sig.f
 	pʳ₀ = 1.0
 	pⁱ₀ = 0.0
-	W₀ = 100λ₀
+	# W₀ = 100λ₀
 	qʳ₀ = 0.0
-	qⁱ₀ = scn.src.sig.ω * W₀^2 / 2
+	# qⁱ₀ = scn.src.sig.ω * W₀^2 / 2
 
 	TLmax = 100.0
 	S = 10^(TLmax/10)
@@ -396,10 +399,12 @@ function ray_propagation(scn::Scenario)
 
 	sols = Vector{ODECompositeSolution}(undef, 0)
 	for (nRay, θ₀) ∈ enumerate(scn.src.fan.θ₀s)
-		push!(δθ₀s, scn.src.fan.δθ₀s[nRay])
+		δθ₀ = scn.src.fan.δθ₀s[nRay]
+		push!(δθ₀s, δθ₀)
 
 		ξ₀ = cos(θ₀) / c(r₀, z₀)
 		ζ₀ = sin(θ₀) / c(r₀, z₀)
+		qⁱ₀ = 2c₀^2/(ω * δθ₀^2)
 		u₀ = [r₀, z₀, ξ₀, ζ₀, τ₀, pʳ₀, pⁱ₀, qʳ₀, qⁱ₀]
 	
 		prob = ODEProblem(ray_propagation!, u₀, sSpan)
@@ -468,13 +473,14 @@ struct Beam <: OceanAcoustic
 		c(s) = ray.c(s)
 
 		c₀ = c(0)
+		f = src.sig.f
 		ω = src.sig.ω
 		λ₀ = c₀/ω
 		q₀ = q(0)
 		θ₀ = ray.θ(0)
 		δθ₀ = ray.δθ₀
 		
-		A = δθ₀/c₀ * exp(im*π/4) * √(q₀ * ω * cos(θ₀) / 2π)
+		A = δθ₀/c₀ * exp(im*π/4) * √(q₀ * f * cos(θ₀))
 		pressure_beam(s, n) = A * √(c(s) / r(s) / q(s)) * exp(-im * ω * (τ(s) + p(s)/q(s) * n^2 / 2))
 
 		return new(ray, pressure_beam)

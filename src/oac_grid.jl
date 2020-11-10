@@ -29,7 +29,7 @@ struct Grid <: OceanAcoustic
 	
 		p = calc_pressure_grid(r, z, pressure)
 
-		TL = min.(90, SonarEqs.transmission_loss.(p))
+		TL = min.(90, SonarEqs.transmission_loss.(4π*p))
 	
 		return new(fld.scn, r, z, p, TL)
 	end
@@ -47,4 +47,4 @@ function Grid(scn::Scenario, args...)
 	return Grid(fld, args...)
 end
 
-Grid(oac::OceanAcoustic) = Grid(oac, 301, 207)
+Grid(oac::OceanAcoustic) = Grid(oac, 31, 27)

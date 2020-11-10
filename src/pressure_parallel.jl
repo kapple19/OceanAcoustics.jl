@@ -26,7 +26,7 @@ function calc_pressure_grid(
 		(Nrz,)
 	)
 
-	desc = "Pressure Grid (Parallel, " * string(nthreads()) * " threads): "
+	desc = "Pressure Grid (parallel, " * string(nthreads()) * " threads): "
 
 	prog = Progress(Nrz, desc = desc)
 	update!(prog, 0)

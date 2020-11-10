@@ -1,0 +1,32 @@
+\documentclass{report}
+\title{Ocean Acoustics}
+\author{Aaron Kaw}
+\date{}
+
+\usepackage{amsmath}
+
+\newcommand{\Par}[1]{\left({#1}\right)}
+\newcommand{\Brack}[1]{\left[{#1}\right]}
+\newcommand{\Brace}[1]{\left\{{#1}\right\}}
+
+\begin{document}
+\maketitle
+
+\chapter{Introduction}
+
+\chapter{Ray Method}
+
+\begin{align*}
+	W_0 &\in \Brack{10\lambda, 50\lambda} \\
+	p_0 &= 1 \\
+	q_0 &= \frac{i\omega W_0^2}{2}
+\end{align*}
+
+\begin{align*}
+	A &= \frac{\delta\theta_0}{c_0} e^{i\pi/4} \sqrt{q_0 f \cos(\theta_0)} \\
+	p^\text{beam}(s, n) &= A \sqrt{\frac{c(s)}{r(s, n) q(s)}} \exp\Brace{-i\omega\Par{\tau(s) + \frac{p(s)}{q(s)} \frac{n^2}{2}}}
+\end{align*}
+
+\chapter{Parabolic Equation Method}
+
+\end{document}
