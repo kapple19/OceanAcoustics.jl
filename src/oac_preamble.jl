@@ -19,6 +19,8 @@ ODECompositeSolution
 using Roots: find_zeros
 using ProgressMeter: @showprogress
 
+export (..)
+
 """
 `OceanAcoustic <: Any`
 

@@ -544,6 +544,8 @@ struct Sonar <: OceanAcoustic
 	
 end
 
+using Base.Threads
+
 struct Grid <: OceanAcoustic
 	scn::Scenario
 	r::AbstractVector{Rr} where Rr <: Real
@@ -569,7 +571,28 @@ struct Grid <: OceanAcoustic
 			end
 		end
 
-		p = @showprogress 1 pn [pressure(r′, z′) for z′ ∈ z, r′ ∈ r]
+		# p .= @showprogress 1 pn [pressure(r′, z′) for z′ ∈ z, r′ ∈ r]
+
+		Nr = length(r)
+		Nz = length(z)
+		rGrid = reshape(
+			r' .* ones(Nz, Nr),
+			(Nr*Nz,)
+		)
+		zGrid = reshape(
+			z .* ones(Nz, Nr),
+			(Nr*Nz,)
+		)
+
+		p′ = zeros(Complex, Nr*Nz)
+		@show nthreads()
+		@time @threads for n ∈ 1:Nr*Nz
+		# @time @showprogress 1 pn for n ∈ 1:Nr*Nz
+			# r′ = rGrid[n]
+			# z′ = zGrid[n]
+			@inbounds p′[n] = pressure(rGrid[n], zGrid[n])
+		end
+		p = reshape(p′, Nz, Nr)
 
 		TL = min.(100, SonarEqs.transmission_loss.(p))
 
@@ -589,4 +612,4 @@ function Grid(scn::Scenario, args...)
 	return Grid(fld, args...)
 end
 
-Grid(oac::OceanAcoustic) = Grid(oac, 11, 7)
+Grid(oac::OceanAcoustic) = Grid(oac, 51, 45)
