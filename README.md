@@ -2,11 +2,11 @@
 
 | Feature  | Status  |
 | --- | --- |
+| License | [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) |
+| Docs | |
 | Linux | [![Build Status](https://travis-ci.com/kapple19/OceanAcoustics.jl.svg?branch=master)](https://travis-ci.com/kapple19/OceanAcoustics.jl) |
 | Windows | [![Build Status](https://ci.appveyor.com/api/projects/status/github/kapple19/OceanAcoustics.jl?svg=true)](https://ci.appveyor.com/project/kapple19/OceanAcoustics-jl) |
 | Coverage | [![Coverage](https://codecov.io/gh/kapple19/OceanAcoustics.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/kapple19/OceanAcoustics.jl) [![Coverage](https://coveralls.io/repos/github/kapple19/OceanAcoustics.jl/badge.svg?branch=master)](https://coveralls.io/github/kapple19/OceanAcoustics.jl?branch=master) |
-| Docs | |
-| License | |
 
 An implementation of ocean acoustics models in literature, written in the Julia programming language.
 
@@ -56,7 +56,8 @@ scn = Scenario(env, src, "n²-Linear Profile")
 
 ```julia
 trc = Trace(scn)
-plot_oac(trc)
+p = plot_oac(scn.env)
+plot_oac!(trc)
 ```
 
 ![](plots/raytraces/n2linear.png)
@@ -64,11 +65,12 @@ plot_oac(trc)
 4. Calculate transmission loss field (dev):
 
 ```julia
-fld = Field(scn)
-plot_oac(fld)
+fld = Field(trc)
+grid = Grid(fld)
+plot_oac(grid)
 ```
 
-![](plots/fields/n2linear_keep.png)
+![](plots/grids/n2linear.png)
 
 ## Motivation
 There are a variety of ocean acoustics modelling software available online, which prompts asking for the purpose of yet another one.
@@ -128,5 +130,3 @@ This package stands on the shoulders of Julia giants.
 > [Roots.jl](https://github.com/JuliaMath/Roots.jl)
 
 > [IntervalArithmetic.jl](https://github.com/JuliaIntervals/IntervalArithmetic.jl)
-
-> [GRUtils.jl](https://github.com/heliosdrm/GRUtils.jl)
