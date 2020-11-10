@@ -544,8 +544,6 @@ struct Sonar <: OceanAcoustic
 	
 end
 
-using Base.Threads
-
 struct Grid <: OceanAcoustic
 	scn::Scenario
 	r::AbstractVector{Rr} where Rr <: Real
@@ -575,22 +573,27 @@ struct Grid <: OceanAcoustic
 
 		Nr = length(r)
 		Nz = length(z)
+		Nrz = Nr*Nz
 		rGrid = reshape(
 			r' .* ones(Nz, Nr),
-			(Nr*Nz,)
+			(Nrz,)
 		)
 		zGrid = reshape(
 			z .* ones(Nz, Nr),
-			(Nr*Nz,)
+			(Nrz,)
 		)
 
-		p′ = zeros(Complex, Nr*Nz)
+		prog = Progress(Nrz)
+		update!(prog, 0)
+
+		p′ = zeros(Complex, Nrz)
 		@show nthreads()
-		@time @threads for n ∈ 1:Nr*Nz
-		# @time @showprogress 1 pn for n ∈ 1:Nr*Nz
-			# r′ = rGrid[n]
-			# z′ = zGrid[n]
+		l = SpinLock()
+		@time @threads for n ∈ eachindex(p′, rGrid, zGrid)
 			@inbounds p′[n] = pressure(rGrid[n], zGrid[n])
+			lock(l)
+			next!(prog, step = 1)
+			unlock(l)
 		end
 		p = reshape(p′, Nz, Nr)
 
