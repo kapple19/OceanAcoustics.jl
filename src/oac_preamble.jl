@@ -17,17 +17,6 @@ AutoVern7,
 Rodas4,
 ODECompositeSolution
 using Roots: find_zeros
-using Base.Threads:
-@threads,
-SpinLock,
-lock,
-unlock,
-nthreads
-using ProgressMeter:
-@showprogress,
-Progress,
-update!,
-next!
 
 export (..)
 

@@ -6,11 +6,14 @@ save_oac_plot.(p, :grids, OAC_EXAMPLE_NAMES)
 
 ##
 using OceanAcoustics
-for name ∈ OAC_EXAMPLE_NAMES[5:end]
+names_subset = OAC_EXAMPLE_NAMES[1:7]
+for (n, name) ∈ enumerate(names_subset)
+	print("Grid ", n, "/", length(names_subset))
+	println(": ", name)
 	grid = example_grid(name)
 	p = plot_oac(grid)
 	display(p)
-	save_oac_plot(p)
+	save_oac_plot(p, :grids, name)
 end
 
 ##
@@ -25,5 +28,5 @@ end
 # 9 => 29, 23, 25
 # 10 => 22, 27, 29
 using OceanAcoustics
-grid = example_grid(:convergence)
+grid = example_grid(:n2linear)
 p = plot_oac(grid)

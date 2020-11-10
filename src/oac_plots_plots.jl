@@ -77,31 +77,8 @@ function plot_oac!(ray::Ray)
 end
 
 function plot_oac!(trc::Trace)
-	plot_oac!(trc.scn.env)
 	plot_oac!.(trc.rays)
 	plot!(title = "Ray Trace: " * trc.scn.name)
-end
-
-function plot_oac!(fld::Field)
-	# r, z = gridpoints.([fld.scn.env.Ωr, fld.scn.env.Ωz], [1001, 801])
-	r, z = gridpoints.([fld.scn.env.Ωr, fld.scn.env.Ωz], [31, 27])
-
-	TL(r, z) = fld.scn.env.ati.z(r) ≤ z ≤ fld.scn.env.bty.z(r) ? min(100.0, fld.TL(r, z)) : NaN
-
-	DEF_NAME = "Pressure Grid"
-	progress_name(name) = length(name) == 0 ? 
-	DEF_NAME : name * ": " * DEF_NAME * " "
-	pn = progress_name(fld.scn.name)
-	TLgrid = @showprogress 1 pn [TL(r′, z′) for z′ ∈ z, r′ ∈ r]
-
-	heatmap!(
-		r, z, TLgrid,
-		seriescolor = cgrad(:jet, rev = true),
-		colorbar = true,
-		colorbar_title = "Transmission Loss (dB)"
-	)
-	
-	plot!(title = "Field: " * fld.scn.name)
 end
 
 function plot_oac!(grid::Grid)

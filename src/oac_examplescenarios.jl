@@ -9,7 +9,7 @@ module ExampleScenarios
 using OceanAcoustics
 
 function convergence()
-	c = [1520, 1500, 1515, 1495, 1545.]
+	c = [1522, 1501, 1514, 1496, 1545.]
 	z = [0., 300., 1200., 2e3, 5000.]
 	Z = z[end]
 	R = 250e3
@@ -115,7 +115,7 @@ function parabolic()
 	env = Environment(R, ocn, bty)
 
 	# Scenario
-	fan = Fan(LinRange(atan(5e3/2e3), atan(5e3/20e3), 30))
+	fan = Fan(LinRange(atan(5e3/2e3), atan(5e3/26e3), 31))
 	src = Source(Position(0, 0), Signal(50), fan)
 	scn = Scenario(env, src, "Parabolic Bathymetry")
 end
@@ -202,7 +202,7 @@ function munk()
 	scn = Scenario(env, src, "Munk Profile")
 end
 
-function n2linear()
+function n2linear(θ₀_mult = LinRange(0.8, 1.2, 21))
 	# Environment
 	c₀ = 1550
 	c(r, z) = c₀/√(1 + 2.4z/c₀)
@@ -216,9 +216,10 @@ function n2linear()
 	# Scenario
 	r₀ = 0.0
 	z₀ = Z
-	θ_crit = ocn.SSP.c(r₀, z₀)/ocn.SSP.c(r₀, 0) |> acos
+	@show θ_crit = ocn.SSP.c(r₀, z₀)/ocn.SSP.c(r₀, 0) |> acos
+	@show θ₀s = -θ_crit * θ₀_mult
 
-	fan = Fan(θ_crit * LinRange(-1.2, -0.8, 21))
+	fan = Fan(θ₀s)
 	src = Source(Position(r₀, z₀), Signal(2e3), fan)
 	scn = Scenario(env, src, "n²-Linear Profile")
 end
@@ -247,7 +248,6 @@ end
 example_scenario(name::String) = Symbol(name) |> example_scenario
 
 function example_trace(name::Symbol)
-	println("Ray Trace: " * String(name))
 	scn = example_scenario(name)
 	trc = Trace(scn)
 end
@@ -255,7 +255,6 @@ end
 example_trace(name::String) = Symbol(name) |> example_trace
 
 function example_field(name::Symbol)
-	println("Field: " * String(name))
 	scn = example_scenario(name)
 	fld = Field(scn)
 end
@@ -263,7 +262,6 @@ end
 example_field(name::String) = Symbol(name) |> example_field
 
 function example_grid(name::Symbol)
-	println("Grid: " * String(name))
 	scn = example_scenario(name)
 	grid = Grid(scn)
 end

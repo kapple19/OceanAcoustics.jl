@@ -311,8 +311,12 @@ struct Fan
 		if ~all(-π/2 .≤ θ₀s .≤ π/2)
 			error("Invalid fan angles.")
 		end
-		δθ₀s = diff(θ₀s)
-		push!(δθ₀s, δθ₀s[end])
+		if length(θ₀s) > 1
+			δθ₀s = diff(θ₀s)
+			push!(δθ₀s, δθ₀s[end])
+		else
+			δθ₀s = [0.01]
+		end
 		return new(θ₀s, δθ₀s)
 	end
 end
@@ -539,80 +543,3 @@ end
 Field(trc::Trace, coh::Coherence = Coherence()) = Field(trc.scn, Beam.(trc.rays, trc.scn.src), coh)
 
 Field(scn::Scenario, coh::Coherence = Coherence()) = Field(Trace(scn), coh)
-
-struct Sonar <: OceanAcoustic
-	
-end
-
-struct Grid <: OceanAcoustic
-	scn::Scenario
-	r::AbstractVector{Rr} where Rr <: Real
-	z::AbstractVector{Rz} where Rz <: Real
-	p::AbstractArray{Cp, 2} where Cp <: Number
-	TL::AbstractArray{RTL, 2} where RTL <: Real
-
-	function Grid(
-		fld::Field,
-		r::AbstractVector{Rr},
-		z::AbstractVector{Rz}
-		) where {Rr <: Real, Rz <: Real}
-		
-		DEF_NAME = "Pressure Grid"
-		progress_name(name) = length(name) == 0 ? DEF_NAME : name * ": " * DEF_NAME * " "
-		pn = progress_name(fld.scn.name)
-
-		function pressure(r, z)
-			if fld.scn.env.ati.z(r) < z < fld.scn.env.bty.z(r)
-				return fld.p(r, z)
-			else
-				return NaN
-			end
-		end
-
-		# p .= @showprogress 1 pn [pressure(r′, z′) for z′ ∈ z, r′ ∈ r]
-
-		Nr = length(r)
-		Nz = length(z)
-		Nrz = Nr*Nz
-		rGrid = reshape(
-			r' .* ones(Nz, Nr),
-			(Nrz,)
-		)
-		zGrid = reshape(
-			z .* ones(Nz, Nr),
-			(Nrz,)
-		)
-
-		prog = Progress(Nrz)
-		update!(prog, 0)
-
-		p′ = zeros(Complex, Nrz)
-		@show nthreads()
-		l = SpinLock()
-		@time @threads for n ∈ eachindex(p′, rGrid, zGrid)
-			@inbounds p′[n] = pressure(rGrid[n], zGrid[n])
-			lock(l)
-			next!(prog, step = 1)
-			unlock(l)
-		end
-		p = reshape(p′, Nz, Nr)
-
-		TL = min.(100, SonarEqs.transmission_loss.(p))
-
-		return new(fld.scn, r, z, p, TL)
-	end
-end
-
-function Grid(fld::Field, Nr::Integer, Nz::Integer)
-	r = gridpoints(fld.scn.env.Ωr, Nr)
-	z = gridpoints(fld.scn.env.Ωz, Nz)
-
-	return Grid(fld, r, z)
-end
-
-function Grid(scn::Scenario, args...)
-	fld = Field(scn)
-	return Grid(fld, args...)
-end
-
-Grid(oac::OceanAcoustic) = Grid(oac, 51, 45)
