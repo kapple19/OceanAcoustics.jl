@@ -414,7 +414,7 @@ function ray_propagation(scn::Scenario)
 				prob,
 				AutoVern7(Rodas4()),
 				callback = callbacks,
-				reltol=1e-8, abstol=1e-8
+				reltol=1e-16, abstol=1e-16
 			)
 		)
 	end

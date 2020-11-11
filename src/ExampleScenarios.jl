@@ -217,7 +217,40 @@ function n2linear(θ₀_mult = LinRange(0.8, 1.2, 21))
 	scn = Scenario(env, src, "n²-Linear Profile")
 end
 
-# Export all
+function stacked(θ₀_mult = LinRange(0, 1, 11))
+	@warn "Stacked layers not yet supported."
+
+	# Environment
+	Z = 5e3
+	zStacks = Z*(0:0.2:1)
+	cStacks = 1470:10:1530
+	function c(r, z)
+		for (nz, z′) ∈ enumerate(zStacks)
+			if z ≤ z′
+				return cStacks[nz]
+			end
+		end
+		return cStacks[end]
+	end
+	R = 10e3
+
+	ocn = Medium(c)
+	bty = Boundary(Z)
+	env = Environment(R, ocn, bty)
+
+	# Scenario
+	r₀ = 0
+	z₀ = 0
+	θ_bot = π/4
+	θ₀_crit = c(r₀, z₀)/c(r₀, Z)*cos(θ_bot) |> acos
+	θ₀s = θ₀_crit * θ₀_mult
+
+	fan = Fan(θ₀s)
+	src = Source(Position(r₀, z₀), Signal(50), fan)
+	scn = Scenario(env, src, "Stacked Layers")
+end
+
+# Export all (at end of module)
 for n in names(@__MODULE__; all=true)
     if Base.isidentifier(n) && n ∉ (Symbol(@__MODULE__), :eval, :include)
         @eval export $n

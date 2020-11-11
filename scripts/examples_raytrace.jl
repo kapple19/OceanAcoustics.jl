@@ -7,6 +7,8 @@ save_oac_plot.(ps, :raytraces, OAC_EXAMPLE_NAMES)
 
 ## One
 using OceanAcoustics
-name = :convergence
-trc = example_trace(name)
-p = plot_oac(trc)
+name = :stacked
+scn = example_scenario(name)
+trc = Trace(scn)
+p = plot_oac(scn.env)
+plot_oac!(trc)

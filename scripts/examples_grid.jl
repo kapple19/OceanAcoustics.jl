@@ -28,5 +28,5 @@ end
 # 9 => 29, 23, 25
 # 10 => 22, 27, 29
 using OceanAcoustics
-grid = example_grid(:n2linear)
+grid = example_grid(:stacked)
 p = plot_oac(grid)

@@ -16,7 +16,7 @@ export save_oac_plot
 
 SSP_COLORMAP = :winter
 SSP_LEVEL_COLOURS = :ice
-DEFAULT_GRID_N = 1001
+DEFAULT_GRID_N = 2001
 
 function plot_oac()
 	p = plot(yaxis = :flip, legend = false)
