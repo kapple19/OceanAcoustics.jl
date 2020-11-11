@@ -70,7 +70,7 @@ grid = Grid(fld)
 plot_oac(grid)
 ```
 
-![](plots/grids/n2linear.png)
+![](plots/grids/n2linear_keep.png)
 
 ## Motivation
 There are a variety of ocean acoustics modelling software available online, which prompts asking for the purpose of yet another one.

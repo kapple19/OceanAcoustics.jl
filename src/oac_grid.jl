@@ -47,4 +47,4 @@ function Grid(scn::Scenario, args...)
 	return Grid(fld, args...)
 end
 
-Grid(oac::OceanAcoustic) = Grid(oac, 31, 27)
+Grid(oac::OceanAcoustic) = Grid(oac, 101, 89)
