@@ -529,12 +529,12 @@ struct Field <: OceanAcoustic
 			p = [
 				beam.p(s, n)
 				for beam ∈ beams
-				for (s, n) ∈ closest_points(r, z, beam)
+				for (s, n) ∈ closest_points(
+					r, z,
+					beam.ray.r, beam.ray.z,
+					beam.ray.Ωs
+				)
 			] |> sum
-			# p = complex(0.0)
-			# for beam ∈ beams, (s, n) ∈ closest_points(r, z, beam)
-			# 	p += beam.p(s, n)
-			# end
 		end
 
 		return new(

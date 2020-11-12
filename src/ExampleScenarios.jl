@@ -12,8 +12,11 @@ function convergence(θ₀_mult = LinRange(0.5, 1.0, 10))
 	ati = Boundary(0.)
 	env = Environment(R, ocn, bty, ati)
 
-	θ₀_crit = acos(ocn.SSP.c(0.0, 0.0)/ocn.SSP.c(0.0, 5e3))
-	θ₀s = θ₀_crit * θ₀_mult
+	r₀ = 0.0
+	z₀ = 20.0
+	θ₀_crit₂ = ocn.SSP.c(r₀, z₀)/ocn.SSP.c(r₀, Z) |> acos
+	θ₀_crit₁ = ocn.SSP.c(r₀, z₀)/ocn.SSP.c(r₀, 4e3) |> acos
+	θ₀s = LinRange(θ₀_crit₁, θ₀_crit₂, 11)
 
 	fan = Fan(θ₀s)
 	src = Source(Position(0., 0.), Signal(200.), fan)

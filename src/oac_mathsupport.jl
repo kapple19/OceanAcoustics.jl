@@ -17,11 +17,11 @@ function interpolated_function(x, y, z)
 	return ItpFcn(x::Real, y::Real) = Itp(x, y)
 end
 
-function closest_points(r, z, beam)
-	Q(s) = (beam.ray.r(s) - r)^2 + (beam.ray.z(s) - z)^2
+function closest_points(x′, y′, x, y, Ωs)
+	Q(s) = (x(s) - x′)^2 + (y(s) - y′)^2
 	dQ(s) = derivative(Q, s)
 	return [
 		(s, √Q(s))
-		for s ∈ find_zeros(dQ, beam.ray.Ωs.lo, beam.ray.Ωs.hi)
+		for s ∈ find_zeros(dQ, Ωs.lo, Ωs.hi)
 	]
 end

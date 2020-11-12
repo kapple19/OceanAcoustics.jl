@@ -28,5 +28,5 @@ end
 # 9 => 29, 23, 25
 # 10 => 22, 27, 29
 using OceanAcoustics
-grid = example_grid(:stacked)
+grid = example_grid(:convergence)
 p = plot_oac(grid)
