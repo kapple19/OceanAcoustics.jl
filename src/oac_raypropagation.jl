@@ -398,7 +398,8 @@ function ray_propagation(scn::Scenario)
 	sSpan = (0.0, S)
 
 	sols = Vector{ODECompositeSolution}(undef, 0)
-	for (nRay, θ₀) ∈ enumerate(scn.src.fan.θ₀s)
+	progname = "Ray Trace (" *scn.name * "): "
+	@showprogress 1 progname for (nRay, θ₀) ∈ enumerate(scn.src.fan.θ₀s)
 		δθ₀ = scn.src.fan.δθ₀s[nRay]
 		push!(δθ₀s, δθ₀)
 
@@ -408,15 +409,23 @@ function ray_propagation(scn::Scenario)
 		u₀ = [r₀, z₀, ξ₀, ζ₀, τ₀, pʳ₀, pⁱ₀, qʳ₀, qⁱ₀]
 	
 		prob = ODEProblem(ray_propagation!, u₀, sSpan)
-		push!(
-			sols,
-			solve(
-				prob,
-				AutoVern7(Rodas4()),
-				callback = callbacks,
-				reltol=1e-16, abstol=1e-16
-			)
+		sol = solve(
+			prob,
+			AutoVern7(Rodas4()),
+			callback = callbacks,
+			abstol = 1e-8, reltol = 1e-8
 		)
+		@show sol.alg
+		push!(sols, sol)
+		## AutoVern7(Rodas4())
+		# Good:
+		# * 11, 13
+		# * 10, 13
+		# Bad:
+		# * 9, 13 (R = 5e5)
+		## Alg
+		# Good:
+		# * 9, 12
 	end
 
 	return sols, δθ₀s

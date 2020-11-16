@@ -1,6 +1,3 @@
-using ProgressMeter:
-@showprogress
-
 function calc_pressure_grid(
 	r::AbstractVector{Rr},
 	z::AbstractVector{Rz},

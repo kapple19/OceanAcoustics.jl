@@ -253,6 +253,26 @@ function stacked(θ₀_mult = LinRange(0, 1, 11))
 	scn = Scenario(env, src, "Stacked Layers")
 end
 
+function simple_convergence(θ₀_mult = LinRange(0.8, 1, 5))
+	z_c = [0, 3e2, 4e3]
+	c = [1438, 1460, 1519.2]
+	Z = z_c[end]
+	R = 1e6
+	
+	ocn = Medium(z_c, c)
+	bty = Boundary(Z)
+	env = Environment(R, ocn, bty)
+	
+	r₀, z₀ = 0.0, 0.0
+	c₀ = ocn.SSP.c(r₀, z₀)
+	θ₀_crit = c₀/ocn.SSP.c(r₀, Z) |> acos
+	θ₀s = θ₀_crit * θ₀_mult
+	
+	fan = Fan(θ₀s)
+	src = Source(Position(r₀, z₀), Signal(200), fan)
+	scn = Scenario(env, src, "Simple Convergence Zone")
+end
+
 # Export all (at end of module)
 for n in names(@__MODULE__; all=true)
     if Base.isidentifier(n) && n ∉ (Symbol(@__MODULE__), :eval, :include)
