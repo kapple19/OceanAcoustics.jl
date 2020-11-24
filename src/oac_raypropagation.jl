@@ -415,7 +415,7 @@ function ray_propagation(scn::Scenario)
 			callback = callbacks,
 			abstol = 1e-8, reltol = 1e-8
 		)
-		@show sol.alg
+		# @show sol.alg
 		push!(sols, sol)
 		## AutoVern7(Rodas4())
 		# Good:
@@ -446,6 +446,7 @@ struct Ray <: OceanAcoustic
 
 	function Ray(sol::ODECompositeSolution, δθ₀::Real)
 		S = sol.t[end]
+		s = sol.t
 		r(s) = sol(s, idxs = 1)
 		z(s) = sol(s, idxs = 2)
 		ξ(s) = sol(s, idxs = 3)

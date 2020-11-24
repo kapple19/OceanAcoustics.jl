@@ -11,7 +11,7 @@ To install this package, simple enter
 ```julia
 add OceanAcoustics
 ```
-in Julia's `Pkg` mode, accessed by pressing `;` from Julian mode.
+in Julia's `Pkg` mode, accessed by pressing `;` from Julian mode in the REPL.
 
 ## Load
 To load this package, simple enter
@@ -27,9 +27,9 @@ using OceanAcoustics
 
 Z = 5e3
 R = 10e3
-bty_z(r) = Z - Z/2.5*exp(-(r - R/2)^2/1e5)
+bty_z(r) = Z - Z/2.5*exp(-(r - R/2)^2/1e6)
 ati_z(r) = 200r/R
-c(r, z) = 1500 + 100z/Z - 200r/R
+c(r, z) = 1500 + 200z/Z - 400r/R
 
 bty = Boundary(bty_z)
 ati = Boundary(ati_z)
@@ -48,34 +48,20 @@ scn = Scenario(env, src, "Documentation Example")
 
 trc = Trace(scn)
 
-plot_oac(trc)
+plot_oac(env)
+plot_oac!(bty)
+plot_oac!(ati)
+plot_oac!(trc)
 ```
 
-An acoustic ray method in a 2D slice of ocean:
-* Range-dependent ocean boundaries
-* Range- and depth-dependent sound speed profile
-* Ray tracing
+```julia
+# Transmission Loss
+```
 
-Acoustic slice field computations:
-* Beam tracing
-* Pressure field
-* Transmission loss
+```julia
+# Detection Index
+```
 
-Detection theory:
-* Detection index
-* Detection threshold
-* Signal excess
-* Probability of detection
-
-Built-in examples:
-* Scenarios
-* Traces
-* Beams
-* Sonar
-
-Performance tools:
-* Multithreading, parallelism on CPU/GPU
-
-User-friendly experience:
-* Simple and flexible code use
-* Progress bar for long calculations (ray tracing, transmission loss)
+```julia
+# Probability of Detection
+```
