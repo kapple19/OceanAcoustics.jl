@@ -11,7 +11,6 @@ export Ray
 export Trace
 export Beam
 export Field
-export Grid
 
 function boundary_reflection(t_inc::Vector, t_bnd::Vector)
 	MyAngle(tng) = atan(tng[2]/tng[1])

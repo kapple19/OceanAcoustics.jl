@@ -60,7 +60,7 @@ p = plot_oac(scn.env)
 plot_oac!(trc)
 ```
 
-![](plots/raytraces/n2linear.png)
+![](plots/raytrace/n2linear.png)
 
 4. Calculate transmission loss field (dev):
 
@@ -70,7 +70,7 @@ grid = Grid(fld)
 plot_oac(grid)
 ```
 
-![](plots/grids/n2linear_keep.png)
+![](plots/propagation/n2linear_keep.png)
 
 ## Motivation
 There are a variety of ocean acoustics modelling software available online, which prompts asking for the purpose of yet another one.

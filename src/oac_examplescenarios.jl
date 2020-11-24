@@ -3,7 +3,7 @@ export OAC_EXAMPLE_NAMES
 export example_scenario
 export example_trace
 export example_field
-export example_grid
+export example_propagation
 
 include("ExampleScenarios.jl")
 
@@ -35,9 +35,9 @@ end
 
 example_field(name::String) = Symbol(name) |> example_field
 
-function example_grid(name::Symbol)
+function example_propagation(name::Symbol)
 	scn = example_scenario(name)
-	grid = Grid(scn)
+	prop = Propagation(scn)
 end
 
-example_grid(name::String) = Symbol(name) |> example_grid
+example_propagation(name::String) = Symbol(name) |> example_propagation

@@ -81,15 +81,15 @@ function plot_oac!(trc::Trace)
 	plot!(title = "Ray Trace: " * trc.scn.name)
 end
 
-function plot_oac!(grid::Grid)
+function plot_oac!(prop::Propagation)
 	heatmap!(
-		grid.r, grid.z, grid.TL,
+		prop.r, prop.z, prop.TL,
 		seriescolor = cgrad(:jet, rev = true),
 		colorbar = true,
 		colorbar_title = "Transmission Loss (dB)"
 	)
 
-	plot!(title = "Grid: " * grid.scn.name)
+	plot!(title = "Propagation: " * prop.scn.name)
 end
 
 function plot_oac(oac::OceanAcoustic)
