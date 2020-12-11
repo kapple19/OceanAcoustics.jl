@@ -17,7 +17,7 @@ Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
 
 [compat]
 DiffEqBase = "6.48"
-Documenter = "0.25"
+Documenter = "0.25, 0.26"
 DrWatson = "1.16"
 ForwardDiff = "0.10"
 Interpolations = "0.13"
