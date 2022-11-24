@@ -1,7 +1,7 @@
 r = unique(sort(10 * rand(20)))
 z = unique(sort(10 * rand(length(r))))
-alt = Altimetry(r, z)
-@testset "altimetry" begin
+alt = Depth(r, z)
+@testset "depth" begin
 	@testset "inputs" begin
 		@testset "vectors" begin
 			@test alt.min == minimum(z)
@@ -11,18 +11,18 @@ alt = Altimetry(r, z)
 
 		@testset "scalar" begin
 			zF64 = 10 * rand()
-			altF64 = Altimetry(zF64)
+			altF64 = Depth(zF64)
 			@test altF64.z(0) == zF64
 
 			zI64 = rand(Int)
-			altI64 = Altimetry(zI64)
+			altI64 = Depth(zI64)
 			@test altI64.z(0) == Float64(zI64)
 		end
 	end
 
 	@testset "exceptions" begin
-		@test_throws DimensionMismatch Altimetry(r, [z; 10 * rand(3)])
-		@test_throws NotSorted Altimetry([3, 2, 1], [1, 2, 3])
-		@test_throws NotAllUnique Altimetry([1, 1, 2], [1, 2, 3])
+		@test_throws DimensionMismatch Depth(r, [z; 10 * rand(3)])
+		@test_throws NotSorted Depth([3, 2, 1], [1, 2, 3])
+		@test_throws NotAllUnique Depth([1, 1, 2], [1, 2, 3])
 	end
 end
