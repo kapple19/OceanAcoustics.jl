@@ -14,8 +14,12 @@ struct Altimetry
 	end
 end
 
+export Altimetry
+
 function Altimetry(r::Vector{<:Real}, z::Vector{<:Real})
-	# check dimensions
+	# !issorted(r) && throw()
+	# !allunique(r) && throw()
+	length(r) ≠ length(z) && throw(DimensionMismatch())
 	# check r is sorted
 	Altimetry(linear_interp_fcn(r, z), minimum(z), maximum(z))
 end
