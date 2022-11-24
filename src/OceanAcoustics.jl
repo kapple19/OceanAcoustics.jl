@@ -1,5 +1,6 @@
 module OceanAcoustics
 
-include("OAC/scenarios.jl")
+include("oac/dependencies.jl")
+include("oac/scenarios.jl")
 
 end
