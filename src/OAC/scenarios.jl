@@ -17,8 +17,8 @@ end
 export Altimetry
 
 function Altimetry(r::Vector{<:Real}, z::Vector{<:Real})
-	# !issorted(r) && throw()
-	# !allunique(r) && throw()
+	!issorted(r) && throw(NotSorted(r))
+	!allunique(r) && throw(NotAllUnique(r))
 	length(r) ≠ length(z) && throw(DimensionMismatch())
 	# check r is sorted
 	Altimetry(linear_interp_fcn(r, z), minimum(z), maximum(z))
