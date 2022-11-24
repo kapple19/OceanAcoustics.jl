@@ -15,7 +15,5 @@ struct Altimetry
 end
 
 function Altimetry(r::Vector{<:Real}, z::Vector{<:Real})
-	z_interp = linear_interpolation(r, z)
-	z_fcn(r) = z_interp_fcn(r)
-	Altimetry(z_fcn, minimum(z), maximum(z))
+	Altimetry(linear_interp_fcn(r, z), minimum(z), maximum(z))
 end
