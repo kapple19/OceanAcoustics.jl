@@ -15,5 +15,7 @@ struct Altimetry
 end
 
 function Altimetry(r::Vector{<:Real}, z::Vector{<:Real})
+	# check dimensions
+	# check r is sorted
 	Altimetry(linear_interp_fcn(r, z), minimum(z), maximum(z))
 end

@@ -2,5 +2,5 @@ using OceanAcoustics
 using Test
 
 @testset "OceanAcoustics.jl" begin
-    # Write your tests here.
+    include("scenarios.jl")
 end
