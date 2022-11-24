@@ -20,6 +20,10 @@ function Altimetry(r::Vector{<:Real}, z::Vector{<:Real})
 	!issorted(r) && throw(NotSorted(r))
 	!allunique(r) && throw(NotAllUnique(r))
 	length(r) ≠ length(z) && throw(DimensionMismatch())
-	# check r is sorted
 	Altimetry(linear_interp_fcn(r, z), minimum(z), maximum(z))
+end
+
+function Altimetry(z::Real)
+	zF64 = Float64(z)
+	Altimetry(r -> zF64, zF64, zF64)
 end
