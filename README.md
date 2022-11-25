@@ -11,6 +11,7 @@ An implementation of acoustics models in the context of long-range ocean propaga
   * Plot recipes
 
 ### Tasks
+* Look into getting extrema for a given mathematically defined function in Julia.
 * Implement `Base.show` for my types.
   * Look into `StructArray`.
   * Or, look into what my structs should be subtypes of.
