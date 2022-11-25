@@ -4,17 +4,22 @@ abstract type OAC end
 function Base.show(io::IO, oac::OAC)
 	print(typeof(oac))
 	oac isa Depth && print(" (callable)")
-	println(":")
+	print(":")
 	for p in propertynames(oac)
+		println()
 		prop = getproperty(oac, (p))
 		print(" ", p, ": ")
-		if prop isa Number
-			println(prop)
+		if typeof(prop) in (Number, String)
+			print(prop)
 		else
-			println(prop |> typeof)
+			print(prop |> typeof)
 		end
 	end
 end
+
+# Base.iterate(ocn::Ocean) = ocn
+
+# Base.broadcastable(oac::OAC) = Ref(oac)
 
 # Exceptions
 struct NotSorted <: Exception

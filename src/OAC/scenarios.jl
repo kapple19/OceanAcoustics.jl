@@ -52,6 +52,13 @@ end
 
 (z::Depth)(x) = z.fcn(x)
 
+# Depth(dpt::Depth) = dpt # not sure this one is needed
+
+# Depth(dpt) = Depth(dpt...) # not sure this one is needed
+
+"""
+`Surface`
+"""
 mutable struct Surface <: OAC
 	z::Depth
 
@@ -65,6 +72,11 @@ export Surface
 
 Surface() = Surface(0)
 
+# Surface(srf::Surface) = srf
+
+"""
+`Bottom`
+"""
 mutable struct Bottom <: OAC
 	z::Depth
 
@@ -76,6 +88,11 @@ end
 
 export Bottom
 
+# Bottom(btm::Bottom) = btm
+
+"""
+`Ocean`
+"""
 mutable struct Ocean <: OAC
 	c::Function
 	Ocean(c::Function) = new((x, z) -> c(x, z))
@@ -85,8 +102,19 @@ function Ocean(c::Real)
 	Ocean((x, z) -> c)
 end
 
+function Ocean(z::AbstractVector{<:Real}, c::AbstractVector{<:Real})
+	Ocean(linear_interp_fcn(z, c))
+end
+
 export Ocean
 
+Ocean(ocn::Ocean) = ocn
+
+# Ocean(ocn) = Ocean(ocn...)
+
+"""
+`Environment`
+"""
 mutable struct Environment <: OAC
 	ocn::Ocean
 	btm::Bottom
@@ -100,39 +128,73 @@ end
 export Environment
 
 function Environment(ocn, btm, srf = 0)
-	Environment(Ocean(ocn...), Bottom(btm...), Surface(srf...))
+	Environment(Ocean(ocn), Bottom(btm), Surface(srf))
 end
 
+Environment(env::Environment) = env
+
+Environment(env) = Environment(env...)
+
+"""
+`Source`
+"""
 mutable struct Source <: OAC
+	f::Float64
 	z::Float64
 end
 
 export Source
 
+Source(src::Source) = src
+
+Source(src) = Source(src...)
+
+"""
+`Receiver`
+"""
 mutable struct Receiver <: OAC
 	x::Float64
+
+	Receiver(x::Float64) = new(x)
 end
 
 export Receiver
 
+Receiver(rcv::Receiver) = rcv
+
+"""
+`Entities`
+"""
 mutable struct Entities <: OAC
 	src::Source
 	rcv::Receiver
 
 	function Entities(src, rcv)
-		new(Source(src...), Receiver(rcv...))
+		new(Source(src), Receiver(rcv))
 	end
 end
 
 export Entities
 
+Entities(ent::Entities) = ent
+
+Entities(ent) = Entities(ent...)
+
+"""
+`Scenario`
+"""
 mutable struct Scenario <: OAC
 	env::Environment
 	ent::Entities
+	name::String
 
-	function Scenario(env, ent)
-		new(Environment(env...), Entities(ent...))
+	function Scenario(env, ent, name = "")
+		new(Environment(env), Entities(ent), name)
 	end
 end
 
 export Scenario
+
+Scenario(scn::Scenario) = scn
+
+Scenario(scn) = Scenario(scn...)
