@@ -14,7 +14,7 @@ Used for:
 
 Author Note: May deprecate. The min/max values storage is used for plotting, but these calculations can be done then instead.
 """
-struct Depth
+struct Depth <: OAC
 	fcn::Function
 	min::Float64
 	max::Float64
@@ -52,7 +52,7 @@ end
 
 (z::Depth)(x) = z.fcn(x)
 
-mutable struct Surface
+mutable struct Surface <: OAC
 	z::Depth
 
 	function Surface(args...)
@@ -65,7 +65,7 @@ export Surface
 
 Surface() = Surface(0)
 
-mutable struct Bottom
+mutable struct Bottom <: OAC
 	z::Depth
 
 	function Bottom(args...)
@@ -76,7 +76,7 @@ end
 
 export Bottom
 
-mutable struct Ocean
+mutable struct Ocean <: OAC
 	c::Function
 	Ocean(c::Function) = new((x, z) -> c(x, z))
 end
@@ -87,7 +87,7 @@ end
 
 export Ocean
 
-mutable struct Environment
+mutable struct Environment <: OAC
 	ocn::Ocean
 	btm::Bottom
 	srf::Surface
@@ -100,8 +100,5 @@ end
 export Environment
 
 function Environment(ocn, btm, srf = 0)
-	@show ocn
-	@show btm
-	@show srf
 	Environment(Ocean(ocn...), Bottom(btm...), Surface(srf...))
 end
