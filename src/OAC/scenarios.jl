@@ -5,7 +5,7 @@ Storing univariate real-valued function (F64 -> F64) and meta-information.
 
 `Depth(z::Function)`
 `Depth(z::Function, min::Real, max::Real)`
-`Depth(r::Vector{<:Real}, z::Vector{<:Real})` creates an interpolator
+`Depth(x::Vector{<:Real}, z::Vector{<:Real})` creates an interpolator
 `Depth(z::Real)` creates a function
 
 Used for:
@@ -102,3 +102,37 @@ export Environment
 function Environment(ocn, btm, srf = 0)
 	Environment(Ocean(ocn...), Bottom(btm...), Surface(srf...))
 end
+
+mutable struct Source <: OAC
+	z::Float64
+end
+
+export Source
+
+mutable struct Receiver <: OAC
+	x::Float64
+end
+
+export Receiver
+
+mutable struct Entities <: OAC
+	src::Source
+	rcv::Receiver
+
+	function Entities(src, rcv)
+		new(Source(src...), Receiver(rcv...))
+	end
+end
+
+export Entities
+
+mutable struct Scenario <: OAC
+	env::Environment
+	ent::Entities
+
+	function Scenario(env, ent)
+		new(Environment(env...), Entities(ent...))
+	end
+end
+
+export Scenario
