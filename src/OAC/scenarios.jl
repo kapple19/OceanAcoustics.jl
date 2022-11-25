@@ -18,6 +18,11 @@ struct Depth <: OAC
 	fcn::Function
 	min::Float64
 	max::Float64
+
+	function Depth(z_fcn::Function, z_min::Real, z_max::Real)
+		!(z_min ≤ z_max) && error("`min` must be less than `max`.")
+		new(x -> z_fcn(x), Float64(z_min), Float64(z_max))
+	end
 end
 
 export Depth
@@ -29,11 +34,6 @@ end
 
 function Depth(z::Function, domain::Tuple{<:Real, <:Real})
 	Depth(z, Interval(domain...))
-end
-
-function Depth(fcn::Function, min::Real, max::Real)
-	zFcn(x::Real) = fcn(x)
-	Depth(zFcn, Float64(min), Float64(max))
 end
 
 function Depth(x::Vector{<:Real}, z::Vector{<:Real})
@@ -88,7 +88,7 @@ end
 
 export Bottom
 
-# Bottom(btm::Bottom) = btm
+Bottom(btm::Bottom) = btm
 
 """
 `Ocean`
