@@ -11,6 +11,8 @@ Storing univariate real-valued function (F64 -> F64) and meta-information.
 Used for:
 	* ocean surface altimetry
 	* ocean bottom bathymetry
+
+Author Note: May deprecate. The min/max values storage is used for plotting, but these calculations can be done then instead.
 """
 struct Depth
 	fcn::Function
