@@ -12,7 +12,7 @@ Used for:
 	* ocean bottom bathymetry
 """
 mutable struct Depth
-	z::Function
+	fcn::Function
 	min::Float64
 	max::Float64
 
@@ -21,15 +21,15 @@ end
 
 export Depth
 
-function Depth(z::Function, min::Float64, max::Float64)
-	d = Depth(z)
+function Depth(fcn::Function, min::Float64, max::Float64)
+	d = Depth(fcn)
 	d.min = min
 	d.max = max
 	return d
 end
 
-function Depth(z::Function, min::Real, max::Real)
-	zFcn(r::Real) = z(r)
+function Depth(fcn::Function, min::Real, max::Real)
+	zFcn(r::Real) = fcn(r)
 	Depth(zFcn, Float64(min), Float64(max))
 end
 
@@ -46,3 +46,5 @@ function Depth(z::Real)
 	zF64 = Float64(z)
 	Depth(r -> zF64, zF64, zF64)
 end
+
+(z::Depth)(r) = z.fcn(r)
