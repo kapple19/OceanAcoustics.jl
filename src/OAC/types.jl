@@ -4,7 +4,7 @@ abstract type OAC end
 function Base.show(io::IO, oac::OAC)
 	print(typeof(oac))
 	oac isa Depth && print(" (callable)")
-	print(":")
+	print(": {")
 	for p in propertynames(oac)
 		println()
 		prop = getproperty(oac, (p))
@@ -15,6 +15,8 @@ function Base.show(io::IO, oac::OAC)
 			print(prop |> typeof)
 		end
 	end
+	println()
+	print("}")
 end
 
 # Base.iterate(ocn::Ocean) = ocn
