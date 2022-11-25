@@ -51,3 +51,57 @@ function Depth(z::Real)
 end
 
 (z::Depth)(x) = z.fcn(x)
+
+mutable struct Surface
+	z::Depth
+
+	function Surface(args...)
+		z = Depth(args...)
+		new(z)
+	end
+end
+
+export Surface
+
+Surface() = Surface(0)
+
+mutable struct Bottom
+	z::Depth
+
+	function Bottom(args...)
+		z = Depth(args...)
+		new(z)
+	end
+end
+
+export Bottom
+
+mutable struct Ocean
+	c::Function
+	Ocean(c::Function) = new((x, z) -> c(x, z))
+end
+
+function Ocean(c::Real)
+	Ocean((x, z) -> c)
+end
+
+export Ocean
+
+mutable struct Environment
+	ocn::Ocean
+	btm::Bottom
+	srf::Surface
+
+	function Environment(ocn::Ocean, btm::Bottom, srf::Surface = Surface())
+		new(ocn, btm, srf)
+	end
+end
+
+export Environment
+
+function Environment(ocn, btm, srf = 0)
+	@show ocn
+	@show btm
+	@show srf
+	Environment(Ocean(ocn...), Bottom(btm...), Surface(srf...))
+end
