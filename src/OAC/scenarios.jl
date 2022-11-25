@@ -11,23 +11,34 @@ Used for:
 	* ocean surface altimetry
 	* ocean bottom bathymetry
 """
-struct Depth
+mutable struct Depth
 	z::Function
 	min::Float64
 	max::Float64
 
-	function Depth(z::Function, min::Real, max::Real)
-		zFcn(r::Real) = z(r)
-		new(zFcn, Float64(min), Float64(max))
-	end
+	Depth(z::Function) = new(z)
 end
 
 export Depth
 
+function Depth(z::Function, min::Float64, max::Float64)
+	d = Depth(z)
+	d.min = min
+	d.max = max
+	return d
+end
+
+function Depth(z::Function, min::Real, max::Real)
+	zFcn(r::Real) = z(r)
+	Depth(zFcn, Float64(min), Float64(max))
+end
+
 function Depth(r::Vector{<:Real}, z::Vector{<:Real})
+	# Checks
 	!issorted(r) && throw(NotSorted(r))
 	!allunique(r) && throw(NotAllUnique(r))
 	length(r) ≠ length(z) && throw(DimensionMismatch())
+
 	Depth(linear_interp_fcn(r, z), minimum(z), maximum(z))
 end
 
