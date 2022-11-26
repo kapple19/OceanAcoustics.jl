@@ -38,7 +38,7 @@ The ray method is based upon the following derivation:
 
 The eikonal equation is expressed in cylindrical coordinates and written in first-order form as
 \begin{align}
-	\dv{r}{s} &= r\ \xi(s), &
+	\dv{r}{s} &= c\ \xi(s), &
 	\dv{z}{s} &= c\ \zeta(s), \\
 	\dv{\xi}{s} &= \frac{-1}{c^2} \pdv{c}{r}, &
 	\dv{\zeta}{s} &= \frac{-1}{c^2} \pdv{c}{z},
@@ -62,7 +62,7 @@ with initial condition
 
 The dynamic ray equations are coupled as
 \begin{align}
-	\dv{p}{s} &= \frac{-c_{nn}}{c^2} &
+	\dv{p}{s} &= \frac{-c_{nn}}{c^2}\ q(s) &
 	\dv{q}{s} &= c\ p(s)
 \end{align}
 where $c_{nn}$ is the curvature of the sound speed in a direction normal to the ray path, given by
