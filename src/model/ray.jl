@@ -6,6 +6,7 @@ struct Ray
 end
 
 struct Trace
+	scn::Scenario
 	rays::Vector{Ray}
 
 	function Trace(scn::Scenario, angles::AbstractVector{<:AbstractFloat})
@@ -79,7 +80,7 @@ struct Trace
 	
 			push!(rays, Ray(θ₀, r, z, s_max))
 		end
-		new(rays)
+		new(scn, rays)
 	end
 end
 
