@@ -1,7 +1,7 @@
 ##
 using OceanAcoustics
 
-for scenario in propertynames(examples)[2:end]
+for scenario in propertynames(examples)
 	scn = getproperty(examples, scenario)
 	println("="^(4*length(scenario |> string)))
 	println(scn.name)

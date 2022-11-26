@@ -1,11 +1,11 @@
-struct Ray
+struct Ray <: OAC
 	θ₀
 	r
 	z
 	s_max
 end
 
-struct Trace
+struct Trace <: OAC
 	scn::Scenario
 	rays::Vector{Ray}
 

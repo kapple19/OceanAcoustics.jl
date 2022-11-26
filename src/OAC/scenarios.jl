@@ -42,7 +42,10 @@ function Depth(x::Vector{<:Real}, z::Vector{<:Real})
 	!allunique(x) && throw(NotAllUnique(x))
 	length(x) ≠ length(z) && throw(DimensionMismatch())
 
-	Depth(linear_interp_fcn(x, z), minimum(z), maximum(z))
+	z_interp = linear_interpolation(x, z, extrapolation_bc = Line())
+	z_fcn(x) = z_interp(x)
+
+	Depth(z_fcn, minimum(z), maximum(z))
 end
 
 function Depth(z::Real)
@@ -103,7 +106,9 @@ function Ocean(c::Real)
 end
 
 function Ocean(z::AbstractVector{<:Real}, c::AbstractVector{<:Real})
-	Ocean(linear_interp_fcn(z, c))
+	c_interp = linear_interpolation(z, c, extrapolation_bc = Line())
+	c_fcn(x, z) = c_interp(z)
+	Ocean(c_fcn)
 end
 
 export Ocean
