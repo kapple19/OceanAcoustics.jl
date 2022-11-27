@@ -60,7 +60,12 @@ struct Trace <: OAC
 			int -> reflect!(int, scn.env.srf)
 		)
 
-		cb = CallbackSet(cb_rng, cb_srf)
+		cb_btm = ContinuousCallback(
+			(x, s, int) -> x[2] - scn.env.btm.z(x[1]),
+			int -> reflect!(int, scn.env.btm)
+		)
+
+		cb = CallbackSet(cb_rng, cb_btm, cb_srf)
 	
 		function tracer!(du, u, params, s)
 			# r, z, ξ, ζ, τ, pRe, pIm, qRe, qIm = u
