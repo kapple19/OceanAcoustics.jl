@@ -1,6 +1,8 @@
 # OceanAcoustics
 An implementation of acoustics models in the context of long-range ocean propagation.
 
+![Munk Profile Ray Trace](test/img/scenario_munk_profile.png)
+
 ## Development Roadmap
 * Models:
   * Ray/beam tracing
