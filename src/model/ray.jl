@@ -85,3 +85,33 @@ struct Trace <: OAC
 end
 
 export Trace
+
+# User Recipe
+@userplot RayTracePlot
+@recipe function plot(rtp::RayTracePlot)
+	trc = rtp.args[1]
+	for ray in trc.rays
+		s = range(0.0, ray.s_max, 501)
+		r = ray.r.(s)
+		z = ray.z.(s)
+		@series r, z
+	end
+end
+
+# export RayTracePlot
+export raytraceplot
+
+# # Type Recipes
+# @recipe function plot(::Type{Trace}, trc::Trace)
+
+# end
+
+# #Plot Recipes
+# @recipe function plot(::Type{Val{:myplotrecipename}})
+
+# end
+
+# # Series Recipes
+# @recipe function plot(::Type{Val{:myseriesrecipename}}, x, y, z)
+
+# end
