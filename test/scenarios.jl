@@ -40,3 +40,10 @@
 		@test_throws NotAllUnique Depth([1, 1, 2], [1, 2, 3])
 	end
 end
+
+@testset "Scenario" begin
+	for (scenario, scn) = pairs(examples)
+		sp = scenarioplot(scn)
+		savefig(sp, joinpath("img", "scenario_" * string(scenario) * ".png"))
+	end
+end
