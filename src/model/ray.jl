@@ -139,6 +139,10 @@ export Trace
 		z = ray.z.(s)
 		@series r, z
 	end
+	# @series begin
+	# 	series_type := :scenarioplot
+	# 	trc.scn
+	# end
 end
 
 # export RayTracePlot
