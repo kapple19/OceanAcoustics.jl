@@ -139,10 +139,15 @@ export Trace
 		z = ray.z.(s)
 		@series r, z
 	end
-	# @series begin
-	# 	series_type := :scenarioplot
-	# 	trc.scn
-	# end
+	for boundary in (:srf, :btm)
+		bnd = getproperty(trc.scn.env, boundary)
+		x = range(0.0, trc.scn.ent.rcv.x)
+		z = bnd.z.(x)
+		@series begin
+			linecolor := :black
+			x, z
+		end
+	end
 end
 
 # export RayTracePlot
