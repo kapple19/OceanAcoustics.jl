@@ -14,6 +14,7 @@ An implementation of acoustics models in the context of long-range ocean propaga
 
 ### Tasks
 Dependency-ordered tasks:
+* Replace range usage `r` with `x`? Research.
 * Improve existing plot recipes:
   * Reverse y-direction in plot recipes.
   * Create celerity plot beside propagation plot.
@@ -23,11 +24,10 @@ Dependency-ordered tasks:
 * Implement gridded field approximation, then define plot recipe.
   * Coherent and Incoherent beam summations.
   * Gridded approximation.
-* Document model features, comparing with and referencing literature.
-  * Tasks will start tree-diverging from here, depending on what features I'm implementing. E.g. boundary losses.
-* Outline mathematics - replace TeX doc?
-  * LaTeX document: Mathematics.
-  * Julia document: Implementation.
+* LaTeX document: Mathematics.
+* Julia document: Implementation.
+  * Document model features, comparing with and referencing literature.
+  * Give background and applications.
 
 Side tasks:
 * Docstrings and comments in the source code.
@@ -35,4 +35,5 @@ Side tasks:
 * Ribbon the bathymetry and surface plotting.
 * Implement more example `Scenario`s.
   * Balearic sea [Jensen et al. p 171]
+* Implement more tests.
 * Document sonar equations.
