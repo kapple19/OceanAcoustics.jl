@@ -17,6 +17,7 @@ Dependency-ordered tasks:
 * Improve existing plot recipes:
   * Reverse y-direction in plot recipes.
   * Create celerity plot beside propagation plot.
+  * Labels, i.e. title, axes, etc.
 * Check initial rays launch within ocean.
 * Implement beam tracing, then define plot recipe.
 * Implement gridded field approximation, then define plot recipe.
