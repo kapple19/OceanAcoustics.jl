@@ -14,5 +14,9 @@ An implementation of acoustics models in the context of long-range ocean propaga
 
 ### Tasks
 * Check initial rays launch within ocean.
-* Implement beam tracing.
-* Create plot recipes for the various types.
+* Implement more example `Scenario`s.
+  * Balearic sea [Jensen et al. p 171]
+* Implement beam tracing, then define plot recipe.
+* Implement gridded field approximation, then define plot recipe.
+* Document model features, comparing with and referencing literature.
+* Outline mathematics - replace TeX doc?
