@@ -153,6 +153,7 @@ export Trace
 	yflip := true
 
 	# Plot Labels
+	plot_title := trc.scn.name
 	xguide := "Range [m]"
 	yguide := "Depth [m]"
 
