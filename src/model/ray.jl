@@ -151,6 +151,10 @@ export Trace
 
 	yflip := true
 
+	# Plot Labels
+	xguide := "Range [m]"
+	yguide := "Depth [m]"
+
 	# Ray Trace
 	for ray in trc.rays
 		s = range(0.0, ray.s_max, 501)
