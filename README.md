@@ -20,11 +20,8 @@ An implementation of acoustics models in the context of long-range ocean propaga
 
 ### Tasks
 Dependency-ordered tasks:
-* Replace range usage `r` with `x`? Research.
 * Improve existing plot recipes:
-  * Reverse y-direction in plot recipes.
   * Create celerity plot beside propagation plot.
-  * Labels, i.e. title, axes, etc.
 * Check initial rays launch within ocean.
 * Implement beam tracing, then define plot recipe.
 * Implement gridded field approximation, then define plot recipe.
@@ -36,12 +33,13 @@ Dependency-ordered tasks:
   * Give background and applications.
 
 Side tasks:
+* Customise ray launch angles in plot production in tests.
+* Replace range usage `r` with `x`? Research.
 * Docstrings and comments in the source code.
 * Ray colouring options:
   * Trapping.
   * Angle magnitude.
   * Angle sign.
-* Ribbon the bathymetry and surface plotting.
 * Implement more example `Scenario`s.
   * Balearic sea [Jensen et al. p 171]
 * Implement more tests.
