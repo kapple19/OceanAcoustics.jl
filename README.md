@@ -3,6 +3,12 @@ An implementation of acoustics models in the context of long-range ocean propaga
 
 ![Munk Profile Ray Trace](test/img/trace_munk_profile.png)
 
+![North Atlantic Convergence Zones](test/img/trace_north_atlantic_convergence_zones.png)
+
+![n-squared Linear Profile](test/img/trace_n2_linear_profile.png)
+
+![Parabolic Bathymetry](test/img/trace_parabolic_bathymetry.png)
+
 ## Development Roadmap (Epics)
 * Models:
   * Ray/beam tracing
