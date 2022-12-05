@@ -137,6 +137,7 @@ export Trace
 
 	# Plot Design.
 	legend --> :none
+
 	x_rng = 0.0 .. trc.scn.ent.rcv.x
 	z_rng_btm = trc.scn.env.btm.z(x_rng)
 	z_rng_srf = trc.scn.env.srf.z(x_rng)
@@ -146,9 +147,9 @@ export Trace
 	if !(z_rng_btm isa Interval)
 		z_rng_btm = (z_rng_btm .. z_rng_btm)
 	end
-	z_lo = z_rng_srf.lo
-	z_hi = z_rng_btm.hi
-	ylims --> (z_lo, z_hi)
+	ylims --> (z_rng_srf.lo, z_rng_btm.hi)
+
+	yflip := true
 
 	# Ray Trace
 	for ray in trc.rays
