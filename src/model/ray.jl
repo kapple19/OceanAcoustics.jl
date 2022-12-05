@@ -147,7 +147,8 @@ export Trace
 	if !(z_rng_btm isa Interval)
 		z_rng_btm = (z_rng_btm .. z_rng_btm)
 	end
-	ylims --> (z_rng_srf.lo, z_rng_btm.hi)
+	ex = (srf = z_rng_srf.lo, btm = z_rng_btm.hi)
+	ylims --> (ex.srf, ex.btm)
 
 	yflip := true
 
@@ -169,10 +170,33 @@ export Trace
 		x = range(0.0, trc.scn.ent.rcv.x)
 		z = bnd.z.(x)
 		@series begin
-			linecolor := :black
+			linecolor := :gray
+			linealpha := 0.5
+			fillalpha := 0.5
+			fillrange := zeros(size(z)) .+ ex[boundary]
+			fillstyle := :/
+			fillcolor := :gray
 			x, z
 		end
+		# @series begin
+		# 	seriestype := :ribbon
+		# 	[x_rng.lo, x_rng.hi], ex[boundary] .+ [0, 100]
+		# end
 	end
+	# boundary = :btm
+	# bnd = getproperty(trc.scn.env, boundary)
+	# x = range(0.0, trc.scn.ent.rcv.x)
+	# z = bnd.z.(x)
+	# @series begin
+	# 	linecolor := :black
+	# 	fillrange := zeros(size(z)) .+ ex[boundary]
+	# 	# fillstyle := 
+	# 	x, z
+	# end
+	# @series begin
+	# 	seriestype := :ribbon
+	# 	[x_rng.lo, x_rng.hi], ex[boundary] .+ [0, 100]
+	# end
 end
 
 # export RayTracePlot
