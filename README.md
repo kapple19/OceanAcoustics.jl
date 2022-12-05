@@ -31,7 +31,10 @@ Dependency-ordered tasks:
 
 Side tasks:
 * Docstrings and comments in the source code.
-* Colour rays by launch angle magnitude and sign.
+* Ray colouring options:
+  * Trapping.
+  * Angle magnitude.
+  * Angle sign.
 * Ribbon the bathymetry and surface plotting.
 * Implement more example `Scenario`s.
   * Balearic sea [Jensen et al. p 171]

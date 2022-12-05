@@ -206,6 +206,8 @@ Scenario(scn) = Scenario(scn...)
 
 @userplot ScenarioPlot
 @recipe function plot(sp::ScenarioPlot)
+	legend --> :none
+	
 	scn = sp.args[1]
 	x = range(0.0, scn.ent.rcv.x)
 	@series x, scn.env.srf.z.(x)

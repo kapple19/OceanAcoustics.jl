@@ -132,13 +132,33 @@ export Trace
 # User Recipe
 @userplot RayTracePlot
 @recipe function plot(rtp::RayTracePlot)
+	# Parse Inputs
 	trc = rtp.args[1]
+
+	# Plot Design.
+	legend --> :none
+	x_rng = 0.0 .. trc.scn.ent.rcv.x
+	z_rng_btm = trc.scn.env.btm.z(x_rng)
+	z_rng_srf = trc.scn.env.srf.z(x_rng)
+	if !(z_rng_srf isa Interval)
+		z_rng_srf = (z_rng_srf .. z_rng_srf)
+	end
+	if !(z_rng_btm isa Interval)
+		z_rng_btm = (z_rng_btm .. z_rng_btm)
+	end
+	z_lo = z_rng_srf.lo
+	z_hi = z_rng_btm.hi
+	ylims --> (z_lo, z_hi)
+
+	# Ray Trace
 	for ray in trc.rays
 		s = range(0.0, ray.s_max, 501)
 		r = ray.r.(s)
 		z = ray.z.(s)
 		@series r, z
 	end
+
+	# Boundaries
 	for boundary in (:srf, :btm)
 		bnd = getproperty(trc.scn.env, boundary)
 		x = range(0.0, trc.scn.ent.rcv.x)
