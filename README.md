@@ -29,6 +29,7 @@ An implementation of acoustics models in the context of long-range ocean propaga
 Dependency-ordered tasks:
 * Improve existing plot recipes:
   * Create celerity plot beside propagation plot.
+  * Layer celerity profile over scenario plot.
 * Check initial rays launch within ocean.
 * Implement beam tracing, then define plot recipe.
 * Implement gridded field approximation, then define plot recipe.
