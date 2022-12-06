@@ -9,6 +9,13 @@ An implementation of acoustics models in the context of long-range ocean propaga
 
 ![Parabolic Bathymetry](test/img/trace_parabolic_bathymetry.png)
 
+## References
+> [1] Jensen, F. B., Kuperman, W. A., Porter, M. B., & Schmidt, H. (2011). Computational ocean acoustics. Springer Science & Business Media.
+
+> [2] Abraham, D. A. (2019). Underwater Acoustic Signal Processing: Modeling, Detection, and Estimation. Springer.
+
+> [3] Rackauckas, C., & Nie, Q. (2017). Differentialequations. jl–a performant and feature-rich ecosystem for solving differential equations in julia. Journal of Open Research Software, 5(1).
+
 ## Development Roadmap (Epics)
 * Models:
   * Ray/beam tracing
