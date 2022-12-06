@@ -10,7 +10,9 @@ for scenario in propertynames(examples)
 
 	for ray in trc.rays
 		s = range(0.0, ray.s_max, 5)
-		@show ray.r.(s)
-		@show ray.z.(s)
+		# @show ray.r.(s)
+		# @show ray.z.(s)
+		n = range(0.0, ray.s_max / 100, 3)'
+		@show ray.p.(s, n)
 	end
 end

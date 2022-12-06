@@ -13,11 +13,24 @@ function reflection(tng_inc::Vector{Float64}, m_bnd::Float64)
 	atan(tng_rfl[2] / tng_rfl[1])
 end
 
+"""
+`Ray`
+
+Fields:
+* `θ₀::Float64` initial ray angle
+* `s_max::Float64` maximum ray length
+* `r::Function` Univariate range of ray wrt ray length
+* `z::Function` Univariate depth of ray wrt ray length
+* `p::Function`:
+	* Univariate ray pressure `p(r)`
+	* Bivariate beam pressure `p(r, z)`
+"""
 struct Ray <: OAC
-	θ₀
-	r
-	z
-	s_max
+	θ₀::Float64
+	s_max::Float64
+	r::Function
+	z::Function
+	p::Function
 end
 
 function default_angles(scn::Scenario)
@@ -60,6 +73,12 @@ struct Trace <: OAC
 			 - 2 * ∂²c_∂r∂z(r, z) * ξ * ζ
 			 + ∂²c_∂z²(r, z) * ξ^2
 		)
+
+		δθ₀ = if length(angles) == 1
+			1.0
+		else
+			angles |> diff |> mean
+		end
 
 		function reflect!(int, bnd)
 			r, z, ξ, ζ = int.u[1:4]
@@ -137,8 +156,25 @@ struct Trace <: OAC
 			r(s) = sol(s, idxs = 1)
 			z(s) = sol(s, idxs = 2)
 			s_max = sol.t[end]
-	
-			push!(rays, Ray(θ₀, r, z, s_max))
+
+			s = range(0.0, s_max, 5)
+
+			c(s) = cel(r(s), z(s))
+			τ(s) = sol(s, idxs = 5)
+			p(s) = sol(s, idxs = 6) + im * sol(s, idxs = 7)
+			q(s) = sol(s, idxs = 8) + im * sol(s, idxs = 9)
+			ω = 2π * f
+			A = δθ₀ / c(0.0) * sqrt(
+				q(0.0) * f * cos(θ₀)
+			) * exp(im * π / 4)
+			p_beam(s::Real, n::Real) = A * sqrt(c(s) / r(s) / q(s)) * exp(
+				-im * ω * (
+					τ(s) + p(s) / 2 / q(s) * n^2
+				)
+			)
+			p_beam(s::Real) = p_beam(s, 0.0)
+
+			push!(rays, Ray(θ₀, s_max, r, z, p_beam))
 		end
 		new(scn, rays)
 	end
