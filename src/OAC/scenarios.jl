@@ -216,3 +216,15 @@ Scenario(scn) = Scenario(scn...)
 end
 
 export scenarioplot
+
+function calc_bnd_range(scn::Scenario, bnd::Symbol)
+	x_rng = 0.0 .. scn.ent.rcv.x
+	z_rng = getproperty(scn.env, bnd).z(x_rng)
+	return if !(z_rng isa Interval)
+		z_rng .. z_rng
+	else
+		z_rng
+	end
+end
+
+# export calc_bnd_range

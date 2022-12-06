@@ -31,9 +31,13 @@ Dependency-ordered tasks:
 * Julia document: Implementation.
   * Document model features, comparing with and referencing literature.
   * Give background and applications.
+* Document sonar equations.
+  * Extend boundary reflection callbacks: store bounce information in external vector? Is this needed?
 
 Side tasks:
-* Customise ray launch angles in plot production in tests.
+* Improve default launch angle computation.
+  * Incorporate initial boundary gradient.
+  * Filter 0 degree ray launch angle via celerity derivative and boundary gradient at source.
 * Replace range usage `r` with `x`? Research.
 * Docstrings and comments in the source code.
 * Ray colouring options:
@@ -43,4 +47,3 @@ Side tasks:
 * Implement more example `Scenario`s.
   * Balearic sea [Jensen et al. p 171]
 * Implement more tests.
-* Document sonar equations.

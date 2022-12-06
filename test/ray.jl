@@ -1,7 +1,7 @@
 @testset "Examples on Ray Method" for (scenario, scn) in pairs(examples)
 	@info "Trace: $(scn.name)"
 
-	trc = Trace(scn, (π/2 - π/7) * range(-1.0, 1.0, 21))
+	trc = Trace(scn)
 	@test trc isa Trace
 
 	rtp = raytraceplot(trc)

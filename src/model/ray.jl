@@ -20,11 +20,33 @@ struct Ray <: OAC
 	s_max
 end
 
+function default_angles(scn::Scenario)
+	x_rcv = scn.ent.rcv.x
+	rng_ocn = [
+		calc_bnd_range(scn, :srf).lo
+		calc_bnd_range(scn, :btm).hi
+	]
+
+	dz_ocn = diff(rng_ocn)[1]
+	θ₀ = atan(dz_ocn / (x_rcv / 10))
+
+	return if scn.ent.src.z == scn.env.srf.z(0.0)
+		θ₀ * range(0, 1, 21)
+	elseif scn.ent.src.z == scn.env.btm.z(0.0)
+		θ₀ * range(-1, 0, 21)
+	else
+		θ₀ * range(-1, 1, 21)
+	end
+end
+
 struct Trace <: OAC
 	scn::Scenario
 	rays::Vector{Ray}
 
-	function Trace(scn::Scenario, angles::AbstractVector{<:AbstractFloat})
+	function Trace(
+		scn::Scenario,
+		angles::AbstractVector{<:AbstractFloat} = default_angles(scn)
+		)
 		# Computation
 	
 		cel(r, z) = scn.env.ocn.c(r, z)
@@ -138,15 +160,8 @@ export Trace
 	# Plot Design.
 	legend --> :none
 
-	x_rng = 0.0 .. trc.scn.ent.rcv.x
-	z_rng_btm = trc.scn.env.btm.z(x_rng)
-	z_rng_srf = trc.scn.env.srf.z(x_rng)
-	if !(z_rng_srf isa Interval)
-		z_rng_srf = (z_rng_srf .. z_rng_srf)
-	end
-	if !(z_rng_btm isa Interval)
-		z_rng_btm = (z_rng_btm .. z_rng_btm)
-	end
+	z_rng_srf = calc_bnd_range(trc.scn, :srf)
+	z_rng_btm = calc_bnd_range(trc.scn, :btm)
 	ex = (srf = z_rng_srf.lo, btm = z_rng_btm.hi)
 	ylims --> (ex.srf, ex.btm)
 
