@@ -30,7 +30,6 @@ Dependency-ordered tasks:
 * Improve existing plot recipes:
   * Create celerity plot beside propagation plot.
   * Layer celerity profile over scenario plot.
-* Check initial rays launch within ocean.
 * Implement beam tracing, then define plot recipe.
 * Implement gridded field approximation, then define plot recipe.
   * Coherent and Incoherent beam summations.
@@ -48,6 +47,7 @@ Side tasks:
   * Filter 0 degree ray launch angle via celerity derivative and boundary gradient at source.
 * Replace range usage `r` with `x`? Research.
 * Docstrings and comments in the source code.
+  * References. E.g. Jensen for ray reflection.
 * Ray colouring options:
   * Trapping.
   * Angle magnitude.
