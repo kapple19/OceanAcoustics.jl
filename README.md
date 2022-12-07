@@ -16,14 +16,15 @@ An implementation of acoustics models in the context of long-range ocean propaga
 
 > [3] Rackauckas, C., & Nie, Q. (2017). Differentialequations. jl–a performant and feature-rich ecosystem for solving differential equations in julia. Journal of Open Research Software, 5(1).
 
-## Development Roadmap (Epics)
+## Development Roadmap
+### Epics
 * Models:
-  * Ray/beam tracing
+  * Ray/beam tracing (in dev)
   * Parabolic equation
   * Sonar equations
 * Auxiliary:
-  * Example scenarios
-  * Plot recipes
+  * Example scenarios (in dev)
+  * Plot recipes (in dev)
 
 ### Tasks
 Dependency-ordered tasks:
