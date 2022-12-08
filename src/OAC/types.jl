@@ -1,7 +1,7 @@
 # Types
-abstract type OAC end
+abstract type Oac end
 
-function Base.show(io::IO, oac::OAC)
+function Base.show(io::IO, oac::Oac)
 	print(typeof(oac))
 	oac isa Depth && print(" (callable)")
 	print(": {")
@@ -21,7 +21,7 @@ end
 
 # Base.iterate(ocn::Ocean) = ocn
 
-# Base.broadcastable(oac::OAC) = Ref(oac)
+# Base.broadcastable(oac::Oac) = Ref(oac)
 
 # Exceptions
 struct NotSorted <: Exception

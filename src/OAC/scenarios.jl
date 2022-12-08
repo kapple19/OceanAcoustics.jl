@@ -14,7 +14,7 @@ Used for:
 
 Author Note: May deprecate. The min/max values storage is used for plotting, but these calculations can be done then instead.
 """
-struct Depth <: OAC
+struct Depth <: Oac
 	fcn::Function
 	min::Float64
 	max::Float64
@@ -62,7 +62,7 @@ end
 """
 `Surface`
 """
-mutable struct Surface <: OAC
+mutable struct Surface <: Oac
 	z::Depth
 
 	function Surface(args...)
@@ -80,7 +80,7 @@ Surface() = Surface(0)
 """
 `Bottom`
 """
-mutable struct Bottom <: OAC
+mutable struct Bottom <: Oac
 	z::Depth
 
 	function Bottom(args...)
@@ -96,7 +96,7 @@ Bottom(btm::Bottom) = btm
 """
 `Ocean`
 """
-mutable struct Ocean <: OAC
+mutable struct Ocean <: Oac
 	c::Function
 	Ocean(c::Function) = new((x, z) -> c(x, z))
 end
@@ -120,7 +120,7 @@ Ocean(ocn::Ocean) = ocn
 """
 `Environment`
 """
-mutable struct Environment <: OAC
+mutable struct Environment <: Oac
 	ocn::Ocean
 	btm::Bottom
 	srf::Surface
@@ -143,7 +143,7 @@ Environment(env) = Environment(env...)
 """
 `Source`
 """
-mutable struct Source <: OAC
+mutable struct Source <: Oac
 	f::Float64
 	z::Float64
 end
@@ -157,7 +157,7 @@ Source(src) = Source(src...)
 """
 `Receiver`
 """
-mutable struct Receiver <: OAC
+mutable struct Receiver <: Oac
 	x::Float64
 
 	Receiver(x::Float64) = new(x)
@@ -170,7 +170,7 @@ Receiver(rcv::Receiver) = rcv
 """
 `Entities`
 """
-mutable struct Entities <: OAC
+mutable struct Entities <: Oac
 	src::Source
 	rcv::Receiver
 
@@ -188,7 +188,7 @@ Entities(ent) = Entities(ent...)
 """
 `Scenario`
 """
-mutable struct Scenario <: OAC
+mutable struct Scenario <: Oac
 	env::Environment
 	ent::Entities
 	name::String

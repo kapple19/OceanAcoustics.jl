@@ -25,7 +25,7 @@ Fields:
 	* Univariate ray pressure `p(r)`
 	* Bivariate beam pressure `p(r, z)`
 """
-struct Ray <: OAC
+struct Ray <: Oac
 	θ₀::Float64
 	s_max::Float64
 	r::Function
@@ -52,7 +52,7 @@ function default_angles(scn::Scenario, N::Int = 1001)
 	end
 end
 
-struct Trace <: OAC
+struct Trace <: Oac
 	scn::Scenario
 	rays::Vector{Ray}
 
