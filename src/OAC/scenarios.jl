@@ -220,11 +220,19 @@ export scenarioplot
 function calc_bnd_range(scn::Scenario, bnd::Symbol)
 	x_rng = 0.0 .. scn.ent.rcv.x
 	z_rng = getproperty(scn.env, bnd).z(x_rng)
-	return if !(z_rng isa Interval)
-		z_rng .. z_rng
+	z_rng_int = if !(z_rng isa Interval)
+		Interval(z_rng, z_rng)
 	else
 		z_rng
 	end
+	z_rng_int.lo, z_rng_int.hi
 end
 
 # export calc_bnd_range
+
+function calc_ocean_depth_range(scn::Scenario)
+	return [
+		calc_bnd_range(scn, :srf) |> minimum
+		calc_bnd_range(scn, :btm) |> maximum
+	]
+end

@@ -30,25 +30,25 @@ struct Ray <: OAC
 	s_max::Float64
 	r::Function
 	z::Function
+	c::Function
+	ξ::Function
+	ζ::Function
 	p::Function
 end
 
-function default_angles(scn::Scenario)
+function default_angles(scn::Scenario, N::Int = 1001)
 	x_rcv = scn.ent.rcv.x
-	rng_ocn = [
-		calc_bnd_range(scn, :srf).lo
-		calc_bnd_range(scn, :btm).hi
-	]
+	rng_ocn = calc_ocean_depth_range(scn)
 
 	dz_ocn = diff(rng_ocn)[1]
 	θ₀ = atan(dz_ocn / (x_rcv / 10))
 
 	return if scn.ent.src.z == scn.env.srf.z(0.0)
-		θ₀ * range(0, 1, 21)
+		θ₀ * range(0, 1, N)
 	elseif scn.ent.src.z == scn.env.btm.z(0.0)
-		θ₀ * range(-1, 0, 21)
+		θ₀ * range(-1, 0, N)
 	else
-		θ₀ * range(-1, 1, 21)
+		θ₀ * range(-1, 1, N)
 	end
 end
 
@@ -136,7 +136,7 @@ struct Trace <: OAC
 		p₀Re = 1.0
 		p₀Im = 0.0
 		λ₀ = c₀ / f
-		W₀ = 25λ₀
+		W₀ = 30λ₀
 		q₀Re = 0.0
 		q₀Im = pi * f * W₀^2
 	
@@ -153,34 +153,47 @@ struct Trace <: OAC
 		
 			sol = solve(prob, Tsit5(), callback = cb)
 	
+			s_max = sol.t[end]
 			r(s) = sol(s, idxs = 1)
 			z(s) = sol(s, idxs = 2)
-			s_max = sol.t[end]
-
-			s = range(0.0, s_max, 5)
-
-			c(s) = cel(r(s), z(s))
+			ξ(s) = sol(s, idxs = 3)
+			ζ(s) = sol(s, idxs = 4)
 			τ(s) = sol(s, idxs = 5)
 			p(s) = sol(s, idxs = 6) + im * sol(s, idxs = 7)
 			q(s) = sol(s, idxs = 8) + im * sol(s, idxs = 9)
+			
+			c(s) = cel(r(s), z(s))
 			ω = 2π * f
 			A = δθ₀ / c(0.0) * sqrt(
 				q(0.0) * f * cos(θ₀)
 			) * exp(im * π / 4)
-			p_beam(s::Real, n::Real) = A * sqrt(c(s) / r(s) / q(s)) * exp(
-				-im * ω * (
-					τ(s) + p(s) / 2 / q(s) * n^2
+			function p_beam(s::Real, n::Real)
+				(s > s_max || s < 0) && return ComplexF64(0.0)
+				r(s) < 0 && return ComplexF64(0.0)
+				return A * sqrt(
+						c(s) / r(s) / q(s)
+					) * exp(
+					-im * ω * (
+						τ(s) + p(s) / 2 / q(s) * n^2
+					)
 				)
-			)
+			end
 			p_beam(s::Real) = p_beam(s, 0.0)
 
-			push!(rays, Ray(θ₀, s_max, r, z, p_beam))
+			push!(rays, Ray(θ₀, s_max, r, z, c, ξ, ζ, p_beam))
 		end
 		new(scn, rays)
 	end
 end
 
 export Trace
+
+function Trace(
+	scn::Scenario,
+	N::Int = 1001
+	)
+	Trace(scn, default_angles(scn, N))
+end
 
 # User Recipe
 @userplot RayTracePlot
@@ -191,9 +204,11 @@ export Trace
 	# Plot Design.
 	legend --> :none
 
-	z_rng_srf = calc_bnd_range(trc.scn, :srf)
-	z_rng_btm = calc_bnd_range(trc.scn, :btm)
-	ex = (srf = z_rng_srf.lo, btm = z_rng_btm.hi)
+	ocn_depth_range = calc_ocean_depth_range(trc.scn)
+	ex = (
+		srf = minimum(ocn_depth_range),
+		btm = maximum(ocn_depth_range)
+	)
 	ylims --> (ex.srf, ex.btm)
 
 	yflip := true
@@ -225,41 +240,54 @@ export Trace
 			fillcolor := :gray
 			x, z
 		end
-		# @series begin
-		# 	seriestype := :ribbon
-		# 	[x_rng.lo, x_rng.hi], ex[boundary] .+ [0, 100]
-		# end
 	end
-	# boundary = :btm
-	# bnd = getproperty(trc.scn.env, boundary)
-	# x = range(0.0, trc.scn.ent.rcv.x)
-	# z = bnd.z.(x)
-	# @series begin
-	# 	linecolor := :black
-	# 	fillrange := zeros(size(z)) .+ ex[boundary]
-	# 	# fillstyle := 
-	# 	x, z
-	# end
-	# @series begin
-	# 	seriestype := :ribbon
-	# 	[x_rng.lo, x_rng.hi], ex[boundary] .+ [0, 100]
-	# end
 end
 
-# export RayTracePlot
 export raytraceplot
 
-# # Type Recipes
-# @recipe function plot(::Type{Trace}, trc::Trace)
+function Field(
+	trc::Trace,
+	rGrid::AbstractVector{<:Real} = range(0.0, trc.scn.ent.rcv.x, 250),
+	zGrid::AbstractVector{<:Real} = range(calc_ocean_depth_range(trc.scn)..., 150)
+	)
 
-# end
+	Nr = length(rGrid)
+	Nz = length(zGrid)
+	p = zeros(ComplexF64, Nr, Nz)
+	Narc = max(101, floor(Nr / 3) |> Int)
+	for ray in trc.rays
+		arc = range(0.0, ray.s_max, Narc)
+		for i = eachindex(arc)[begin+1:end]
+			sᵢ₋₁, sᵢ = arc[i-1 : i]
+			rᵢ₋₁, rᵢ = ray.r.([sᵢ₋₁, sᵢ])
+			# zᵢ₋₁ = ray.z(sᵢ₋₁)
+			zᵢ = ray.z(sᵢ)
+			for (nr, r) in enumerate(rGrid)
+				if !(rᵢ₋₁ .≤ r .< rᵢ)
+					continue
+				end
+				for (nz, z) in enumerate(zGrid)
+					x_rcv = [r, z]
+					# x_ray = [rᵢ₋₁, zᵢ₋₁]
+					x_ray = [rᵢ, zᵢ]
+					t_ray = ray.c(sᵢ₋₁) * [ray.ξ(sᵢ₋₁), ray.ζ(sᵢ₋₁)]
+					t_ray /= dot(t_ray, t_ray) |> sqrt
+					n_ray = ray.c(sᵢ₋₁) * [-ray.ζ(sᵢ₋₁), ray.ξ(sᵢ₋₁)]
+					n_ray /= dot(n_ray, n_ray) |> sqrt
+					s = dot(x_rcv - x_ray, t_ray)
+					n = dot(x_rcv - x_ray, n_ray) |> abs
+					p_add = ray.p(sᵢ₋₁ + s, n)
+					if !(isnan(p_add) || isinf(p_add))
+						p[nr, nz] += p_add
+					end
+				end
+			end
+		end
+	end
+	TL = -20log10.(p .|> abs)
+	TL = max.(TL, 0.0)
+	TL = min.(TL, 100.0)
+	rGrid, zGrid, TL
+end
 
-# #Plot Recipes
-# @recipe function plot(::Type{Val{:myplotrecipename}})
-
-# end
-
-# # Series Recipes
-# @recipe function plot(::Type{Val{:myseriesrecipename}}, x, y, z)
-
-# end
+export Field
