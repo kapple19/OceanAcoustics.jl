@@ -1,13 +1,25 @@
 # OceanAcoustics
 An implementation of acoustics models in the context of long-range ocean propagation.
 
+## Gaussian Beam Method
 ![Munk Profile Ray Trace](test/img/trace_munk_profile.png)
 
-![North Atlantic Convergence Zones](test/img/trace_north_atlantic_convergence_zones.png)
+![North Atlantic Convergence Zones Ray Trace](test/img/trace_north_atlantic_convergence_zones.png)
 
-![n-squared Linear Profile](test/img/trace_n2_linear_profile.png)
+![n-squared Linear Profile Ray Trace](test/img/trace_n2_linear_profile.png)
 
-![Parabolic Bathymetry](test/img/trace_parabolic_bathymetry.png)
+![Parabolic Bathymetry Ray Trace](test/img/trace_parabolic_bathymetry.png)
+
+![Munk Profile Transmission Loss](test/img/raymethod_munk_profile.png)
+
+![North Atlantic Convergence Zones Transmission Loss](test/img/raymethod_north_atlantic_convergence_zones.png)
+
+![n-squared Linear Profile Transmission Loss](test/img/raymethod_n2_linear_profile.png)
+
+![Parabolic Bathymetry Transmission Loss](test/img/raymethod_parabolic_bathymetry.png)
+
+## Parabolic Equation Method
+Upcoming.
 
 ## References
 > [1] Jensen, F. B., Kuperman, W. A., Porter, M. B., & Schmidt, H. (2011). Computational ocean acoustics. Springer Science & Business Media.
