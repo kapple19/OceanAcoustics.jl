@@ -2,6 +2,7 @@
 An implementation of acoustics models in the context of long-range ocean propagation.
 
 ## Gaussian Beam Method
+### Ray Trace
 ![Munk Profile Ray Trace](test/img/trace_munk_profile.png)
 
 ![North Atlantic Convergence Zones Ray Trace](test/img/trace_north_atlantic_convergence_zones.png)
@@ -10,6 +11,7 @@ An implementation of acoustics models in the context of long-range ocean propaga
 
 ![Parabolic Bathymetry Ray Trace](test/img/trace_parabolic_bathymetry.png)
 
+### Transmission Loss
 ![Munk Profile Transmission Loss](test/img/raymethod_munk_profile.png)
 
 ![North Atlantic Convergence Zones Transmission Loss](test/img/raymethod_north_atlantic_convergence_zones.png)
@@ -20,6 +22,15 @@ An implementation of acoustics models in the context of long-range ocean propaga
 
 ## Parabolic Equation Method
 Upcoming.
+
+## Sonar Equations
+Upcoming.
+
+### Signal-to-Noise Ratio
+
+### Signal Excess
+
+### Probability of Detection
 
 ## References
 > [1] Jensen, F. B., Kuperman, W. A., Porter, M. B., & Schmidt, H. (2011). Computational ocean acoustics. Springer Science & Business Media.
