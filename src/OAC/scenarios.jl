@@ -233,12 +233,9 @@ Scenario(scn) = Scenario(scn...)
 		x = range(0.0, scn.ent.rcv.x)
 		z = bnd.z.(x)
 		@series begin
-			linecolor := :gray
-			linealpha := 0.5
-			fillalpha := 0.5
+			linecolor := :brown
 			fillrange := zeros(size(z)) .+ ex[boundary]
-			fillstyle := :/
-			fillcolor := :gray
+			fillcolor := :brown
 			x, z
 		end
 	end

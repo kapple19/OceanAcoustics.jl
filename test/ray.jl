@@ -21,6 +21,7 @@
 		title = scn.name,
 		yflip = true
 	)
+	scenarioplot!(scn)
 	savefig(fig, joinpath("img", "raymethod_" * string(scenario) * ".png"))
 end
 
@@ -37,6 +38,7 @@ end
 			title = scn.name,
 			yflip = true
 		)
+		scenarioplot!(scn)
 		savefig(fig, joinpath("img", "jensenetal2011_fig_3_16.png"))
 
 		fld isa Field
