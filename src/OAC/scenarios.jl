@@ -206,13 +206,42 @@ Scenario(scn) = Scenario(scn...)
 
 @userplot ScenarioPlot
 @recipe function plot(sp::ScenarioPlot)
+	# Inputs
+	scn = sp.args[1]
+
+	# Plot Design
 	legend --> :none
 	yflip := true
 	
-	scn = sp.args[1]
+	# Extrema
+	ocn_depth_range = calc_ocean_depth_range(scn)
+	ex = (
+		srf = minimum(ocn_depth_range),
+		btm = maximum(ocn_depth_range)
+	)
+	ylims --> (ex.srf, ex.btm)
+
+	# Plot Labels
+	plot_title := scn.name
+	xguide := "Range [m]"
+	yguide := "Depth [m]"
+
 	x = range(0.0, scn.ent.rcv.x)
-	@series x, scn.env.srf.z.(x)
-	@series x, scn.env.btm.z.(x)
+	# Boundaries
+	for boundary in (:srf, :btm)
+		bnd = getproperty(scn.env, boundary)
+		x = range(0.0, scn.ent.rcv.x)
+		z = bnd.z.(x)
+		@series begin
+			linecolor := :gray
+			linealpha := 0.5
+			fillalpha := 0.5
+			fillrange := zeros(size(z)) .+ ex[boundary]
+			fillstyle := :/
+			fillcolor := :gray
+			x, z
+		end
+	end
 end
 
 export scenarioplot
@@ -236,3 +265,11 @@ function calc_ocean_depth_range(scn::Scenario)
 		calc_bnd_range(scn, :btm) |> maximum
 	]
 end
+
+mutable struct Field
+	r::Vector{Float64}
+	z::Vector{Float64}
+	TL::Matrix{Float64}
+end
+
+export Field

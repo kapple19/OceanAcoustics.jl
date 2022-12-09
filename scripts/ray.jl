@@ -6,13 +6,33 @@ for scenario in propertynames(examples)
 	println("="^(4*length(scenario |> string)))
 	println(scn.name)
 
-	trc = Trace(scn, π/6 * range(-1.0, 1.0, 11))
-
-	for ray in trc.rays
-		s = range(0.0, ray.s_max, 5)
-		# @show ray.r.(s)
-		# @show ray.z.(s)
-		n = range(0.0, ray.s_max / 100, 3)'
-		@show ray.p.(s, n)
-	end
+	trc = RayMethodField(scn,
+	11,
+	save_field = false,
+	save_trace = true
+	)
+	@show trc
 end
+
+## Just One
+using OceanAcoustics
+
+scenario = :n2_linear_profile
+scn = getproperty(examples, scenario)
+trc = RayMethodField(scn,
+	11,
+	save_field = false,
+	save_trace = true
+)
+for ray in trc.rays
+	@show ray.s_max
+end
+
+##
+using OceanAcoustics
+
+scenario = :n2_linear_profile
+scn = getproperty(examples, scenario)
+fld = RayMethodField(scn,
+	[-π/4]
+)
