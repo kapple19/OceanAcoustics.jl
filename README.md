@@ -54,10 +54,8 @@ Dependency-ordered tasks:
 * Improve existing plot recipes:
   * Create celerity plot beside propagation plot.
   * Layer celerity profile over scenario plot.
-* Implement beam tracing, then define plot recipe.
 * Implement gridded field approximation, then define plot recipe.
   * Coherent and Incoherent beam summations.
-  * Gridded approximation.
 * LaTeX document: Mathematics.
 * Julia document: Implementation.
   * Document model features, comparing with and referencing literature.
