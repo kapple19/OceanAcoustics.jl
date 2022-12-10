@@ -16,11 +16,8 @@
 	@test fld.r isa AbstractVector{<:AbstractFloat}
 	@test fld.z isa AbstractVector{<:AbstractFloat}
 	@test fld.TL isa AbstractMatrix{<:AbstractFloat}
-	fig = heatmap(fld.r, fld.z, fld.TL',
-		c = cgrad(:jet, rev = true),
-		title = scn.name,
-		yflip = true
-	)
+
+	fig = propagationplot(fld)
 	scenarioplot!(scn)
 	savefig(fig, joinpath("img", "raymethod_" * string(scenario) * ".png"))
 end
@@ -33,11 +30,7 @@ end
 		fld.TL = max.(40, fld.TL)
 		fld.TL = min.(90, fld.TL)
 
-		fig = heatmap(fld.r, fld.z, fld.TL',
-			c = cgrad(:jet, rev = true),
-			title = scn.name,
-			yflip = true
-		)
+		fig = propagationplot(fld)
 		scenarioplot!(scn)
 		savefig(fig, joinpath("img", "jensenetal2011_fig_3_16.png"))
 
