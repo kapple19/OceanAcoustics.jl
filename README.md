@@ -51,6 +51,7 @@ Upcoming.
 
 ### Tasks
 Dependency-ordered tasks:
+* Implement boundary losses.
 * Improve existing plot recipes:
   * Create celerity plot beside propagation plot.
   * Layer celerity profile over scenario plot.
