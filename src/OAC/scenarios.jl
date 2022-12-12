@@ -14,7 +14,7 @@ Used for:
 
 Author Note: May deprecate. The min/max values storage is used for plotting, but these calculations can be done then instead.
 """
-struct Depth <: OAC
+struct Depth <: Oac
 	fcn::Function
 	min::Float64
 	max::Float64
@@ -62,7 +62,7 @@ end
 """
 `Surface`
 """
-mutable struct Surface <: OAC
+mutable struct Surface <: Oac
 	z::Depth
 
 	function Surface(args...)
@@ -80,7 +80,7 @@ Surface() = Surface(0)
 """
 `Bottom`
 """
-mutable struct Bottom <: OAC
+mutable struct Bottom <: Oac
 	z::Depth
 
 	function Bottom(args...)
@@ -96,7 +96,7 @@ Bottom(btm::Bottom) = btm
 """
 `Ocean`
 """
-mutable struct Ocean <: OAC
+mutable struct Ocean <: Oac
 	c::Function
 	Ocean(c::Function) = new((x, z) -> c(x, z))
 end
@@ -120,7 +120,7 @@ Ocean(ocn::Ocean) = ocn
 """
 `Environment`
 """
-mutable struct Environment <: OAC
+mutable struct Environment <: Oac
 	ocn::Ocean
 	btm::Bottom
 	srf::Surface
@@ -143,7 +143,7 @@ Environment(env) = Environment(env...)
 """
 `Source`
 """
-mutable struct Source <: OAC
+mutable struct Source <: Oac
 	f::Float64
 	z::Float64
 end
@@ -157,7 +157,7 @@ Source(src) = Source(src...)
 """
 `Receiver`
 """
-mutable struct Receiver <: OAC
+mutable struct Receiver <: Oac
 	x::Float64
 
 	Receiver(x::Float64) = new(x)
@@ -170,7 +170,7 @@ Receiver(rcv::Receiver) = rcv
 """
 `Entities`
 """
-mutable struct Entities <: OAC
+mutable struct Entities <: Oac
 	src::Source
 	rcv::Receiver
 
@@ -188,7 +188,7 @@ Entities(ent) = Entities(ent...)
 """
 `Scenario`
 """
-mutable struct Scenario <: OAC
+mutable struct Scenario <: Oac
 	env::Environment
 	ent::Entities
 	name::String
@@ -206,10 +206,81 @@ Scenario(scn) = Scenario(scn...)
 
 @userplot ScenarioPlot
 @recipe function plot(sp::ScenarioPlot)
+	# Inputs
 	scn = sp.args[1]
+
+	# Plot Design
+	legend --> :none
+	yflip := true
+	
+	# Extrema
+	ocn_depth_range = calc_ocean_depth_range(scn)
+	ex = (
+		srf = minimum(ocn_depth_range),
+		btm = maximum(ocn_depth_range)
+	)
+	ylims --> (ex.srf, ex.btm)
+
+	# Plot Labels
+	plot_title := scn.name
+	xguide := "Range [m]"
+	yguide := "Depth [m]"
+
 	x = range(0.0, scn.ent.rcv.x)
-	@series x, scn.env.srf.z.(x)
-	@series x, scn.env.btm.z.(x)
+	# Boundaries
+	for boundary in (:srf, :btm)
+		bnd = getproperty(scn.env, boundary)
+		x = range(0.0, scn.ent.rcv.x)
+		z = bnd.z.(x)
+		@series begin
+			linecolor := :brown
+			fillrange := zeros(size(z)) .+ ex[boundary]
+			fillcolor := :brown
+			x, z
+		end
+	end
 end
 
 export scenarioplot
+
+function calc_bnd_range(scn::Scenario, bnd::Symbol)
+	x_rng = 0.0 .. scn.ent.rcv.x
+	z_rng = getproperty(scn.env, bnd).z(x_rng)
+	z_rng_int = if !(z_rng isa Interval)
+		Interval(z_rng, z_rng)
+	else
+		z_rng
+	end
+	z_rng_int.lo, z_rng_int.hi
+end
+
+# export calc_bnd_range
+
+function calc_ocean_depth_range(scn::Scenario)
+	return [
+		calc_bnd_range(scn, :srf) |> minimum
+		calc_bnd_range(scn, :btm) |> maximum
+	]
+end
+
+mutable struct Field
+	r::Vector{Float64}
+	z::Vector{Float64}
+	TL::Matrix{Float64}
+end
+
+export Field
+
+@userplot PropagationPlot
+@recipe function plot(pp::PropagationPlot)
+	fld = pp.args[1]
+
+	legend --> :none
+	yflip := true
+
+	@series begin
+		seriestype := :heatmap
+		seriescolor := cgrad(:jet, rev = true)
+		fld.r, fld.z, fld.TL'
+	end
+end
