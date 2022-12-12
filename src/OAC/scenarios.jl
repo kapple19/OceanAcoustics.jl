@@ -266,7 +266,7 @@ end
 mutable struct Field
 	r::Vector{Float64}
 	z::Vector{Float64}
-	TL::Matrix{Float64}
+	PL::Matrix{Float64}
 end
 
 export Field
@@ -281,6 +281,6 @@ export Field
 	@series begin
 		seriestype := :heatmap
 		seriescolor := cgrad(:jet, rev = true)
-		fld.r, fld.z, fld.TL'
+		fld.r, fld.z, fld.PL'
 	end
 end

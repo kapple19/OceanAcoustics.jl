@@ -17,23 +17,32 @@ end
 `Ray`
 
 Fields:
-* `θ₀::Float64` initial ray angle
-* `s_max::Float64` maximum ray length
-* `r::Function` Univariate range of ray wrt ray length
-* `z::Function` Univariate depth of ray wrt ray length
-* `p::Function`:
-	* Univariate ray pressure `p(r)`
-	* Bivariate beam pressure `p(r, z)`
+* `s_max::Float64` maximum ray arc length
+* `r(s)::Function` ray range
+* `z(s)::Function` ray depth
+* `θ(s)::Function` ray angle
+* `c(s)::Function` ray sound celerity
+* `τ(s)::Function` ray phase
+* `p(s)::Function` ray pressure
+* `PL(s)::Function` ray propagation loss
+where
+* `s::Real` arc length along ray
+
+The pressure `p` and propagation loss `PL` are also bivarate:
+* `p(s, n)`
+* `PL(s, n)`
+where:
+* `n` is normal from ray at point `n`
 """
 struct Ray <: Oac
-	θ₀::Float64
 	s_max::Float64
 	r::Function
 	z::Function
+	θ::Function
 	c::Function
 	τ::Function
 	p::Function
-	TL::Function
+	PL::Function
 end
 
 export Ray
@@ -203,6 +212,7 @@ function RayMethodField(scn::Scenario,
 		q(s) = sol(s, idxs = 8) + im * sol(s, idxs = 9)
 		
 		c(s) = cel(r(s), z(s))
+		θ(s) = atan(ζ(s) / ξ(s))
 		ω = 2π * f
 		A = δθ₀ / c(0.0) * sqrt(
 			q(0.0) * f * cos(θ₀)
@@ -219,11 +229,11 @@ function RayMethodField(scn::Scenario,
 			)
 		end
 		beam(s::Real) = beam(s, 0.0)
-		TL(s::Real, n::Real) = -20log10(beam(s, n) |> abs)
-		TL(s::Real) = TL(s, 0.0)
+		PL(s::Real, n::Real) = -20log10(beam(s, n) |> abs)
+		PL(s::Real) = PL(s, 0.0)
 
 		if save_trace
-			push!(rays, Ray(θ₀, s_max, r, z, c, τ, beam, TL))
+			push!(rays, Ray(s_max, r, z, θ, c, τ, beam, PL))
 		end
 
 		if save_field
@@ -256,11 +266,11 @@ function RayMethodField(scn::Scenario,
 			end
 		end
 	end
-	TL = -20log10.(pressure .|> abs)
-	TL = max.(0.0, TL)
-	TL = min.(100.0, TL)
+	PL = -20log10.(pressure .|> abs)
+	PL = max.(0.0, PL)
+	PL = min.(100.0, PL)
 
-	fld = Field(ranges, depths, TL)
+	fld = Field(ranges, depths, PL)
 	trc = Trace(rays)
 
 	return if save_trace && save_field

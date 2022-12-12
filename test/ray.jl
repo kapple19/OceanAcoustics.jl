@@ -15,7 +15,7 @@
 	fld = RayMethodField(scn, 101)
 	@test fld.r isa AbstractVector{<:AbstractFloat}
 	@test fld.z isa AbstractVector{<:AbstractFloat}
-	@test fld.TL isa AbstractMatrix{<:AbstractFloat}
+	@test fld.PL isa AbstractMatrix{<:AbstractFloat}
 
 	fig = propagationplot(fld)
 	scenarioplot!(scn)
@@ -27,8 +27,8 @@ end
 	@test begin
 		scn = examples.n2_linear_profile
 		fld = RayMethodField(scn, [-π/4])
-		fld.TL = max.(40, fld.TL)
-		fld.TL = min.(90, fld.TL)
+		fld.PL = max.(40, fld.PL)
+		fld.PL = min.(90, fld.PL)
 
 		fig = propagationplot(fld)
 		scenarioplot!(scn)
