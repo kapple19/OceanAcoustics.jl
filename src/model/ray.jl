@@ -6,42 +6,50 @@ function gradient2tangent(m::Float64)
 end
 
 function reflection(tng_inc::Vector{Float64}, m_bnd::Float64)
+
 	tng_bnd = gradient2tangent(m_bnd)
 	nrm_bnd = [0 1; -1 0] * tng_bnd
-	α = dot(tng_inc, nrm_bnd)
-	tng_rfl = tng_inc - 2α * nrm_bnd
+	α = dot(tng_inc, nrm_bnd) # [Jensen et al. eq. 3.118]
+	tng_rfl = tng_inc - 2α * nrm_bnd # [Jensen et al. eq. 3.121]
 	atan(tng_rfl[2] / tng_rfl[1])
 end
 
 """
-`Ray`
+$(TYPEDEF)
 
-Fields:
-* `s_max::Float64` maximum ray arc length
-* `r(s)::Function` ray range
-* `z(s)::Function` ray depth
-* `θ(s)::Function` ray angle
-* `c(s)::Function` ray sound celerity
-* `τ(s)::Function` ray phase
-* `p(s)::Function` ray pressure
-* `PL(s)::Function` ray propagation loss
-where
-* `s::Real` arc length along ray
-
-The pressure `p` and propagation loss `PL` are also bivarate:
-* `p(s, n)`
-* `PL(s, n)`
-where:
-* `n` is normal from ray at point `n`
+$(TYPEDFIELDS)
 """
 struct Ray <: Oac
+	"Maximum ray arc length [m]."
 	s_max::Float64
+
+	"Ray range [m]. Univariate, called as `r(s::Real)`."
 	r::Function
+
+	"Ray depth [m]. Univariate, called as `z(s::Real)`."
 	z::Function
+
+	"Ray angle [rad]. Univariate, called as `θ(s::Real)`."
 	θ::Function
+
+	"Ray sound celerity [m/s]. Univariate, called as `c(s::Real)`."
 	c::Function
+
+	"Ray pressure phase [rad?]. Univariate, called as `τ(s::Real)`."
 	τ::Function
+
+	"""
+	Ray pressure [Pa]. Has two methods:
+	* `p(s::Real) -> ComplexF64` pressure along ray at arc length point `s`.
+	* `p(s::Real, n::Real) -> ComplexF64` pressure at normal distance `n` [m] from ray at arc length point `s` [m].
+	"""
 	p::Function
+
+	"""
+	Propagation Loss [dB]. Has two methods:
+	* `PL(s::Real) -> Real` propagation loss along ray at arc length point `s`.
+	* `PL(s::Real, n::Real) -> Real` propagation loss at normal distance `n` [m] from ray at arc length point `s` [m].
+	"""
 	PL::Function
 end
 
@@ -94,8 +102,11 @@ default_ranges(scn::Scenario) = range(0.0, scn.ent.rcv.x, 250)
 
 default_depths(scn::Scenario) = range(calc_ocean_depth_range(scn)..., 150)
 
+"""
+$(TYPEDSIGNATURES)
+"""
 function RayMethodField(scn::Scenario,
-	angles::AbstractVector{<:AbstractFloat} = default_angles(scn);
+	angles::AbstractVector{<:AbstractFloat};
 	ranges::AbstractVector{<:AbstractFloat} = default_ranges(scn),
 	depths::AbstractVector{<:AbstractFloat} = default_depths(scn),
 	save_field::Bool = true,
@@ -282,7 +293,7 @@ function RayMethodField(scn::Scenario,
 	end
 end
 
-export RayMethod
+export RayMethodField
 
 function RayMethodField(scn::Scenario,
 	Nangles::Int = 101;
@@ -300,5 +311,3 @@ function RayMethodField(scn::Scenario,
 		save_trace = save_trace
 	)
 end
-
-export RayMethodField

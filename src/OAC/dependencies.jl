@@ -5,5 +5,6 @@ using OrdinaryDiffEq: ODEProblem, solve, Tsit5, ContinuousCallback, CallbackSet,
 using RecipesBase: RecipesBase, @userplot, @recipe, @series
 using PlotUtils: cgrad
 using Statistics: mean
+using DocStringExtensions: TYPEDFIELDS, TYPEDEF, TYPEDSIGNATURES
 
 export (..)

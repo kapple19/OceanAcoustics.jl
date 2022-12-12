@@ -33,6 +33,7 @@ using OceanAcoustics
 
 scenario = :n2_linear_profile
 scn = getproperty(examples, scenario)
-fld = RayMethodField(scn,
-	[-π/4]
-)
+fld, trc = RayMethodField(scn, [-π/4], save_trace = true)
+ray = trc.rays[1]
+s = range(0.0, ray.s_max, 101)
+ray.τ.(s)
