@@ -1,75 +1,18 @@
 """
-`Depth`
-
-Storing univariate real-valued function (F64 -> F64) and meta-information.
-
-`Depth(z::Function)`
-`Depth(z::Function, min::Real, max::Real)`
-`Depth(x::Vector{<:Real}, z::Vector{<:Real})` creates an interpolator
-`Depth(z::Real)` creates a function
-
-Used for:
-	* ocean surface altimetry
-	* ocean bottom bathymetry
-
-Author Note: May deprecate. The min/max values storage is used for plotting, but these calculations can be done then instead.
-"""
-struct Depth <: OACBase.Oac
-	fcn::Function
-	min::Float64
-	max::Float64
-
-	function Depth(z_fcn::Function, z_min::Real, z_max::Real)
-		!(z_min ≤ z_max) && error("`min` must be less than `max`.")
-		new(x -> z_fcn(x), Float64(z_min), Float64(z_max))
-	end
-end
-
-function Depth(z::Function, domain::AbstractInterval{<:Real})
-	rng = z(domain)
-	Depth(z, rng.lo, rng.hi)
-end
-
-function Depth(z::Function, domain::Tuple{<:Real, <:Real})
-	Depth(z, Interval(domain...))
-end
-
-function Depth(x::Vector{<:Real}, z::Vector{<:Real})
-	# Checks
-	!issorted(x) && throw(NotSorted(x))
-	!allunique(x) && throw(NotAllUnique(x))
-	length(x) ≠ length(z) && throw(DimensionMismatch())
-
-	z_interp = linear_interpolation(x, z, extrapolation_bc = Line())
-	z_fcn(x) = z_interp(x)
-
-	Depth(z_fcn, minimum(z), maximum(z))
-end
-
-function Depth(z::Real)
-	zF64 = Float64(z)
-	Depth(x -> zF64, zF64, zF64)
-end
-
-(z::Depth)(x) = z.fcn(x)
-
-# Depth(dpt::Depth) = dpt # not sure this one is needed
-
-# Depth(dpt) = Depth(dpt...) # not sure this one is needed
-
-"""
 `Surface`
 """
 mutable struct Surface <: OACBase.Oac
-	z::Depth
+	z::Function
 
-	function Surface(args...)
-		z = Depth(args...)
+	function Surface(zFcn::Function)
+		z(r) = zFcn(r)
 		new(z)
 	end
 end
 
 Surface() = Surface(0)
+
+Surface(z::Real) = Surface(r -> z)
 
 # Surface(srf::Surface) = srf
 
@@ -77,13 +20,15 @@ Surface() = Surface(0)
 `Bottom`
 """
 mutable struct Bottom <: OACBase.Oac
-	z::Depth
+	z::Function
 
-	function Bottom(args...)
-		z = Depth(args...)
+	function Bottom(zFcn::Function)
+		z(r) = zFcn(r)
 		new(z)
 	end
 end
+
+Bottom(z::Real) = Bottom(r -> z)
 
 Bottom(btm::Bottom) = btm
 
@@ -264,7 +209,6 @@ end
 
 # Exports
 ## Types
-export Depth
 export Surface
 export Bottom
 export Ocean

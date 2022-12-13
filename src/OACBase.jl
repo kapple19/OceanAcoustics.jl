@@ -22,7 +22,6 @@ export NotSorted
 export NotAllUnique
 
 ## Types
-export Depth
 export Surface
 export Bottom
 export Ocean

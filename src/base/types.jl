@@ -2,9 +2,7 @@
 abstract type Oac end
 
 function Base.show(io::IO, oac::Oac)
-	print(typeof(oac))
-	oac isa Depth && print(" (callable)")
-	print(": {")
+	print(typeof(oac), ": {")
 	for p in propertynames(oac)
 		println()
 		prop = getproperty(oac, (p))

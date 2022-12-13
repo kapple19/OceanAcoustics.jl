@@ -49,7 +49,7 @@ parabolic_bathymetry = let
 	b = 2.5e5
 	z_bty(r) = 2e-3b * √(1 + r/c)
 	
-	btm = Bottom(z_bty, z_bty(0.0), z_bty(r_rcv))
+	btm = Bottom(z_bty)
 
 	scn = Scenario(
 		(c, btm),
