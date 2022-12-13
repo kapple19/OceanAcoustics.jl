@@ -14,7 +14,7 @@ Used for:
 
 Author Note: May deprecate. The min/max values storage is used for plotting, but these calculations can be done then instead.
 """
-struct Depth <: Oac
+struct Depth <: OACBase.Oac
 	fcn::Function
 	min::Float64
 	max::Float64
@@ -24,8 +24,6 @@ struct Depth <: Oac
 		new(x -> z_fcn(x), Float64(z_min), Float64(z_max))
 	end
 end
-
-export Depth
 
 function Depth(z::Function, domain::AbstractInterval{<:Real})
 	rng = z(domain)
@@ -62,7 +60,7 @@ end
 """
 `Surface`
 """
-mutable struct Surface <: Oac
+mutable struct Surface <: OACBase.Oac
 	z::Depth
 
 	function Surface(args...)
@@ -71,8 +69,6 @@ mutable struct Surface <: Oac
 	end
 end
 
-export Surface
-
 Surface() = Surface(0)
 
 # Surface(srf::Surface) = srf
@@ -80,7 +76,7 @@ Surface() = Surface(0)
 """
 `Bottom`
 """
-mutable struct Bottom <: Oac
+mutable struct Bottom <: OACBase.Oac
 	z::Depth
 
 	function Bottom(args...)
@@ -89,14 +85,12 @@ mutable struct Bottom <: Oac
 	end
 end
 
-export Bottom
-
 Bottom(btm::Bottom) = btm
 
 """
 `Ocean`
 """
-mutable struct Ocean <: Oac
+mutable struct Ocean <: OACBase.Oac
 	c::Function
 	Ocean(c::Function) = new((x, z) -> c(x, z))
 end
@@ -111,8 +105,6 @@ function Ocean(z::AbstractVector{<:Real}, c::AbstractVector{<:Real})
 	Ocean(c_fcn)
 end
 
-export Ocean
-
 Ocean(ocn::Ocean) = ocn
 
 # Ocean(ocn) = Ocean(ocn...)
@@ -120,7 +112,7 @@ Ocean(ocn::Ocean) = ocn
 """
 `Environment`
 """
-mutable struct Environment <: Oac
+mutable struct Environment <: OACBase.Oac
 	ocn::Ocean
 	btm::Bottom
 	srf::Surface
@@ -129,8 +121,6 @@ mutable struct Environment <: Oac
 		new(ocn, btm, srf)
 	end
 end
-
-export Environment
 
 function Environment(ocn, btm, srf = 0)
 	Environment(Ocean(ocn), Bottom(btm), Surface(srf))
@@ -143,12 +133,10 @@ Environment(env) = Environment(env...)
 """
 `Source`
 """
-mutable struct Source <: Oac
+mutable struct Source <: OACBase.Oac
 	f::Float64
 	z::Float64
 end
-
-export Source
 
 Source(src::Source) = src
 
@@ -157,20 +145,18 @@ Source(src) = Source(src...)
 """
 `Receiver`
 """
-mutable struct Receiver <: Oac
+mutable struct Receiver <: OACBase.Oac
 	x::Float64
 
 	Receiver(x::Float64) = new(x)
 end
-
-export Receiver
 
 Receiver(rcv::Receiver) = rcv
 
 """
 `Entities`
 """
-mutable struct Entities <: Oac
+mutable struct Entities <: OACBase.Oac
 	src::Source
 	rcv::Receiver
 
@@ -179,8 +165,6 @@ mutable struct Entities <: Oac
 	end
 end
 
-export Entities
-
 Entities(ent::Entities) = ent
 
 Entities(ent) = Entities(ent...)
@@ -188,7 +172,7 @@ Entities(ent) = Entities(ent...)
 """
 `Scenario`
 """
-mutable struct Scenario <: Oac
+mutable struct Scenario <: OACBase.Oac
 	env::Environment
 	ent::Entities
 	name::String
@@ -197,8 +181,6 @@ mutable struct Scenario <: Oac
 		new(Environment(env), Entities(ent), name)
 	end
 end
-
-export Scenario
 
 Scenario(scn::Scenario) = scn
 
@@ -241,8 +223,6 @@ Scenario(scn) = Scenario(scn...)
 	end
 end
 
-export scenarioplot
-
 function calc_bnd_range(scn::Scenario, bnd::Symbol)
 	x_rng = 0.0 .. scn.ent.rcv.x
 	z_rng = getproperty(scn.env, bnd).z(x_rng)
@@ -253,8 +233,6 @@ function calc_bnd_range(scn::Scenario, bnd::Symbol)
 	end
 	z_rng_int.lo, z_rng_int.hi
 end
-
-# export calc_bnd_range
 
 function calc_ocean_depth_range(scn::Scenario)
 	return [
@@ -269,8 +247,6 @@ mutable struct Field
 	PL::Matrix{Float64}
 end
 
-export Field
-
 @userplot PropagationPlot
 @recipe function plot(pp::PropagationPlot)
 	fld = pp.args[1]
@@ -283,4 +259,26 @@ export Field
 		seriescolor := cgrad(:jet, rev = true)
 		fld.r, fld.z, fld.PL'
 	end
+
 end
+
+# Exports
+## Types
+export Depth
+export Surface
+export Bottom
+export Ocean
+export Environment
+export Source
+export Receiver
+export Entities
+export Scenario
+export Field
+
+## Auxiliary Functions
+export calc_ocean_depth_range
+
+## Plot Recipes
+export scenarioplot
+export scenarioplot!
+export propagationplot

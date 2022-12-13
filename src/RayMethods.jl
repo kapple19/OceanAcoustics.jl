@@ -1,3 +1,11 @@
+module RayMethods
+using ..OACBase
+using Statistics: mean
+using ForwardDiff: derivative
+using OrdinaryDiffEq: ODEProblem, solve, Tsit5, ContinuousCallback, CallbackSet, terminate!
+using RecipesBase: RecipesBase #= check =#, @userplot, @recipe, @series
+using DocStringExtensions: TYPEDFIELDS, TYPEDEF, TYPEDSIGNATURES
+
 dot(u::AbstractVector{<:Number}, v::AbstractVector{<:Number}) = u' * v
 
 function gradient2tangent(m::Float64)
@@ -6,7 +14,6 @@ function gradient2tangent(m::Float64)
 end
 
 function reflection(tng_inc::Vector{Float64}, m_bnd::Float64)
-
 	tng_bnd = gradient2tangent(m_bnd)
 	nrm_bnd = [0 1; -1 0] * tng_bnd
 	α = dot(tng_inc, nrm_bnd) # [Jensen et al. eq. 3.118]
@@ -19,7 +26,7 @@ $(TYPEDEF)
 
 $(TYPEDFIELDS)
 """
-struct Ray <: Oac
+struct Ray <: OACBase.Oac
 	"Maximum ray arc length [m]."
 	s_max::Float64
 
@@ -53,8 +60,6 @@ struct Ray <: Oac
 	PL::Function
 end
 
-export Ray
-
 function default_angles(scn::Scenario, N::Int = 1001)
 	x_rcv = scn.ent.rcv.x
 	rng_ocn = calc_ocean_depth_range(scn)
@@ -71,11 +76,9 @@ function default_angles(scn::Scenario, N::Int = 1001)
 	end
 end
 
-struct Trace <: Oac
+struct Trace <: OACBase.Oac
 	rays::Vector{Ray}
 end
-
-export Trace
 
 @userplot RayTracePlot
 @recipe function plot(rtp::RayTracePlot)
@@ -96,8 +99,6 @@ export Trace
 	end
 end
 
-export raytraceplot
-
 default_ranges(scn::Scenario) = range(0.0, scn.ent.rcv.x, 250)
 
 default_depths(scn::Scenario) = range(calc_ocean_depth_range(scn)..., 150)
@@ -105,7 +106,7 @@ default_depths(scn::Scenario) = range(calc_ocean_depth_range(scn)..., 150)
 """
 $(TYPEDSIGNATURES)
 """
-function RayMethodField(scn::Scenario,
+function RayMethods.Field(scn::Scenario,
 	angles::AbstractVector{<:AbstractFloat};
 	ranges::AbstractVector{<:AbstractFloat} = default_ranges(scn),
 	depths::AbstractVector{<:AbstractFloat} = default_depths(scn),
@@ -281,7 +282,7 @@ function RayMethodField(scn::Scenario,
 	PL = max.(0.0, PL)
 	PL = min.(100.0, PL)
 
-	fld = Field(ranges, depths, PL)
+	fld = OACBase.Field(ranges, depths, PL)
 	trc = Trace(rays)
 
 	return if save_trace && save_field
@@ -293,9 +294,7 @@ function RayMethodField(scn::Scenario,
 	end
 end
 
-export RayMethodField
-
-function RayMethodField(scn::Scenario,
+function RayMethods.Field(scn::Scenario,
 	Nangles::Int = 101;
 	ranges::AbstractVector{<:Float64} = default_ranges(scn),
 	depths::AbstractVector{<:Float64} = default_depths(scn),
@@ -303,7 +302,7 @@ function RayMethodField(scn::Scenario,
 	save_trace::Bool = false
 	)
 
-	return RayMethodField(scn,
+	return RayMethods.Field(scn,
 		default_angles(scn, Nangles),
 		ranges = ranges,
 		depths = depths,
@@ -311,3 +310,16 @@ function RayMethodField(scn::Scenario,
 		save_trace = save_trace
 	)
 end
+
+export Trace
+export Ray
+export raytraceplot
+
+end # module RayMethods
+
+using .RayMethods
+
+export RayMethods
+export Trace
+export Ray
+export raytraceplot
