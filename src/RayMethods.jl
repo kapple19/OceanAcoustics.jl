@@ -137,7 +137,19 @@ function RayMethods.Field(scn::Scenario,
 		angles |> diff |> mean
 	end
 
-	function reflect!(int, bnd)
+	function reflect_srf!(int, bnd)
+		r, z, ξ, ζ, τ = int.u[1:5]
+		c = cel(r, z)
+		tng_inc = c * [ξ; ζ]
+
+		θ_rfl = reflection(tng_inc, derivative(bnd.z, r))
+
+		int.u[3] = cos(θ_rfl) / c
+		int.u[4] = sin(θ_rfl) / c
+		int.u[5] = τ + π
+	end
+
+	function reflect_btm!(int, bnd)
 		r, z, ξ, ζ = int.u[1:4]
 		c = cel(r, z)
 		tng_inc = c * [ξ; ζ]
@@ -155,12 +167,12 @@ function RayMethods.Field(scn::Scenario,
 
 	cb_srf = ContinuousCallback(
 		(x, s, int) -> x[2] - scn.env.srf.z(x[1]),
-		int -> reflect!(int, scn.env.srf)
+		int -> reflect_srf!(int, scn.env.srf)
 	)
 
 	cb_btm = ContinuousCallback(
 		(x, s, int) -> x[2] - scn.env.btm.z(x[1]),
-		int -> reflect!(int, scn.env.btm)
+		int -> reflect_btm!(int, scn.env.btm)
 	)
 
 	cb = CallbackSet(cb_rng, cb_btm, cb_srf)
@@ -220,7 +232,7 @@ function RayMethods.Field(scn::Scenario,
 		z(s) = sol(s, idxs = 2)
 		ξ(s) = sol(s, idxs = 3)
 		ζ(s) = sol(s, idxs = 4)
-		τ(s) = sol(s, idxs = 5)
+		τ(s) = mod(sol(s, idxs = 5), π)
 		p(s) = sol(s, idxs = 6) + im * sol(s, idxs = 7)
 		q(s) = sol(s, idxs = 8) + im * sol(s, idxs = 9)
 		
