@@ -56,24 +56,29 @@ parabolic_bathymetry = let
 		((2e2, 0.0), r_rcv),
 		"Parabolic Bathymetry"
 	)
-end # module Examples
+end
+
+lloyd_mirror = let
+	scn = Scenario(
+		(1500, 500),
+		((150, 25), 500),
+		"Lloyd Mirror"
+	)
+end
 
 export north_atlantic_convergence_zones
 export munk_profile
 export n2_linear_profile
 export parabolic_bathymetry
-end
+export lloyd_mirror
+end # module Examples
 
 examples = (
 	north_atlantic_convergence_zones = Examples.north_atlantic_convergence_zones,
 	munk_profile = Examples.munk_profile,
 	n2_linear_profile = Examples.n2_linear_profile,
-	parabolic_bathymetry = Examples.parabolic_bathymetry
+	parabolic_bathymetry = Examples.parabolic_bathymetry,
+	lloyd_mirror = Examples.lloyd_mirror
 )
-
-# export north_atlantic_convergence_zones
-# export munk_profile
-# export n2_linear_profile
-# export parabolic_bathymetry
 
 export examples

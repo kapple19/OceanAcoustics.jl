@@ -37,16 +37,16 @@ Bottom(btm::Bottom) = btm
 """
 mutable struct Ocean <: OACBase.Oac
 	c::Function
-	Ocean(c::Function) = new((x, z) -> c(x, z))
+	Ocean(c::Function) = new((r, z) -> c(r, z))
 end
 
 function Ocean(c::Real)
-	Ocean((x, z) -> c)
+	Ocean((r, z) -> c)
 end
 
 function Ocean(z::AbstractVector{<:Real}, c::AbstractVector{<:Real})
 	c_interp = linear_interpolation(z, c, extrapolation_bc = Line())
-	c_fcn(x, z) = c_interp(z)
+	c_fcn(r, z) = c_interp(z)
 	Ocean(c_fcn)
 end
 
@@ -91,9 +91,9 @@ Source(src) = Source(src...)
 `Receiver`
 """
 mutable struct Receiver <: OACBase.Oac
-	x::Float64
+	r::Float64
 
-	Receiver(x::Float64) = new(x)
+	Receiver(r::Real) = new(r |> Float64)
 end
 
 Receiver(rcv::Receiver) = rcv
@@ -153,24 +153,24 @@ Scenario(scn) = Scenario(scn...)
 	xguide := "Range [m]"
 	yguide := "Depth [m]"
 
-	x = range(0.0, scn.ent.rcv.x)
+	r = range(0.0, scn.ent.rcv.r)
 	# Boundaries
 	for boundary in (:srf, :btm)
 		bnd = getproperty(scn.env, boundary)
-		x = range(0.0, scn.ent.rcv.x)
-		z = bnd.z.(x)
+		r = range(0.0, scn.ent.rcv.r)
+		z = bnd.z.(r)
 		@series begin
 			linecolor := :brown
 			fillrange := zeros(size(z)) .+ ex[boundary]
 			fillcolor := :brown
-			x, z
+			r, z
 		end
 	end
 end
 
 function calc_bnd_range(scn::Scenario, bnd::Symbol)
-	x_rng = 0.0 .. scn.ent.rcv.x
-	z_rng = getproperty(scn.env, bnd).z(x_rng)
+	r_rng = 0.0 .. scn.ent.rcv.r
+	z_rng = getproperty(scn.env, bnd).z(r_rng)
 	z_rng_int = if !(z_rng isa Interval)
 		Interval(z_rng, z_rng)
 	else
