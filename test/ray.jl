@@ -1,7 +1,7 @@
 @testset "Examples on Ray Method" for (scenario, scn) in pairs(examples)
 	@info "Ray Method: $(scn.name)"
 
-	trc = RayMethods.Field(scn,
+	trc = RayMethod.Field(scn,
 		21,
 		save_field = false,
 		save_trace = true
@@ -12,7 +12,7 @@
 	scenarioplot!(scn)
 	savefig(rtp, joinpath("img", "trace_" * string(scenario) * ".png"))
 
-	fld = RayMethods.Field(scn, 101)
+	fld = RayMethod.Field(scn, 101)
 	@test fld.r isa AbstractVector{<:AbstractFloat}
 	@test fld.z isa AbstractVector{<:AbstractFloat}
 	@test fld.PL isa AbstractMatrix{<:AbstractFloat}
@@ -26,7 +26,7 @@ end
 	@info "Jensen Fig 3.16"
 	@test begin
 		scn = examples.n2_linear_profile
-		fld = RayMethods.Field(scn, [-π/4])
+		fld = RayMethod.Field(scn, [-π/4])
 		fld.PL = max.(40, fld.PL)
 		fld.PL = min.(90, fld.PL)
 

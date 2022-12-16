@@ -1,4 +1,4 @@
-module RayMethods
+module RayMethod
 using ..OACBase
 using Statistics: mean
 using ForwardDiff: derivative
@@ -107,7 +107,7 @@ default_depths(scn::Scenario) = range(calc_ocean_depth_range(scn)..., 150)
 """
 $(TYPEDSIGNATURES)
 """
-function RayMethods.Field(scn::Scenario,
+function RayMethod.Field(scn::Scenario,
 	angles::AbstractVector{<:AbstractFloat};
 	ranges::AbstractVector{<:AbstractFloat} = default_ranges(scn),
 	depths::AbstractVector{<:AbstractFloat} = default_depths(scn),
@@ -307,7 +307,7 @@ function RayMethods.Field(scn::Scenario,
 	end
 end
 
-function RayMethods.Field(scn::Scenario,
+function RayMethod.Field(scn::Scenario,
 	Nangles::Int = 101;
 	ranges::AbstractVector{<:Float64} = default_ranges(scn),
 	depths::AbstractVector{<:Float64} = default_depths(scn),
@@ -315,7 +315,7 @@ function RayMethods.Field(scn::Scenario,
 	save_trace::Bool = false
 	)
 
-	return RayMethods.Field(scn,
+	return RayMethod.Field(scn,
 		default_angles(scn, Nangles),
 		ranges = ranges,
 		depths = depths,
@@ -328,11 +328,11 @@ export Trace
 export Ray
 export raytraceplot
 
-end # module RayMethods
+end # module RayMethod
 
-using .RayMethods
+using .RayMethod
 
-export RayMethods
+export RayMethod
 export Trace
 export Ray
 export raytraceplot

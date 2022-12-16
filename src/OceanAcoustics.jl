@@ -2,7 +2,7 @@ module OceanAcoustics
 
 include("OACBase.jl")
 include("Examples.jl")
-include("RayMethods.jl")
+include("RayMethod.jl")
 include("Sonar.jl")
 
 end
