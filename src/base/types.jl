@@ -28,5 +28,6 @@ struct NotAllUnique <: Exception
 end
 Base.showerror(io::IO, e::NotAllUnique) = print(io, e.var, " not all unique")
 
+export Oac
 export NotSorted
 export NotAllUnique
