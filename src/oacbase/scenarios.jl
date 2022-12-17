@@ -2,6 +2,7 @@
 `Surface`
 """
 mutable struct Surface <: OACBase.Oac
+	"Depth of ocean surface"
 	z::Function
 
 	function Surface(zFcn::Function)
@@ -20,17 +21,23 @@ Surface(z::Real) = Surface(r -> z)
 `Bottom`
 """
 mutable struct Bottom <: OACBase.Oac
+	"Depth of ocean bottom"
 	z::Function
 
-	function Bottom(zFcn::Function)
+	"Bottom reflection coefficient"
+	R::Float64
+
+	function Bottom(zFcn::Function, R::AbstractFloat)
 		z(r) = zFcn(r)
-		new(z)
+		new(z, R)
 	end
 end
 
-Bottom(z::Real) = Bottom(r -> z)
+Bottom(z::Real, args...) = Bottom(r -> z, args...)
 
 Bottom(btm::Bottom) = btm
+
+Bottom(args) = Bottom(args...)
 
 """
 `Ocean`
