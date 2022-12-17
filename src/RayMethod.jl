@@ -268,10 +268,12 @@ function RayMethod.Field(scn::Scenario,
 				rᵢ₋₁, rᵢ = r.([sᵢ₋₁, sᵢ])
 				# zᵢ₋₁ = z(sᵢ₋₁)
 				zᵢ = z(sᵢ)
-				for (nr, r_grid) in enumerate(ranges)
-					if !(rᵢ₋₁ .≤ r_grid .< rᵢ)
-						continue
-					end
+				# for (nr, r_grid) in enumerate(ranges)
+				# 	if !(rᵢ₋₁ .≤ r_grid .< rᵢ)
+				# 		continue
+				# 	end
+				for nr in findall(rᵢ₋₁ .≤ ranges .< rᵢ)
+					r_grid = ranges[nr]
 					for (nz, z_grid) in enumerate(depths)
 						x_rcv = [r_grid, z_grid]
 						# x_ray = [rᵢ₋₁, zᵢ₋₁]
