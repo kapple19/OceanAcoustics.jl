@@ -1,9 +1,3 @@
-# Precompilation
-scn = examples.parabolic_bathymetry
-RayTrace.Field(scn, 21, save_field = false, save_trace = true)
-RayTrace.Field(scn)
-
-# Run Time
 @testset "Examples on Ray Trace Method" for (scenario, scn) in pairs(examples)
 	@info "Ray Trace Method: $(scn.name)"
 
