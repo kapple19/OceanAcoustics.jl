@@ -1,6 +1,6 @@
 module Sonar
 using ..OACBase
-using ..RayMethod
+using ..RayTrace
 
 # ⊕(L1, L2) = 10 * log10(10.0^(L1/10) + 10.0^(L2/10))
 # ⊖(L1, L2) = 10 * log10(10.0^(L1/10) - 10.0^(L2/10))

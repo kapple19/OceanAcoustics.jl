@@ -44,6 +44,6 @@
 @testset "Scenario" begin
 	for (scenario, scn) = pairs(examples)
 		sp = scenarioplot(scn)
-		savefig(sp, joinpath("img", "scenario_" * string(scenario) * ".png"))
+		savefig(sp, joinpath("img", "scenario", "scenario_" * string(scenario) * ".png"))
 	end
 end
