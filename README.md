@@ -30,6 +30,8 @@ Upcoming.
 
 ### Signal Excess
 
+### Figure of Merit
+
 ### Probability of Detection
 
 ## References
@@ -44,7 +46,7 @@ Upcoming.
 * Models:
   * Ray/beam tracing (in dev)
   * Parabolic equation
-  * Sonar equations
+  * Sonar equations (in dev)
 * Auxiliary:
   * Example scenarios (in dev)
   * Plot recipes (in dev)
