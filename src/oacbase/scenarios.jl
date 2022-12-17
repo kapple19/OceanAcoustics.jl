@@ -198,38 +198,3 @@ mutable struct Field
 	z::Vector{Float64}
 	PL::Matrix{Float64}
 end
-
-@userplot PropagationPlot
-@recipe function plot(pp::PropagationPlot)
-	fld = pp.args[1]
-
-	legend --> :none
-	yflip := true
-
-	@series begin
-		seriestype := :heatmap
-		seriescolor := cgrad(:jet, rev = true)
-		fld.r, fld.z, fld.PL'
-	end
-
-end
-
-# Exports
-## Types
-export Surface
-export Bottom
-export Ocean
-export Environment
-export Source
-export Receiver
-export Entities
-export Scenario
-export Field
-
-## Auxiliary Functions
-export calc_ocean_depth_range
-
-## Plot Recipes
-export scenarioplot
-export scenarioplot!
-export propagationplot

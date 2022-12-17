@@ -1,4 +1,3 @@
-
 abstract type Oac end
 
 function Base.show(io::IO, oac::Oac)
@@ -27,7 +26,3 @@ struct NotAllUnique <: Exception
 	var
 end
 Base.showerror(io::IO, e::NotAllUnique) = print(io, e.var, " not all unique")
-
-export Oac
-export NotSorted
-export NotAllUnique
