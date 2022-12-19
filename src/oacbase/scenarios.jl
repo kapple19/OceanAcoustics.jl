@@ -6,7 +6,7 @@ mutable struct Surface <: OACBase.Oac
 	z::Function
 
 	"Surface reflection coefficient"
-	R::Float64
+	R::Complex
 
 	function Surface(zFcn::Function, R::Number)
 		z(r) = zFcn(r)
@@ -14,11 +14,13 @@ mutable struct Surface <: OACBase.Oac
 	end
 end
 
+Surface(z::Real, R::Number) = Surface(r -> z, R |> ComplexF64)
+
+Surface(srf::Surface) = srf
+
 Surface() = Surface(0, -1 |> Complex)
 
-Surface(z::Real) = Surface(r -> z, -1 |> Complex)
-
-# Surface(srf::Surface) = srf
+Surface(args) = Surface(args...)
 
 """
 `Bottom`
@@ -28,11 +30,11 @@ mutable struct Bottom <: OACBase.Oac
 	z::Function
 
 	"Bottom reflection coefficient"
-	R::Float64
+	R::Complex
 
-	function Bottom(zFcn::Function, R::AbstractFloat)
+	function Bottom(zFcn::Function, R::Number)
 		z(r) = zFcn(r)
-		new(z, R)
+		new(z, Complex(R))
 	end
 end
 
@@ -77,7 +79,7 @@ mutable struct Environment <: OACBase.Oac
 	end
 end
 
-function Environment(ocn, btm, srf = 0)
+function Environment(ocn, btm, srf = Surface())
 	Environment(Ocean(ocn), Bottom(btm), Surface(srf))
 end
 

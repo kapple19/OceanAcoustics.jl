@@ -7,7 +7,7 @@ env_north_atlantic = let
 		[1522, 1501, 1514, 1496, 1545.0]
 	)
 
-	Environment(ocn, (5e3, 0.5))
+	Environment(ocn, (5e3, 0.0))
 end
 
 north_atlantic_convergence_zones = Scenario(
@@ -26,7 +26,7 @@ munk_profile = let
 	c(r, z) = 1500(1 + ϵ*(z̃(z) - 1 + exp(-z̃(z))))
 
 	ocn = Ocean(c)
-	scn = Scenario((c, (5e3, 0.0)), ((f, z_src), r_rcv), "Munk Profile")
+	scn = Scenario((c, (5e3, 0.0), (0.0, 0.0)), ((f, z_src), r_rcv), "Munk Profile")
 end
 
 n2_linear_profile = let
@@ -36,7 +36,7 @@ n2_linear_profile = let
 	ocn = Ocean(c)
 
 	scn = Scenario(
-		(ocn, (1e3, 1.0)),
+		(ocn, (1e3, 0.0), (0.0, 0.0)),
 		((2e3, 1e3), 3.5e3),
 		"n²-Linear Profile"
 	)

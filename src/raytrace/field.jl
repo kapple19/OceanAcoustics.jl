@@ -120,8 +120,8 @@ function Field(scn::Scenario,
 
 		s_span = (0.0, 100e3)
 	
-		s_rfl = Float64[]
-		R_rfl = Complex[]
+		s_rfl = [0.0]
+		R_rfl = [1.0 + 0.0im]
 
 		function reflect!(int, bnd)
 			r, z, ξ, ζ = int.u[1:4]
@@ -168,14 +168,19 @@ function Field(scn::Scenario,
 		c(s) = cel(r(s), z(s))
 		θ(s) = atan(ζ(s) / ξ(s))
 		
+		R_rfl = [*(R_rfl[begin:n]...) for n = eachindex(R_rfl)]
 		ω = 2π * f
-		A = δθ₀ / c(0.0) * sqrt(
-			q(0.0) * f * cos(θ₀)
-		) * exp(im * π / 4)
+		function A(s)
+			A₀ = δθ₀ / c(0.0) * sqrt(
+				q(0.0) * f * cos(θ₀)
+			) * exp(im * π / 4)
+			n_rfl = findlast(s_rfl .<= s)
+			return A₀ * R_rfl[n_rfl]
+		end
 		function beam(s::Real, n::Real)
 			(s > s_max || s < 0) && return ComplexF64(0.0)
 			r(s) < 0 && return ComplexF64(0.0)
-			return A * sqrt(
+			return A(s) * sqrt(
 					c(s) / r(s) / q(s)
 				) * exp(
 				-im * ω * (
