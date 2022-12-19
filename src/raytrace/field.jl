@@ -74,46 +74,6 @@ function Field(scn::Scenario,
 		angles |> diff |> mean
 	end
 
-	function reflect_srf!(int, bnd)
-		r, z, ξ, ζ, τ = int.u[1:5]
-		c = cel(r, z)
-		tng_inc = c * [ξ; ζ]
-
-		θ_rfl = reflection(tng_inc, derivative(bnd.z, r))
-
-		int.u[3] = cos(θ_rfl) / c
-		int.u[4] = sin(θ_rfl) / c
-		int.u[5] = τ + π
-	end
-
-	function reflect_btm!(int, bnd)
-		r, z, ξ, ζ = int.u[1:4]
-		c = cel(r, z)
-		tng_inc = c * [ξ; ζ]
-
-		θ_rfl = reflection(tng_inc, derivative(bnd.z, r))
-
-		int.u[3] = cos(θ_rfl) / c
-		int.u[4] = sin(θ_rfl) / c
-	end
-
-	cb_rng = ContinuousCallback(
-		(x, s, int) -> x[1] - scn.ent.rcv.r,
-		terminate!
-	)
-
-	cb_srf = ContinuousCallback(
-		(x, s, int) -> x[2] - scn.env.srf.z(x[1]),
-		int -> reflect_srf!(int, scn.env.srf)
-	)
-
-	cb_btm = ContinuousCallback(
-		(x, s, int) -> x[2] - scn.env.btm.z(x[1]),
-		int -> reflect_btm!(int, scn.env.btm)
-	)
-
-	cb = CallbackSet(cb_rng, cb_btm, cb_srf)
-
 	function tracer!(du, u, params, s)
 		r, z, ξ, ζ, τ, pRe, pIm, qRe, qIm = u
 		
@@ -155,11 +115,44 @@ function Field(scn::Scenario,
 	for θ₀ in angles
 		ξ₀ = cos(θ₀) / c₀
 		ζ₀ = sin(θ₀) / c₀
-
+		
 		u₀ = [r₀, z₀, ξ₀, ζ₀, τ₀, p₀Re, p₀Im, q₀Re, q₀Im]
 
 		s_span = (0.0, 100e3)
 	
+		s_rfl = Float64[]
+		R_rfl = Complex[]
+
+		function reflect!(int, bnd)
+			r, z, ξ, ζ = int.u[1:4]
+			c = cel(r, z)
+			tng_inc = c * [ξ; ζ]
+	
+			θ_rfl = reflection(tng_inc, derivative(bnd.z, r))
+			push!(s_rfl, int.t)
+			push!(R_rfl, bnd.R)
+	
+			int.u[3] = cos(θ_rfl) / c
+			int.u[4] = sin(θ_rfl) / c
+		end
+	
+		cb_rng = ContinuousCallback(
+			(x, s, int) -> x[1] - scn.ent.rcv.r,
+			terminate!
+		)
+	
+		cb_srf = ContinuousCallback(
+			(x, s, int) -> x[2] - scn.env.srf.z(x[1]),
+			int -> reflect!(int, scn.env.srf)
+		)
+	
+		cb_btm = ContinuousCallback(
+			(x, s, int) -> x[2] - scn.env.btm.z(x[1]),
+			int -> reflect!(int, scn.env.btm)
+		)
+	
+		cb = CallbackSet(cb_rng, cb_btm, cb_srf)
+
 		prob = ODEProblem(tracer!, u₀, s_span)
 	
 		sol = solve(prob, Tsit5(), callback = cb)
@@ -172,9 +165,9 @@ function Field(scn::Scenario,
 		τ(s) = mod(sol(s, idxs = 5), π)
 		p(s) = sol(s, idxs = 6) + im * sol(s, idxs = 7)
 		q(s) = sol(s, idxs = 8) + im * sol(s, idxs = 9)
-		
 		c(s) = cel(r(s), z(s))
 		θ(s) = atan(ζ(s) / ξ(s))
+		
 		ω = 2π * f
 		A = δθ₀ / c(0.0) * sqrt(
 			q(0.0) * f * cos(θ₀)

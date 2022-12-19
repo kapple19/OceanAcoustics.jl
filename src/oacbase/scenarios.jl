@@ -5,15 +5,18 @@ mutable struct Surface <: OACBase.Oac
 	"Depth of ocean surface"
 	z::Function
 
-	function Surface(zFcn::Function)
+	"Surface reflection coefficient"
+	R::Float64
+
+	function Surface(zFcn::Function, R::Number)
 		z(r) = zFcn(r)
-		new(z)
+		new(z, ComplexF64(R))
 	end
 end
 
-Surface() = Surface(0)
+Surface() = Surface(0, -1 |> Complex)
 
-Surface(z::Real) = Surface(r -> z)
+Surface(z::Real) = Surface(r -> z, -1 |> Complex)
 
 # Surface(srf::Surface) = srf
 
