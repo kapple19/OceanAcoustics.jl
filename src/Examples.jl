@@ -21,7 +21,7 @@ end
 munk_profile = let
 	f = 5e2
 	z_src = 1e3
-	r_rcv = 20e3
+	r_rcv = 100e3
 
 	z̃(z) = 2/1300*(z - 1300)
 	ϵ = 7.37e-3
