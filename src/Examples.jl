@@ -1,20 +1,22 @@
 module Examples
 using ..OACBase
 
-env_north_atlantic = let
-	ocn = Ocean(
-		[0, 300, 1200, 2e3, 5e3],
-		[1522, 1501, 1514, 1496, 1545.0]
+north_atlantic_convergence_zones = let
+	env_north_atlantic = let
+		ocn = Ocean(
+			[0, 300, 1200, 2e3, 5e3],
+			[1522, 1501, 1514, 1496, 1545.0]
+		)
+
+		Environment(ocn, (5e3, 0.0))
+	end
+
+		Scenario(
+		env_north_atlantic,
+		((200, 0), 70e3),
+		"North Atlantic Convergence Zones"
 	)
-
-	Environment(ocn, (5e3, 0.0))
 end
-
-north_atlantic_convergence_zones = Scenario(
-	env_north_atlantic,
-	((200, 0), 70e3),
-	"North Atlantic Convergence Zones"
-)
 
 munk_profile = let
 	f = 5e2
@@ -66,19 +68,9 @@ lloyd_mirror = let
 	)
 end
 
-export north_atlantic_convergence_zones
-export munk_profile
-export n2_linear_profile
-export parabolic_bathymetry
-export lloyd_mirror
+export_all(@__MODULE__)
 end # module Examples
 
-examples = (
-	north_atlantic_convergence_zones = Examples.north_atlantic_convergence_zones,
-	munk_profile = Examples.munk_profile,
-	n2_linear_profile = Examples.n2_linear_profile,
-	parabolic_bathymetry = Examples.parabolic_bathymetry,
-	lloyd_mirror = Examples.lloyd_mirror
-)
-
+examples = get_names(Examples)
+export Examples
 export examples

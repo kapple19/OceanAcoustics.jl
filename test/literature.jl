@@ -1,7 +1,7 @@
 @testset "Literature Replications" begin
 	@info "Jensen Fig 3.16"
 	@test begin
-		scn = examples.n2_linear_profile
+		scn = getproperty(Examples, :n2_linear_profile)
 		fld = RayTrace.Field(scn, [-π/4])
 		fld.PL = max.(40, fld.PL)
 		fld.PL = min.(90, fld.PL)

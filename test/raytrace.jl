@@ -1,4 +1,5 @@
-@testset "Examples on Ray Trace Method" for (scenario, scn) in pairs(examples)
+@testset "Examples on Ray Trace Method" for scenario in examples
+	scn = getproperty(Examples, scenario)
 	@info "Ray Trace Method: $(scn.name)"
 
 	trc = RayTrace.Field(scn,

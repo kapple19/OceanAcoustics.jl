@@ -8,10 +8,11 @@ include("oacbase/types.jl")
 include("oacbase/auxiliaries.jl")
 include("oacbase/scenarios.jl")
 include("oacbase/recipes.jl")
-include("oacbase/exports.jl")
+include("oacbase/exports_internal.jl")
+include("oacbase/exports_external.jl")
 
 end # module OACBase
 
 using .OACBase
 
-include("oacbase/exports.jl")
+include("oacbase/exports_external.jl")
