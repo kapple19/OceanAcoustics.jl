@@ -42,7 +42,7 @@ function Depth(z::Real)
 	Depth(fcn)
 end
 
-# Depth(args) = Depth(args...)
+Depth(args) = Depth(args...)
 
 # function effective_acoustic_admittance(ρ::Real, c::Number, θ)
 # 	A = sin(θ) / ρ / c
