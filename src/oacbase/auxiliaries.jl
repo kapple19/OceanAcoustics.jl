@@ -12,7 +12,6 @@ end
 
 function export_all(m::Module)
 	for n in get_names(m)
-		@show n
 		@eval export $n
 	end
 end

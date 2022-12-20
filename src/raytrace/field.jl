@@ -3,7 +3,7 @@ $(TYPEDEF)
 
 $(TYPEDFIELDS)
 """
-struct Ray <: OACBase.Oac
+struct Ray <: Oac
 	"Maximum ray arc length [m]."
 	s_max::Float64
 
@@ -37,7 +37,7 @@ struct Ray <: OACBase.Oac
 	PL::Function
 end
 
-struct Trace <: OACBase.Oac
+struct Trace <: Oac
 	rays::Vector{Ray}
 end
 

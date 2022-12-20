@@ -1,7 +1,7 @@
 """
 `Surface`
 """
-mutable struct Surface <: OACBase.Oac
+mutable struct Surface <: Oac
 	"Depth of ocean surface"
 	z::Function
 
@@ -25,7 +25,7 @@ Surface(args) = Surface(args...)
 """
 `Bottom`
 """
-mutable struct Bottom <: OACBase.Oac
+mutable struct Bottom <: Oac
 	"Depth of ocean bottom"
 	z::Function
 
@@ -47,7 +47,7 @@ Bottom(args) = Bottom(args...)
 """
 `Ocean`
 """
-mutable struct Ocean <: OACBase.Oac
+mutable struct Ocean <: Oac
 	c::Function
 	Ocean(c::Function) = new((r, z) -> c(r, z))
 end
@@ -69,7 +69,7 @@ Ocean(ocn::Ocean) = ocn
 """
 `Environment`
 """
-mutable struct Environment <: OACBase.Oac
+mutable struct Environment <: Oac
 	ocn::Ocean
 	btm::Bottom
 	srf::Surface
@@ -90,7 +90,7 @@ Environment(env) = Environment(env...)
 """
 `Source`
 """
-mutable struct Source <: OACBase.Oac
+mutable struct Source <: Oac
 	f::Float64
 	z::Float64
 end
@@ -102,7 +102,7 @@ Source(src) = Source(src...)
 """
 `Receiver`
 """
-mutable struct Receiver <: OACBase.Oac
+mutable struct Receiver <: Oac
 	r::Float64
 
 	Receiver(r::Real) = new(r |> Float64)
@@ -113,7 +113,7 @@ Receiver(rcv::Receiver) = rcv
 """
 `Entities`
 """
-mutable struct Entities <: OACBase.Oac
+mutable struct Entities <: Oac
 	src::Source
 	rcv::Receiver
 
@@ -129,7 +129,7 @@ Entities(ent) = Entities(ent...)
 """
 `Scenario`
 """
-mutable struct Scenario <: OACBase.Oac
+mutable struct Scenario <: Oac
 	env::Environment
 	ent::Entities
 	name::String
