@@ -154,12 +154,10 @@ function calc_bnd_range(scn::Scenario, bnd::Symbol)
 	z_rng_int.lo, z_rng_int.hi
 end
 
-function calc_ocean_depth_range(scn::Scenario)
-	return [
-		calc_bnd_range(scn, :srf) |> minimum
-		calc_bnd_range(scn, :btm) |> maximum
-	]
-end
+calc_ocean_depth_range(scn::Scenario) = [
+	calc_bnd_range(scn, :srf) |> minimum
+	calc_bnd_range(scn, :btm) |> maximum
+]
 
 mutable struct Field
 	r::Vector{Float64}
