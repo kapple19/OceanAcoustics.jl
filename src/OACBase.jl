@@ -6,6 +6,7 @@ using Interpolations: linear_interpolation, Line
 
 include("oacbase/types.jl")
 include("oacbase/auxiliaries.jl")
+include("oacbase/parameters.jl")
 include("oacbase/scenarios.jl")
 include("oacbase/recipes.jl")
 include("oacbase/exports_internal.jl")

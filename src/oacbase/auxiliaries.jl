@@ -16,6 +16,16 @@ function export_all(m::Module)
 	end
 end
 
+function interp_vec_pair(
+	x::Vector{<:Tx},
+	y::Vector{<:Ty}
+) where {Tx <: Number, Ty <: Number}
+	y_interp = linear_interpolation(x, y,
+		extrapolation_bc = Line()
+	)
+	y_fcn(x::Tx) = Ty(y_interp(x))
+end
+
 # function series125(N::Int)
 # 	@assert N ≥ 1 "Input must be a positive integer."
 # 	series = Int[]
