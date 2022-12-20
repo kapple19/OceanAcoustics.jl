@@ -1,4 +1,6 @@
 @testset "Literature Replications" begin
+	img_dir = joinpath("img", "raytrace", "literature")
+
 	@info "Jensen et al, Fig 3.16"
 	@test begin
 		scn = getproperty(Examples, :n2_linear_profile)
@@ -8,7 +10,9 @@
 
 		fig = propagationplot(fld)
 		scenarioplot!(scn)
-		savefig(fig, joinpath("img", "literature", "jensenetal2011_fig_3_16.png"))
+		savefig(fig,
+			joinpath(img_dir, "jensenetal2011_fig_3_16.png")
+		)
 
 		fld isa Field
 	end
@@ -24,7 +28,9 @@
 
 		fig = propagationplot(fld)
 		scenarioplot!(scn)
-		savefig(fig, joinpath("img", "literature", "jensenetal2011_fig_3_24.png"))
+		savefig(fig,
+			joinpath(img_dir, "jensenetal2011_fig_3_24.png")
+		)
 
 		fld isa Field
 	end
@@ -36,7 +42,9 @@
 
 		fig = raytraceplot(trc)
 		scenarioplot!(scn)
-		savefig(fig, joinpath("img", "literature", "jensenetal2011_fig_3_32b.png"))
+		savefig(fig,
+			joinpath(img_dir, "jensenetal2011_fig_3_32b.png")
+		)
 
 		trc isa Trace
 	end
@@ -50,7 +58,9 @@
 
 		fig = propagationplot(fld)
 		scenarioplot!(scn)
-		savefig(fig, joinpath("img", "literature", "jensenetal2011_fig_3_33.png"))
+		savefig(fig,
+			joinpath(img_dir, "jensenetal2011_fig_3_33.png")
+		)
 
 		fld isa Field
 	end

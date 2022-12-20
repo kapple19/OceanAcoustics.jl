@@ -1,4 +1,6 @@
 @testset "Examples on Ray Trace Method" for scenario in examples
+	img_dir = joinpath("img", "raytrace", "examples")
+
 	scn = getproperty(Examples, scenario)
 	@info "Ray Trace Method: $(scn.name)"
 
@@ -11,7 +13,9 @@
 
 	rtp = raytraceplot(trc)
 	scenarioplot!(scn)
-	savefig(rtp, joinpath("img", "raytrace", "trace_" * string(scenario) * ".png"))
+	savefig(rtp,
+		joinpath(img_dir, "trace_" * string(scenario) * ".png")
+	)
 
 	fld = RayTrace.Field(scn, 101)
 	@test fld.r isa AbstractVector{<:AbstractFloat}
@@ -20,5 +24,7 @@
 
 	fig = propagationplot(fld)
 	scenarioplot!(scn)
-	savefig(fig, joinpath("img", "raytrace", "raytrace_" * string(scenario) * ".png"))
+	savefig(fig,
+		joinpath(img_dir, "raytrace_" * string(scenario) * ".png")
+	)
 end
