@@ -3,22 +3,22 @@ An implementation of acoustics models in the context of long-range ocean propaga
 
 ## Gaussian Beam Method
 ### Ray Trace
-![Munk Profile Ray Trace](test/img/raytrace/trace_munk_profile.png)
+![Munk Profile Ray Trace](test/img/raytrace/examples/trace_munk_profile.png)
 
-![North Atlantic Convergence Zones Ray Trace](test/img/raytrace/trace_north_atlantic_convergence_zones.png)
+![North Atlantic Convergence Zones Ray Trace](test/img/raytrace/examples/trace_north_atlantic_convergence_zones.png)
 
-![n-squared Linear Profile Ray Trace](test/img/raytrace/trace_n2_linear_profile.png)
+![n-squared Linear Profile Ray Trace](test/img/raytrace/examples/trace_n2_linear_profile.png)
 
-![Parabolic Bathymetry Ray Trace](test/img/raytrace/trace_parabolic_bathymetry.png)
+![Parabolic Bathymetry Ray Trace](test/img/raytrace/examples/trace_parabolic_bathymetry.png)
 
 ### Propagation Loss
-![Munk Profile Propagation Loss](test/img/raytrace/raytrace_munk_profile.png)
+![Munk Profile Propagation Loss](test/img/raytrace/examples/raytrace_munk_profile.png)
 
 ![North Atlantic Convergence Zones Propagation Loss](test/img/raytrace_north_atlantic_convergence_zones.png)
 
-![n-squared Linear Profile Propagation Loss](test/img/raytrace/raytrace_n2_linear_profile.png)
+![n-squared Linear Profile Propagation Loss](test/img/raytrace/examples/raytrace_n2_linear_profile.png)
 
-![Parabolic Bathymetry Propagation Loss](test/img/raytrace/raytrace_parabolic_bathymetry.png)
+![Parabolic Bathymetry Propagation Loss](test/img/raytrace/examples/raytrace_parabolic_bathymetry.png)
 
 ## Parabolic Equation Method
 Upcoming.
