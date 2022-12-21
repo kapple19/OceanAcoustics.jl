@@ -8,12 +8,12 @@ north_atlantic_convergence_zones = let
 			[1522, 1501, 1514, 1496, 1545.0]
 		)
 
-		Environment(ocn, (5e3, 0.0))
+		Environment(ocn, (5e3, 0.0), (0, -1))
 	end
 
 		Scenario(
 		env_north_atlantic,
-		((200, 0), 70e3),
+		((200, 0), 250e3),
 		"North Atlantic Convergence Zones"
 	)
 end
@@ -21,14 +21,16 @@ end
 munk_profile = let
 	f = 5e2
 	z_src = 1e3
-	r_rcv = 100e3
 
 	z̃(z) = 2/1300*(z - 1300)
 	ϵ = 7.37e-3
 	c(r, z) = 1500(1 + ϵ*(z̃(z) - 1 + exp(-z̃(z))))
 
-	ocn = Ocean(c)
-	scn = Scenario((c, (5e3, 0.0), (0.0, 0.0)), ((f, z_src), r_rcv), "Munk Profile")
+	scn = Scenario(
+		(c, (5e3, 0.0), (0.0, 0.0)),
+		((f, z_src), 100e3),
+		"Munk Profile"
+	)
 end
 
 n2_linear_profile = let
@@ -38,8 +40,8 @@ n2_linear_profile = let
 	ocn = Ocean(c)
 
 	scn = Scenario(
-		(ocn, (1e3, 0.0), (0.0, 0.0)),
-		((2e3, 1e3), 3.5e3),
+		(ocn, (1e3, 1.0), (0.0, 0.0)),
+		((2e3, 1e3), 10e3),
 		"n²-Linear Profile"
 	)
 end
@@ -50,11 +52,9 @@ parabolic_bathymetry = let
 	c = 250.0
 	b = 2.5e5
 	z_bty(r) = 2e-3b * √(1 + r/c)
-	
-	btm = Bottom(z_bty, 1.0)
 
 	scn = Scenario(
-		(c, btm),
+		(c, (z_bty, 1.0), (0.0, 0.0)),
 		((2e2, 0.0), r_rcv),
 		"Parabolic Bathymetry"
 	)
