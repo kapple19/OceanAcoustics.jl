@@ -25,6 +25,6 @@
 	fig = propagationplot(fld)
 	scenarioplot!(scn)
 	savefig(fig,
-		joinpath(img_dir, "raytrace_" * string(scenario) * ".png")
+		joinpath(img_dir, "proploss_" * string(scenario) * ".png")
 	)
 end
