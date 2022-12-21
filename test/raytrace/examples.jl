@@ -4,23 +4,23 @@
 	scn = getproperty(Examples, scenario)
 	@info "Ray Trace Method: $(scn.name)"
 
-	trc = RayTrace.Field(scn,
-		21,
-		save_field = false,
+	fld, trc = RayTrace.Field(scn,
+		save_field = true,
 		save_trace = true
 	)
+
+	@test fld isa Field
 	@test trc isa Trace
 
-	rtp = raytraceplot(trc)
+	@test fld.r isa AbstractVector{<:AbstractFloat}
+	@test fld.z isa AbstractVector{<:AbstractFloat}
+	@test fld.PL isa AbstractMatrix{<:AbstractFloat}
+
+	rtp = raytraceplot(trc, 21)
 	scenarioplot!(scn)
 	savefig(rtp,
 		joinpath(img_dir, "trace_" * string(scenario) * ".png")
 	)
-
-	fld = RayTrace.Field(scn, 101)
-	@test fld.r isa AbstractVector{<:AbstractFloat}
-	@test fld.z isa AbstractVector{<:AbstractFloat}
-	@test fld.PL isa AbstractMatrix{<:AbstractFloat}
 
 	fig = propagationplot(fld)
 	scenarioplot!(scn)
