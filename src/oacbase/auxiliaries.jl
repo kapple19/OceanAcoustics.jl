@@ -24,6 +24,7 @@ function interp_vec_pair(
 		extrapolation_bc = Line()
 	)
 	y_fcn(x::Tx) = Ty(y_interp(x))
+	return y_fcn
 end
 
 # function series125(N::Int)

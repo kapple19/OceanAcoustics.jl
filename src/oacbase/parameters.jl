@@ -1,5 +1,3 @@
-
-
 """
 `Depth`
 
@@ -19,7 +17,7 @@ struct Depth <: Oac
 
 	function Depth(z::Function)
 		fcn(r::Real) = Float64(z(r))
-		new(fcn)
+		return new(fcn)
 	end
 end
 
@@ -31,67 +29,84 @@ function Depth(r::Vector{<:Real}, z::Vector{<:Real})
 	!allunique(r) && throw(NotAllUnique(r))
 	length(r) ≠ length(z) && throw(DimensionMismatch())
 
-	z_interp = linear_interpolation(r, z, extrapolation_bc = Line())
-	z_fcn(r::Real) = z_interp(r)
-
-	Depth(z_fcn)
+	z_fcn = interp_vec_pair(r, z)
+	return Depth(z_fcn)
 end
 
 function Depth(z::Real)
 	fcn(r::Real) = Float64(z)
-	Depth(fcn)
+	return Depth(fcn)
 end
 
 Depth(args) = Depth(args...)
 
-# function effective_acoustic_admittance(ρ::Real, c::Number, θ)
-# 	A = sin(θ) / ρ / c
-# end
+function effective_acoustic_admittance(ρ::Real, c::Number, θ)
+	A = sin(θ) / ρ / c
+end
 
-# function surface_reflection_coefficient(
-# 	ρ₁::Number,
-# 	ρ₂::Number,
-# 	c₁::Number,
-# 	c₂::Number,
-# 	θ₁::Number,
-# 	θ₂::Number
-# )
-# 	A₁ = effective_acoustic_admittance(ρ₁, c₁, θ₁)
-# 	A₂ = effective_acoustic_admittance(ρ₂, c₂, θ₂)
-# 	R = (A₁ - A₂) / (A₁ + A₂)
-# end
+function surface_reflection_coefficient(
+	ρ₁::Number,
+	ρ₂::Number,
+	c₁::Number,
+	c₂::Number,
+	θ₁::Number,
+	θ₂::Number
+)
+	A₁ = effective_acoustic_admittance(ρ₁, c₁, θ₁)
+	A₂ = effective_acoustic_admittance(ρ₂, c₂, θ₂)
+	return R = (A₁ - A₂) / (A₁ + A₂)
+end
 
-# function bottom_reflection_coefficient(
-# 	ρ₁::Number,
-# 	ρ₂::Number,
-# 	c₁::Number,
-# 	cₚ::Number,
-# 	cₛ::Number,
-# 	θ₁::Number
-# )
+function bottom_reflection_coefficient(
+	ρ₁::Number,
+	ρ₂::Number,
+	c₁::Number,
+	cₚ::Number,
+	cₛ::Number,
+	θ₁::Number
+)
 
-# 	θₚ = acos(cₚ / c₁ * cos(θ₁))
-# 	θₛ = acos(cₛ / c₁ * cos(θ₁))
+	θₚ = acos(cₚ / c₁ * cos(θ₁))
+	θₛ = acos(cₛ / c₁ * cos(θ₁))
 	
-# 	Z₁ = 1 / effective_acoustic_admittance(ρ₁, c₁, θ₁)
-# 	Zₚ = 1 / effective_acoustic_admittance(ρₚ, cₚ, θₚ)
-# 	Zₛ = 1 / effective_acoustic_admittance(ρₛ, cₛ, θₛ)
-# 	Zₜ = Zₚ * cos(2θₛ)^2 + Zₛ * sin(2θₛ)^2
-# 	R = (Zₜ - Z₁) / (Zₜ + Z₁)
-# end
+	Z₁ = 1 / effective_acoustic_admittance(ρ₁, c₁, θ₁)
+	Zₚ = 1 / effective_acoustic_admittance(ρₚ, cₚ, θₚ)
+	Zₛ = 1 / effective_acoustic_admittance(ρₛ, cₛ, θₛ)
+	Zₜ = Zₚ * cos(2θₛ)^2 + Zₛ * sin(2θₛ)^2
+	return R = (Zₜ - Z₁) / (Zₜ + Z₁)
+end
 
-# """
-# `ReflectionCoefficient`
-# """
-# struct ReflectionCoefficient <: Oac
-# 	fcn::Function
-# end
+"""
+`ReflectionCoefficient`
+"""
+struct ReflectionCoefficient <: Oac
+	fcn::Function
 
-# (R::ReflectionCoefficient)(θ) = R.fcn(θ)
+	function ReflectionCoefficient(R::Function)
+		fcn(θ::Number) = Complex(R(θ))
+		return new(fcn)
+	end
+end
 
-# function ReflectionCoefficient(R::Number)
-# 	fcn(θ::Number) = R
-# end
+(R::ReflectionCoefficient)(θ) = R.fcn(θ)
+
+function ReflectionCoefficient(R::Number)
+	fcn(θ::Number) = R
+	return ReflectionCoefficient(fcn)
+end
+
+function ReflectionCoefficient(
+	θ::AbstractVector{<:Number},
+	R::AbstractVector{<:Number}
+)
+	# Checks
+	!issorted(θ) && throw(NotSorted(θ))
+	!allunique(θ) && throw(NotAllUnique(θ))
+	length(θ) ≠ length(R) && throw(DimensionMismatch())
+
+	fcn = interp_vec_pair(θ, R)
+	return ReflectionCoefficient(fcn)
+end
 
 # """
 # Surface `ReflectionCoefficient`
