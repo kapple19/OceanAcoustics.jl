@@ -1,5 +1,5 @@
 # OceanAcoustics
-An implementation of acoustics models in the context of long-range ocean propagation.
+A personal project, unregistered Julia package. An implementation of acoustics models in the context of long-range ocean propagation.
 
 ## Gaussian Beam Method
 ### Ray Trace
